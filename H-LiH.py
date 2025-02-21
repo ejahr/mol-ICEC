@@ -1,5 +1,7 @@
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from HLiH_input import * # defines constants and parameters
 #sys.path.insert(0, '/mnt/home/elena/icec_project') % on linux servers
 sys.path.insert(0, '/home/elena/icec-project')
