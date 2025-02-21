@@ -108,7 +108,34 @@ def plot_xs_vi(system, icec, R):
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + 'icec.pdf'
     fig.savefig(fname)
     
-def plot_xs_R(system, icec, R):
+def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies):
+    vib_energies_LiH
+    fig = plt.figure()
+    ax = plt.gca() 
+    ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
+    ax.set_xlabel(r'$\epsilon$ [eV]')
+    ax.set_ylabel(r'$\sigma$ [Mb]')
+    ax.set_yscale('log')
+    ax.set_xlim(0,5)
+    ax.set_ylim(1e-3, 1e2)
+    ax.grid(True)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
+    results = read_results_file(system, R)
+    for t in T:
+        norm = sum(np.exp(-vib_energies[vi]/KB/t) for vi in range(v_max+1))
+        avg = 0
+        label = r'$T=$' + str(t) + 'K'
+        for vi in range(0, v_max+1):
+            avg += np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
+        ax.plot(results[:,0], avg/norm, label=label)
+    for vi in range(v_max + 1):
+        plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')
+    ax.legend()
+    plt.tight_layout()
+    fname = DIR + 'plots/' + system + '.boltzmann.R'+ str(round(R*BOHR2ANGSTROM)) + 'icec.pdf'
+    fig.savefig(fname)
+    
+def plot_xs_R(system, icec: IntraICEC, R):
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
