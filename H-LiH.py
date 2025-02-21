@@ -19,7 +19,7 @@ R = np.array([2,4,6,8,10]) * ANGSTROM2BOHR
 
 min_kinE = 0.01 * EV2HARTREE
 max_kinE = 10 * EV2HARTREE
-resolution = 100
+resolution = 200
 
 v_max = 2
 vp_max = 5
@@ -52,11 +52,9 @@ def xs_vB_vBp(system, icec: IntraICEC, R):
 
 def xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max):
     xs_array = icec.energyGrid*HARTREE2EV
-
     for v in range(v_max+1):
         xs = icec.xs_vB(R, v, vp_max)
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-
     file_path = DIR + "results/" + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
@@ -68,16 +66,14 @@ def calculate_xs_R(system, icec, R, header):
 
 def calculate_spectrum(system, header, icec: IntraICEC, R, electronE): 
     new_header = header + "E_in = " + str(round(electronE*HARTREE2EV)) + " eV\n"
-    new_header += "| E_out [eV] : xs [Mb] |" 
-      
+    new_header += "| E_out [eV] : xs [Mb] |"  
     spectrum_all_vi = np.array([]) 
     for vi in range(v_max+1):
         spectrum = icec.spectrum(electronE, R, vi, vp_max)
         if spectrum_all_vi.size == 0:
             spectrum_all_vi = spectrum
         else:
-            spectrum_all_vi = np.hstack((spectrum_all_vi, spectrum))  
-            
+            spectrum_all_vi = np.hstack((spectrum_all_vi, spectrum))          
     fname = DIR + "results/" + system + ".spectrum."+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=new_header)  
     
@@ -86,18 +82,17 @@ def read_results_file(system, R):
     results = np.loadtxt(file_path, comments='#')
     return results
 
-def plot_xs(ax, system, R, v_B, label):
+def plot_xs(ax, system, R, v_B, label, **kwargs):
     ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     # ax.plot(icec.energyGrid * HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*AU2MB, label=r'$\sigma_\text{PI}$')
     results = read_results_file(system, R)
-    ax.plot(results[:,0], results[:, v_B+1], label=label)
+    ax.plot(results[:,0], results[:, v_B+1], label=label, **kwargs)
     ax.legend()
-    plt.tight_layout()
     
-def plot_xs_vi(system, icec, R):
+def plot_xs_vi(system, icec: IntraICEC, R):
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
@@ -144,6 +139,7 @@ def plot_xs_R(system, icec: IntraICEC, R):
         label = r'$R=$' + str(round(R*BOHR2ANGSTROM)) + 'A'
         plot_xs(ax, system, r, 0, label)
     #fname = DIR + 'plots/' + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    plt.tight_layout()
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     fig.savefig(fname)
     
@@ -164,6 +160,7 @@ def plot_spectrum(system, R, electronE, vi=0):
     ax.legend()
     fname = DIR + 'plots/' + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     fig.savefig(fname)
+    
 
   
 icec = IntraICEC(*input_HLiH)
@@ -182,7 +179,11 @@ for electronE in electron_energies:
     r = 4 * ANGSTROM2BOHR
     #calculate_spectrum(system, header, icec, r, electronE)
 
-plot_spectrum(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE)
+#plot_spectrum(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE)
+
+T = [15, 298, 2000] 
+plot_xs_boltzmann(system, icec, 4*ANGSTROM2BOHR, T, vib_energies_LiH)
+xs_vB_vBp(system, icec, 4*ANGSTROM2BOHR)
 
 #icec = IntraICEC(*input_BLiH)  
 #icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
