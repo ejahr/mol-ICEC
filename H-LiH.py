@@ -26,6 +26,30 @@ vp_max = 5
 
 electron_energies = np.array([1, 5]) * EV2HARTREE
 
+def xs_vB_vBp(system, icec: IntraICEC, R):
+    fname = DIR + "plots/" + system + '.all_vib.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
+    with PdfPages(fname) as pdf:
+        energies = icec.energyGrid*HARTREE2EV
+        for vi in range(v_max+1): 
+            fig, ax = plt.subplots()
+            ax.set_yscale('log')
+            ax.set_xlabel(r'$\epsilon$ [eV]')
+            ax.set_ylabel(r'$\sigma$ [Mb]')
+            ax.set_title(r'$\text{H}^+ \text{LiH}$, $v_{LiH}=$' + str(vi))
+            ax.set_ylim(1e-5, 1e2)
+            ax.grid(True)
+            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
+            results = read_results_file(system, R)
+            ax.plot(results[:,0], results[:, vi+1], label='total', color='grey')
+            for vf in range(vp_max+1):
+                label = r'$v_{LiH^+}=$' + str(vf)
+                xs = icec.xs_vB_vBp(R, vi, vf)
+                ax.plot(energies, xs, label=label)
+            ax.legend()
+            pdf.savefig(fig)  #, bbox_inches = "tight"
+            plt.close(fig) 
+    
+
 def xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max):
     xs_array = icec.energyGrid*HARTREE2EV
 
