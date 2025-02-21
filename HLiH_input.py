@@ -86,7 +86,9 @@ print(we * np.sqrt(mu/2/De))
 
 stateX = (mu, we, Req, De)
 
+energy_v0 = 697.72 * WAVENUMBER2HARTREE
 vib_spacing_LiH  = np.array([0, 1359.66, 1314.68, 1270.55, 1227.31, 1184.87, 1143.06, 1101.72, 1060.73, 1019.88, 978.85, 937.40, 895.21, 851.75, 806.39, 758.32, 706.47, 649.46, 585.50, 512.30, 427.12, 326.95, 209.30, 76.29]) * WAVENUMBER2HARTREE
+vib_energies_LiH = vib_spacing_LiH + energy_v0
 vib_diff_to_ground_LiH = np.cumsum(vib_spacing_LiH)
 
 #https://doi.org/10.1063/1.479970
