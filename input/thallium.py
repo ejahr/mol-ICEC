@@ -2,10 +2,9 @@ import sys
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-sys.path.insert(0, '/home/elena/icec-project')
-from crosssection.icec.constants import *
+from ..icec.constants import *
 
-DIR = '/home/elena/icec-project/dimers/'
+DIR = '/home/elena/intraICEC/dimers/'
 IP_Tl = 6.1 * EV2HARTREE
 
 def angstrom2hartree(wavelength):

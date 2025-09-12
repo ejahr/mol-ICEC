@@ -2,11 +2,9 @@ import sys
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-#sys.path.insert(0, '/mnt/home/elena/icec_project') % on linux servers
-sys.path.insert(0, '/home/elena/icec-project')
-from crosssection.icec.constants import *
+from ..icec.constants import *
 
-DIR = '/home/elena/icec-project/dimers/'
+DIR = '/home/elena/intraICEC/dimers/'
 
 def generate_polyfit(fname, degree):
     xs_data = np.loadtxt(fname, comments='#')

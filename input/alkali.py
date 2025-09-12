@@ -2,12 +2,10 @@ import sys
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-sys.path.insert(0, '/home/elena/icec-project')
-from crosssection.icec.constants import *
-from dimers.fitting import generate_polyfit, generate_linfit
+from ..icec.constants import *
+from ..fitting import generate_polyfit, generate_linfit
 
-DIR = '/home/elena/icec-project/dimers/'
-
+DIR = '/home/elena/intraICEC/dimers/'
 
 # K, Na 2S1/2
 degeneracy_2S = 2
