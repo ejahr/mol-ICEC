@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from crosssection.icec.constants import *
+from .constants import *
 from typing import Callable
 
 class Morse:
