@@ -2,11 +2,10 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from HLiH_input import * # defines constants and parameters
-#sys.path.insert(0, '/mnt/home/elena/icec_project') % on linux servers
-sys.path.insert(0, '/home/elena/icec-project')
-from crosssection.icec.intraIcec import IntraICEC
-from crosssection.icec.constants import *
+from input.HLiH import * 
+from icec.icec import ICEC
+from icec.intraIcec import IntraICEC
+from icec.constants import *
 
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
