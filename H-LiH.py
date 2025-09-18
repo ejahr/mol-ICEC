@@ -11,7 +11,7 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 plt.rcParams.update({'font.size': 14})
 
-DIR = '/home/elena/icec-project/dimers/'
+DIR = '/home/elena/intraICEC/dimers/'
 
 #https://doi.org/10.1021/jp9921295
 R = 2 * ANGSTROM2BOHR
@@ -83,7 +83,7 @@ def read_results_file(system, R):
     results = np.loadtxt(file_path, comments='#')
     return results
 
-def plot_xs(ax, system, R, v_B, label, **kwargs):
+def plot_xs(ax, system, R, v_B, label='icec', **kwargs):
     ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
@@ -144,14 +144,14 @@ def plot_xs_R(system, icec: IntraICEC, R):
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     fig.savefig(fname)
     
-def plot_spectrum(system, R, electronE, vi=0):
+def plot_spectrum(system, R, electronE, vi=0, title=None):
     fname = DIR + "results/" + system + ".spectrum."+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results = np.loadtxt(fname, comments='#')
     
     fig = plt.figure()
     ax = plt.gca() 
-    ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
-    ax.set_yscale('log')
+    ax.set_title(title)
+    #ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon_\text{out}$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
