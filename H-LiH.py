@@ -163,39 +163,53 @@ def plot_spectrum(system, R, electronE, vi=0, title=None):
     fig.savefig(fname)
     
 
+HLi = False
+BLi = True
   
-icec = IntraICEC(*input_HLiH)
-icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
-icec.make_energy_grid(min_kinE, max_kinE, resolution)
-  
-system = 'Hp-LiH'
-header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
-header += f'Number of initial vibrational states: {v_max+1}\n' 
-header += f'Number of final vibrational states: {vp_max+1}\n' 
-
-#calculate_xs_R(system, icec, R, header)
-#plot_xs_vi(system, icec, R=4*ANGSTROM2BOHR)
-
-for electronE in electron_energies:
-    r = 4 * ANGSTROM2BOHR
-    #calculate_spectrum(system, header, icec, r, electronE)
-
-#plot_spectrum(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE)
-
-T = [15, 298, 2000] 
-plot_xs_boltzmann(system, icec, 4*ANGSTROM2BOHR, T, vib_energies_LiH)
-xs_vB_vBp(system, icec, 4*ANGSTROM2BOHR)
-
-#icec = IntraICEC(*input_BLiH)  
-#icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
-#icec.make_energy_grid(min_kinE, max_kinE, resolution)  
-  
-#system = 'Bp-LiH'
-#header = 'e- + B+ + LiH -> B + LiH+ + e-\n'
-#header += f'Number of initial vibrational states: {v_max+1}\n' 
-#header += f'Number of final vibrational states: {vp_max+1}\n' 
-#header += f'R = {round(R*BOHR2ANGSTROM)} Angstrom'
-#header += 'E_in [eV] | xs [Mb]'
+if HLi:
+    system = 'Hp-LiH'
+    title = r'$\text{H}^+ \text{LiH}$'
     
-#xs_bb(system, header, icec, R, v_max, vp_max)
-#plot_xs(system, icec, R, 0)
+    icec = IntraICEC(*input_HLiH)
+    icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
+    icec.make_energy_grid(min_kinE, max_kinE, resolution)
+    
+    #system = 'Hp-LiH'
+    #header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
+    #header += f'Number of initial vibrational states: {v_max+1}\n' 
+    #header += f'Number of final vibrational states: {vp_max+1}\n' 
+
+    #calculate_xs_R(system, icec, R, header)
+    #plot_xs_vi(system, icec, R=4*ANGSTROM2BOHR)
+
+    for electronE in electron_energies:
+        r = 4 * ANGSTROM2BOHR
+        #calculate_spectrum(system, header, icec, r, electronE)
+
+    #plot_spectrum(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE, title=title)
+
+    #T = [15, 298, 2000] 
+    #plot_xs_boltzmann(system, icec, 4*ANGSTROM2BOHR, T, vib_energies_LiH)
+    #xs_vB_vBp(system, icec, 4*ANGSTROM2BOHR)
+
+if BLi:
+    system = 'Bp-LiH'
+    title = r'$\text{B}^+ \text{LiH}$'
+    
+    icec = IntraICEC(*input_BLiH)  
+    icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
+    icec.make_energy_grid(min_kinE, max_kinE, resolution) 
+    
+    R = 10 * ANGSTROM2BOHR
+    
+    header = 'e- + B+ + LiH -> B + LiH+ + e-\n'
+    header += f'Number of initial vibrational states: {v_max+1}\n' 
+    header += f'Number of final vibrational states: {vp_max+1}\n' 
+    header += f'R = {round(R*BOHR2ANGSTROM)} Angstrom'
+    header += 'E_in [eV] | xs [Mb]'
+        
+    #xs_bb(system, header, icec, R, v_max, vp_max)
+    plot_xs_vi(system, icec, R)
+
+    #for electronE in electron_energies:
+    #    calculate_spectrum(system, header, icec, R, electronE)
