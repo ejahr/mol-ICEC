@@ -2,7 +2,8 @@ import sys
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-from ..icec.constants import *
+from icec.constants import *
+# from constants import *   # use this import when directly running this file
 
 DIR = '/home/elena/intraICEC/dimers/'
 
@@ -21,7 +22,7 @@ def test_polyfit(polyfit, x, y, degree):
     plt.scatter(x*HARTREE2EV, y*AU2MB, color='red', label='Data points')  # Original data points
     plt.plot(x_fit*HARTREE2EV, y_fit*AU2MB, label=f'Polynomial fit, degree = ' + str(degree))  # Fitted curve
     plt.legend()
-    fname = DIR + 'H/test_polyfit.pdf'
+    fname = DIR + 'data/H/test_polyfit.pdf'
     plt.savefig(fname)
     
 def generate_linfit(fname):
@@ -39,7 +40,7 @@ def test_linfit(interp_func, x, y):
     plt.scatter(x*HARTREE2EV, y*AU2MB, color='red', label='Data points') 
     plt.plot(x_fit*HARTREE2EV, y_fit*AU2MB, label=f'Linear fit')  
     plt.legend()
-    fname = DIR + 'B/test_linfit.pdf'
+    fname = DIR + 'data/B/test_linfit.pdf'
     plt.savefig(fname)
 
 # =================== H+ ==========================
@@ -49,7 +50,7 @@ deg_2S = 2
 IP_H = 13.598434599702 * EV2HARTREE
 deg_factor_H = deg_2S / 1
 
-fname = DIR + 'H/H.txt'
+fname = DIR + 'data/H/H.txt'
 PI_xs_H = generate_polyfit(fname, 15)
 
 # =================== B+ ==========================
@@ -58,7 +59,7 @@ deg_1S = 1
 deg_factor_B = 6
 IP_B = 8.298019 * EV2HARTREE
 
-fname = DIR + 'B/B.txt'
+fname = DIR + 'data/B/B.txt'
 PI_xs_B = generate_linfit(fname)
 
 # ====================== LiH ==========================
@@ -79,8 +80,8 @@ alpha   = 0.2124 * WAVENUMBER2HARTREE
 we      = 1406.18 * WAVENUMBER2HARTREE
 wexe    = 23.5777 * WAVENUMBER2HARTREE
 
-print(alpha)
-print(we * np.sqrt(mu/2/De))
+print('alpha =', alpha)
+print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
 
 stateX = (mu, we, Req, De)
 
@@ -99,12 +100,12 @@ wexe    = 42.3 * WAVENUMBER2HARTREE
 vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) * WAVENUMBER2HARTREE
 vib_diff_to_ground_LiHp = np.cumsum(vib_spacing_LiHp)
 
-file_PI_xs_LiH = DIR + 'LiH/LiH_vi_vf_'
+file_PI_xs_LiH = DIR + 'data/LiH/LiH_vi_vf_'
 
 # ===================== H+ = LiH =================
 
 input_HLiH = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH]
 
-# ===================== H+ = LiH =================
+# ===================== B+ = LiH =================
 
 input_BLiH = [deg_factor_B, IP_B, IP_LiH, PI_xs_B, file_PI_xs_LiH]
