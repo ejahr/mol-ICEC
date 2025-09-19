@@ -197,11 +197,16 @@ class IntraICEC:
         xs = sum(self.xs_vD_vDp(R, vD, vDp) for vDp in range(vDp_max + 1))
         return xs
     
-    def xs_boltzmann(self, R, T, vD_max, vDp_max):
-        norm = sum(np.exp(-vib_energies[vi]/KB/t) for vi in range(vD_max+1))
-        avg = 0
-        for vi in range(0, vD_max+1):
-            avg += np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
+    def xs_boltzmann(self, R, t, vD_max, vDp_max):
+        norm = sum(
+            np.exp(-self.Morse_D.energy(vD)/KB/t) 
+            for vD in range(vD_max+1)
+        )
+        avg = sum(
+            np.exp(-self.Morse_D.energy(vD)/KB/t) * self.xs_vD(R, vD, vDp_max)
+            for vD in range(vD_max+1)
+        )
+        return avg/norm * AU2MB
     
     def spectrum(self, electronE, R, v_D=0, v_Dp_max=0):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
