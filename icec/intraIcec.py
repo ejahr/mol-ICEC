@@ -194,8 +194,14 @@ class IntraICEC:
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
         """
         # Element-wise summation sum(list_of_arrays)
-        xs_array = sum(self.xs_vB_vBp(R, vB, vBp) for vBp in range(vBp_max + 1))
-        return xs_array
+        xs = sum(self.xs_vD_vDp(R, vD, vDp) for vDp in range(vDp_max + 1))
+        return xs
+    
+    def xs_boltzmann(self, R, T, vD_max, vDp_max):
+        norm = sum(np.exp(-vib_energies[vi]/KB/t) for vi in range(vD_max+1))
+        avg = 0
+        for vi in range(0, vD_max+1):
+            avg += np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
     
     def spectrum(self, electronE, R, v_D=0, v_Dp_max=0):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
