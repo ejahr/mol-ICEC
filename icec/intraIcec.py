@@ -40,7 +40,7 @@ class Morse:
         """Morse potential
         - r : interatomic distance (Bohr, a.u.)
         """
-        return self.De * (1 - np.exp(-self.alpha * (r - self.req))) ** 2 - self.De
+        return self.De * (1 - np.exp(-self.alpha * (r - self.req))) ** 2 #- self.De
 
     def psi(self, v, r):
         """v-th eigenstate of the Morse potential
@@ -62,7 +62,7 @@ class Morse:
 
     def energy(self, v):
         """Energy [Hartree] of the v-th (bound) Morse state. E_bound < 0"""
-        return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) - self.De
+        return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) #- self.De
 
     def intersection_V(self, E):
         arg = (-self.De + np.sqrt(self.De**2 + self.De * E)) / E
