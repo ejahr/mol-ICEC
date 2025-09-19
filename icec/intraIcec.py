@@ -60,10 +60,9 @@ class Morse:
             * sp.laguerre(v, 2 * self.lam - 2 * v - 1, z)
         )
 
-    def E(self, v):
+    def energy(self, v):
         """Energy [Hartree] of the v-th (bound) Morse state. E_bound < 0"""
-        vphalf = v + 0.5
-        return self.we * vphalf - (self.we * vphalf) ** 2 / (4 * self.De) - self.De
+        return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) - self.De
 
     def intersection_V(self, E):
         arg = (-self.De + np.sqrt(self.De**2 + self.De * E)) / E
