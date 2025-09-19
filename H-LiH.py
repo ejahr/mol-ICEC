@@ -20,7 +20,7 @@ R = np.array([2,4,6,8,10]) * ANGSTROM2BOHR
 
 min_kinE = 0.01 * EV2HARTREE
 max_kinE = 10 * EV2HARTREE
-resolution = 200
+resolution = 1000
 
 v_max = 2
 vp_max = 5
@@ -104,16 +104,12 @@ def plot_xs_vi(system, icec: IntraICEC, R):
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     fig.savefig(fname)
     
-def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies):
-    vib_energies_LiH
+def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     fig = plt.figure()
     ax = plt.gca() 
-    ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.set_yscale('log')
-    ax.set_xlim(0,5)
-    ax.set_ylim(1e-3, 1e2)
     ax.grid(True)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     results = read_results_file(system, R)
@@ -125,10 +121,11 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies):
             avg += np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
         ax.plot(results[:,0], avg/norm, label=label)
     for vi in range(v_max + 1):
-        plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')
+        plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')  
+        
     ax.legend()
     plt.tight_layout()
-    fname = DIR + 'plots/' + system + '.boltzmann.R'+ str(round(R*BOHR2ANGSTROM)) + 'icec.pdf'
+    fname = DIR + 'plots/' + system + '.boltzmann.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     fig.savefig(fname)
     
 def plot_xs_R(system, icec: IntraICEC, R):
@@ -151,13 +148,13 @@ def plot_spectrum(system, R, electronE, vi=0, title=None):
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title(title)
-    #ax.set_yscale('log')
+    ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon_\text{out}$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     for vi in range(v_max+1):
-        label = r'$\epsilon=$' + str(round(electronE*HARTREE2EV)) + r', $v_{LiH}=$' + str(vi)
-        ax.bar(results[:,3*vi], results[:,3*vi+1],width=0.002, label=label)
+        label = r'$\epsilon=$' + str(round(electronE*HARTREE2EV)) + r', $\nu=$' + str(vi)
+        ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label)
     ax.legend()
     fname = DIR + 'plots/' + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     fig.savefig(fname)
@@ -210,8 +207,14 @@ if BLi:
     header += f'R = {round(R*BOHR2ANGSTROM)} Angstrom'
     header += 'E_in [eV] | xs [Mb]'
         
-    #xs_bb(system, header, icec, R, v_max, vp_max)
-    plot_xs_vi(system, icec, R)
+    xs_bb(system, header, icec, R, v_max, vp_max)
+    
+    T = [15, 298, 2000] 
+    plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
+    #plot_xs_vi(system, icec, R)
 
     #for electronE in electron_energies:
     #    calculate_spectrum(system, header, icec, R, electronE)
+
+    #plot_spectrum(system, R, 1*EV2HARTREE, title=title)
+    #plot_spectrum(system, R, 5*EV2HARTREE, title=title)
