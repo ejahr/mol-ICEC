@@ -114,12 +114,26 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     results = read_results_file(system, R)
     for t in T:
-        norm = sum(np.exp(-vib_energies[vi]/KB/t) for vi in range(v_max+1))
-        avg = 0
+        if vib_energies is None:
+            norm = sum(np.exp(-icec.Morse_D.energy(vi)/KB/t) 
+                       for vi in range(v_max+1)
+                       )
+            avg = sum(
+                np.exp(-icec.Morse_D.energy(vi)/KB/t) * results[:, vi+1] 
+                for vi in range(v_max+1)
+                )
+        else:
+            norm = sum(
+                np.exp(-vib_energies[vi]/KB/t) 
+                for vi in range(v_max+1)
+                )
+            avg = sum(
+                np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
+                for vi in range(v_max+1)
+                )
         label = r'$T=$' + str(t) + 'K'
-        for vi in range(0, v_max+1):
-            avg += np.exp(-vib_energies[vi]/KB/t) * results[:, vi+1]
         ax.plot(results[:,0], avg/norm, label=label)
+        
     for vi in range(v_max + 1):
         plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')  
         
