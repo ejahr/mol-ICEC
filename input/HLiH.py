@@ -71,7 +71,8 @@ IP_LiH = 7.9 * EV2HARTREE
 
 m_p =  1836.152673426
 
-#  https://doi.org/10.1063/1.479970
+# https://doi.org/10.1063/1.479970
+# Table IV
 m_H     = m_p + 1
 m_Li    = 7*m_p + 3
 
@@ -86,22 +87,28 @@ wexe    = 23.5777 * WAVENUMBER2HARTREE
 print('alpha =', alpha)
 print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
 
-stateX = (mu, we, Req, De)
+state_LiH = (mu, we, Req, De)
 
+# Table III
 energy_v0 = 697.72 * WAVENUMBER2HARTREE
-vib_spacing_LiH  = np.array([0, 1359.66, 1314.68, 1270.55, 1227.31, 1184.87, 1143.06, 1101.72, 1060.73, 1019.88, 978.85, 937.40, 895.21, 851.75, 806.39, 758.32, 706.47, 649.46, 585.50, 512.30, 427.12, 326.95, 209.30, 76.29]) * WAVENUMBER2HARTREE
-vib_energies_LiH = vib_spacing_LiH + energy_v0
-vib_diff_to_ground_LiH = np.cumsum(vib_spacing_LiH)
+vib_spacing_LiH  = np.array([0, 1359.66, 1314.68, 1270.55, 1227.31, 1184.87, 1143.06, 1101.72, 1060.73, 1019.88, 978.85, 937.40, 895.21, 851.75, 806.39, 758.32, 706.47, 649.46, 585.50, 512.30, 427.12, 326.95, 209.30, 76.29])
+vib_spacing_LiH *= WAVENUMBER2HARTREE
+vib_diff_to_v0_LiH = np.cumsum(vib_spacing_LiH)
+vib_energies_LiH = vib_diff_to_v0_LiH + energy_v0
 
-#https://doi.org/10.1063/1.479970
+# https://doi.org/10.1063/1.479970
 mu      = m_H * m_Li / (m_H + m_Li)
 Req     = 4.136
 we      = 442.9 * WAVENUMBER2HARTREE
 alpha   = 0.507 * WAVENUMBER2HARTREE
 wexe    = 42.3 * WAVENUMBER2HARTREE
 
-vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) * WAVENUMBER2HARTREE
-vib_diff_to_ground_LiHp = np.cumsum(vib_spacing_LiHp)
+state_LiHp = (mu, we, Req, De)
+
+# Table V
+vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) 
+vib_spacing_LiHp *= WAVENUMBER2HARTREE
+vib_diff_to_v0_LiHp = np.cumsum(vib_spacing_LiHp)
 
 file_PI_xs_LiH = DIR + 'data/LiH/LiH_vi_vf_'
 
