@@ -2,8 +2,11 @@ import sys
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-from icec.constants import *
-# from constants import *   # use this import when directly running this file
+if __name__ == "__main__":
+    from constants import *
+else:
+    from icec.constants import *
+#    # use this import when directly running this file
 
 DIR = '/home/elena/intraICEC/dimers/'
 
