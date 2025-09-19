@@ -84,8 +84,8 @@ alpha   = 0.2124 * WAVENUMBER2HARTREE
 we      = 1406.18 * WAVENUMBER2HARTREE
 wexe    = 23.5777 * WAVENUMBER2HARTREE
 
-print('alpha =', alpha)
-print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
+#print('alpha =', alpha)
+#print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
 
 state_LiH = (mu, we, Req, De)
 
@@ -102,6 +102,7 @@ Req     = 4.136
 we      = 442.9 * WAVENUMBER2HARTREE
 alpha   = 0.507 * WAVENUMBER2HARTREE
 wexe    = 42.3 * WAVENUMBER2HARTREE
+De      = we**2 / 4 / wexe 
 
 state_LiHp = (mu, we, Req, De)
 
