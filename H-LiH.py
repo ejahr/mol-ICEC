@@ -44,7 +44,7 @@ def xs_vB_vBp(system, icec: IntraICEC, R):
             ax.plot(results[:,0], results[:, vi+1], label='total', color='grey')
             for vf in range(vp_max+1):
                 label = r'$v_{LiH^+}=$' + str(vf)
-                xs = icec.xs_vB_vBp(R, vi, vf)
+                xs = icec.xs_vD_vDp(R, vi, vf)
                 ax.plot(energies, xs, label=label)
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
@@ -54,7 +54,7 @@ def xs_vB_vBp(system, icec: IntraICEC, R):
 def xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max):
     xs_array = icec.energyGrid*HARTREE2EV
     for v in range(v_max+1):
-        xs = icec.xs_vB(R, v, vp_max)
+        xs = icec.xs_vD(R, v, vp_max)
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR + "results/" + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
@@ -75,7 +75,7 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE):
             spectrum_all_vi = spectrum
         else:
             spectrum_all_vi = np.hstack((spectrum_all_vi, spectrum))          
-    fname = DIR + "results/" + system + ".spectrum."+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
+    fname = DIR + "results/" + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=new_header)  
     
 def read_results_file(system, R):
@@ -101,7 +101,7 @@ def plot_xs_vi(system, icec: IntraICEC, R):
     for vi in range(0, v_max+1):
         label = r'$v_{LiH}=$' + str(vi)
         plot_xs(ax, system, R, vi, label)
-    fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + 'icec.pdf'
+    fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     fig.savefig(fname)
     
 def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies):
@@ -145,7 +145,7 @@ def plot_xs_R(system, icec: IntraICEC, R):
     fig.savefig(fname)
     
 def plot_spectrum(system, R, electronE, vi=0, title=None):
-    fname = DIR + "results/" + system + ".spectrum."+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
+    fname = DIR + "results/" + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results = np.loadtxt(fname, comments='#')
     
     fig = plt.figure()
@@ -171,7 +171,7 @@ if HLi:
     title = r'$\text{H}^+ \text{LiH}$'
     
     icec = IntraICEC(*input_HLiH)
-    icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
+    icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
     
     #system = 'Hp-LiH'
@@ -197,7 +197,9 @@ if BLi:
     title = r'$\text{B}^+ \text{LiH}$'
     
     icec = IntraICEC(*input_BLiH)  
-    icec.input_vib_spacing_B(vib_spacing_LiH, vib_spacing_LiHp)
+    #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
+    icec.define_Morse_D(*state_LiH)
+    icec.define_Morse_Dp(*state_LiHp)
     icec.make_energy_grid(min_kinE, max_kinE, resolution) 
     
     R = 10 * ANGSTROM2BOHR
