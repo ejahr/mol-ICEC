@@ -145,24 +145,23 @@ class IntraICEC:
         interp_func = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
         return interp_func(hbarOmega)
     
-    def energy_relation(self, electronE, v_B, v_Bp):
-        vib_energy_B = 0 if v_Bp is None else (self.Morse_Bp.energy(v_Bp) - self.Morse_Bp.energy(0)) - (self.Morse_B.energy(v_B) - self.Morse_B.energy(0))
-        transition_B = self.IP_B - vib_energy_B
+    def energy_relation(self, electronE, v_D, v_Dp):
+        if v_Dp is None:
+            vib_energy_D = 0
+        elif hasattr(self, 'vib_diff_to_v0_D'):
+            vib_energy_D = self.vib_diff_to_v0_Dp[v_Dp] - self.vib_diff_to_v0_D[v_D]
+        else:
+            vib_energy_D = (self.Morse_Dp.energy(v_Dp) - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(v_D) - self.Morse_D.energy(0))
+        transition_D = self.IP_D + vib_energy_D
         
         hbarOmega = electronE + self.IP_A 
-        electronE_f = hbarOmega - transition_B
+        electronE_f = hbarOmega - transition_D
         
         return hbarOmega, electronE_f
     
-    def input_vib_spacing_B(self, vib_spacing_B, vib_spacing_Bp):
-        self.vib_diff_to_ground_B = np.cumsum(vib_spacing_B)
-        self.vib_diff_to_ground_Bp = np.cumsum(vib_spacing_Bp)
-
-    def energy_relation_vib(self, electronE, v_B, v_Bp):
-        hbarOmega = electronE + self.IP_A
-        transition_B = self.IP_B + self.vib_diff_to_ground_Bp[v_Bp] - self.vib_diff_to_ground_B[v_B]
-        electronE_f = hbarOmega - transition_B
-        return hbarOmega, electronE_f
+    def input_vib_spacing_D(self, vib_spacing_D, vib_spacing_Dp):
+        self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
+        self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
 
     # ----- CROSS SECTION -----    
     def xs(self, electronE, R, v_D=0, v_Dp=0):
@@ -172,10 +171,7 @@ class IntraICEC:
         - v_A+ -> v_A (v_A -> v_A+ Photoionization)
         - v_D -> v_D+
         """   
-        if hasattr(self, 'vib_diff_to_ground_B'):
-            hbarOmega, electronE_f = self.energy_relation_vib(electronE, v_B, v_Bp)
-        else:
-            hbarOmega, electronE_f = self.energy_relation(electronE, v_B, v_Bp)
+        hbarOmega, electronE_f = self.energy_relation(electronE, v_D, v_Dp)
         if electronE_f <= 0: 
             return 0
         else: 
@@ -206,12 +202,11 @@ class IntraICEC:
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         """
         spectrum = []
-        for v_Bp in range(v_Bp_max+1):
-            hbarOmega, electronE_f = self.energy_relation_vib(electronE, v_B, v_Bp)
+        for v_Dp in range(v_Dp_max+1):
+            hbarOmega, electronE_f = self.energy_relation(electronE, v_D, v_Dp)
             if electronE_f >= 0:
-                xs = self.xs(electronE, R, v_B, v_Bp)
-                spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, v_Bp])
-        print(spectrum)
+                xs = self.xs(electronE, R, v_D, v_Dp)
+                spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, v_Dp])
         return np.array(spectrum)
 
     def xs_R(self, electronE, v_D=0, v_Dp=None):
