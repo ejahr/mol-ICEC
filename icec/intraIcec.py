@@ -194,7 +194,10 @@ class IntraICEC:
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
         """
         # Element-wise summation sum(list_of_arrays)
-        xs = sum(self.xs_vD_vDp(R, vD, vDp) for vDp in range(vDp_max + 1))
+        xs = sum(
+            self.xs_vD_vDp(R, vD, vDp) 
+            for vDp in range(vDp_max + 1)
+        )
         return xs
     
     def xs_boltzmann(self, R, t, vD_max, vDp_max):
@@ -234,13 +237,13 @@ class IntraICEC:
         ])
         return xs * AU2MB
 
-    def plot_xs(self, ax, xs, label="ICEC", **kwargs):
+    def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
         '''Plots the Cross section xs [Mb]'''
         ax.plot(self.energyGrid*HARTREE2EV, xs, label=label, **kwargs)
         ax.set_xlabel(r'$E_\text{el}$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         ax.set_yscale('log')
-        ax.set_title('ICEC cross section')
+        ax.set_title(title)
 
     def plot_xs_R(self, ax, xs, **kwargs):
         '''Plots the Cross section xs [Mb]'''
