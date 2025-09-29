@@ -111,12 +111,14 @@ vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3])
 vib_spacing_LiHp *= WAVENUMBER2HARTREE
 vib_diff_to_v0_LiHp = np.cumsum(vib_spacing_LiHp)
 
-file_PI_xs_LiH = DIR + 'data/LiH/LiH_vi_vf_'
+file_PI_xs_LiH_resolved = DIR + 'data/LiH/LiH_vi_vf_'
+file_PI_xs_LiH_unresolved = DIR + 'data/LiH/LiH'
 
 # ===================== H+ = LiH =================
 
-input_HLiH = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH]
+input_HLiH = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH_resolved]
+input_HLiH_unresolved = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH_unresolved]
 
 # ===================== B+ = LiH =================
 
-input_BLiH = [deg_factor_B, IP_B, IP_LiH, PI_xs_B, file_PI_xs_LiH]
+input_BLiH = [deg_factor_B, IP_B, IP_LiH, PI_xs_B, file_PI_xs_LiH_resolved]
