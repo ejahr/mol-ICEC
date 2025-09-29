@@ -103,7 +103,16 @@ class IntraICEC:
         self.PI_xs_A = PI_xs_A
         self.file_PI_xs_D = file_PI_xs_D
         self.prefactor = (3 * c**2) / (8 * np.pi)
-
+        
+    def define_PI_xs_D(self, method="FC"):
+        if method == 'FC':
+            self.PI_xs_D = self.PI_xs_D_FC
+        elif method == 'resolved':
+            self.PI_xs_D = self.PI_xs_D_resolved
+        # elif method == 'branching-ratio'
+        else:
+            print("not a valid method")
+            
     def define_Morse_D(self, mu, we, req, De):
         """Morse potential for the initial vibrational mode of the system.
         - mu: reduced mass (proton mass)
@@ -139,11 +148,29 @@ class IntraICEC:
         """
         self.rGrid = np.linspace(Rmin, Rmax, resolution)
     
-    def PI_xs_D(self, vi, vf, hbarOmega):
+    def FC_factor(self, vD, vDp):
+        '''<psi_vi|psi_vf>'''
+        def integrand(r):
+            return np.conjugate(self.Morse_D.psi(vDp, r)) * self.Morse_Dp.psi(vD, r)
+        result, error = sp.integrate.quad(integrand, 0, np.inf)
+        return abs(result)**2
+    
+    def PI_xs_D_FC(self, vD, vDp, hbarOmega):
+        if not hasattr(self, "PI_xs_D_interpolated"):
+            data = np.loadtxt(self.file_PI_xs_D + '.txt')
+            energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
+            self.PI_xs_D_interpolated = sp.interpolate.interp1d(
+                energies, xs, kind='linear', fill_value="extrapolate"
+                )
+        return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
+    
+    def PI_xs_D_resolved(self, vi, vf, hbarOmega):
         filename = self.file_PI_xs_D + f"{vi}_{vf}.txt"
         data = np.loadtxt(filename)
         energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
-        interp_func = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
+        interp_func = sp.interpolate.interp1d(
+            energies, xs, kind='linear', fill_value="extrapolate"
+            )
         return interp_func(hbarOmega)
     
     def energy_relation(self, electronE, v_D, v_Dp):
