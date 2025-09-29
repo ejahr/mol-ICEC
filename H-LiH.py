@@ -173,22 +173,58 @@ def plot_spectrum(system, R, electronE, vi=0, title=None):
     fname = DIR + 'plots/' + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     fig.savefig(fname)
     
+def plot_morse(icec:IntraICEC, system):
+    fig = plt.figure()
+    ax = plt.gca() 
+    ax.set_xlabel(r'$R$ [angstrom]')
+    ax.set_ylabel(r'$E$')
+    ax.set_ylim(-0.1, 4)
+    
+    r = icec.Morse_D.make_rgrid(rmax=5*ANGSTROM2BOHR)
+    V = icec.Morse_D.V(r)
+    ax.plot(r*BOHR2ANGSTROM, V*HARTREE2EV, label=r'$\mathrm{LiH}$')
+    
+    for vi in range(v_max+1):
+        psi = [icec.Morse_D.psi(vi,r_i)/15 + icec.Morse_D.energy(vi)*HARTREE2EV for r_i in r]
+        ax.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
+    
+    V = icec.Morse_Dp.V(r)
+    ax.plot(r*BOHR2ANGSTROM, V*HARTREE2EV + 2.7, label=r'$\mathrm{LiH}^+$')
+    
+    psi = [icec.Morse_Dp.psi(0,r_i)/15 + 2.7 + icec.Morse_Dp.energy(0)*HARTREE2EV for r_i in r]
+    ax.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
+    
+    ax.legend()
+    fname = DIR + 'plots/' + system + ".PES.pdf"
+    fig.savefig(fname)
 
-HLi = False
-BLi = True
+HLi = True
+BLi = False
   
 if HLi:
     system = 'Hp-LiH'
     title = r'$\text{H}^+ \text{LiH}$'
     
     icec = IntraICEC(*input_HLiH)
-    icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
+    #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
+    icec.define_Morse_D(*state_LiH)
+    icec.define_Morse_Dp(*state_LiHp)
+    icec.define_PI_xs_D(method="resolved")
     
-    #system = 'Hp-LiH'
-    #header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
-    #header += f'Number of initial vibrational states: {v_max+1}\n' 
-    #header += f'Number of final vibrational states: {vp_max+1}\n' 
+    icec_FC = IntraICEC(*input_HLiH_unresolved)
+    icec_FC.define_Morse_D(*state_LiH)
+    icec_FC.define_Morse_Dp(*state_LiHp)
+    icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
+    icec_FC.define_PI_xs_D(method="FC")
+    
+    #plot_morse(icec, 'LiH')
+    
+    system = 'Hp-LiH'
+    header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
+    header += f'Number of initial vibrational states: {v_max+1}\n' 
+    header += f'Number of final vibrational states: {vp_max+1}\n' 
+    
 
     #calculate_xs_R(system, icec, R, header)
     #plot_xs_vi(system, icec, R=4*ANGSTROM2BOHR)
