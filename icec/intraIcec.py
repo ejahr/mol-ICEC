@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import mpmath
 from .constants import *
 from typing import Callable
 
@@ -42,22 +43,22 @@ class Morse:
         """
         return self.De * (1 - np.exp(-self.alpha * (r - self.req))) ** 2 #- self.De
 
-    def psi(self, v, r):
+    def psi(self, v:int, r:float):
         """v-th eigenstate of the Morse potential
         - r : interatomic distance (Bohr, a.u.)
         """
-        z = self.z0 * sp.exp(-self.alpha * r)
-        N = sp.sqrt(
+        z = self.z0 * mpmath.exp(-self.alpha * r)
+        N = mpmath.sqrt(
             (2 * self.lam - 2 * v - 1)
-            * sp.factorial(v)
+            * mpmath.factorial(v)
             * self.alpha
-            / sp.gamma(2 * self.lam - v)
+            / mpmath.gamma(2 * self.lam - v)
         )
         return (
             N
             * z ** (self.lam - v - 0.5)
-            * sp.exp(-z / 2)
-            * sp.laguerre(v, 2 * self.lam - 2 * v - 1, z)
+            * mpmath.exp(-z / 2)
+            * mpmath.laguerre(v, 2 * self.lam - 2 * v - 1, z)
         )
 
     def energy(self, v):
