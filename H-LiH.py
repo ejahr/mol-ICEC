@@ -279,6 +279,37 @@ def plot_morse(icec:IntraICEC, system):
     fname = DIR + 'plots/' + system + ".PES.pdf"
     fig.savefig(fname)
 
+def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC):
+    omega = 10*EV2HARTREE
+    print('xs         ', icec.PI_xs_D(0,0,omega))
+    print('xs FC      ', icec_FC.PI_xs_D(0,0,omega))
+    print('xs FC paper', icec_fixed.PI_xs_B(omega*HARTREE2EV)*MB2AU*0.0153)
+    
+    for vp in range(0, vp_max+1):
+        icec_FC.FC_factor(0,vp)
+        
+def plot_H_PI_PR(icec:ICEC):
+    fig = plt.figure()
+    ax = plt.gca() 
+    ax.set_title('Hydrogen')
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\epsilon$ [eV]')
+    ax.set_ylabel(r'$\sigma$ [Mb]')
+    
+    PI_xs = np.array([])
+    hbaromega = np.array([])
+    for electronE in icec.energyGrid:
+        omega = electronE + icec.IP_A
+        hbaromega = np.append(hbaromega, [omega*HARTREE2EV])
+        xs = icec.PI_xs_A(omega*HARTREE2EV)
+        PI_xs = np.append(PI_xs, [xs])
+    ax.plot(icec.energyGrid*HARTREE2EV, PI_xs, label = r'$H\to H^+$')
+    icec.plot_PR_xs(ax, label = r'$H^+\to H$')
+    ax.legend()
+    fname = DIR + 'plots/H.PI.PR.pdf'
+    fig.savefig(fname)
+    
+
 HLi = True
 BLi = False
 calculation = False
