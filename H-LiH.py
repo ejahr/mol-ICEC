@@ -27,7 +27,7 @@ vp_max = 5
 
 electron_energies = np.array([1, 5]) * EV2HARTREE
 
-def xs_vB_vBp(system, icec: IntraICEC, R):
+def plot_xs_vB_vBp(system, icec: IntraICEC, R):
     fname = DIR + "plots/" + system + '.all_vib.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     with PdfPages(fname) as pdf:
         energies = icec.energyGrid*HARTREE2EV
@@ -51,7 +51,7 @@ def xs_vB_vBp(system, icec: IntraICEC, R):
             plt.close(fig) 
     
 
-def xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max):
+def calculate_xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max, modifier=''):
     xs_array = icec.energyGrid*HARTREE2EV
     for v in range(v_max+1):
         xs = icec.xs_vD(R, v, vp_max)
@@ -63,7 +63,7 @@ def calculate_xs_R(system, icec, R, header):
     for r in R:
         headerR = header + f'R = {round(r*BOHR2ANGSTROM)} Angstrom'
         headerR += 'E_in [eV] | xs [Mb]'
-        xs_bb(system, headerR, icec, r, v_max, vp_max)
+        calculate_xs_bb(system, headerR, icec, r, v_max, vp_max)
 
 def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, modifier=''): 
     new_header = header + "E_in = " + str(round(electronE*HARTREE2EV)) + " eV\n"
@@ -283,7 +283,7 @@ if BLi:
     header += f'R = {round(R*BOHR2ANGSTROM)} Angstrom'
     header += 'E_in [eV] | xs [Mb]'
         
-    xs_bb(system, header, icec, R, v_max, vp_max)
+    #xs_bb(system, header, icec, R, v_max, vp_max)
     
     T = [15, 298, 2000] 
     plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
