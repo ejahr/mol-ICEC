@@ -239,32 +239,49 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=Non
     fig.savefig(fname)
     
 def plot_morse(icec:IntraICEC, system):
-    fig = plt.figure()
-    ax = plt.gca() 
-    ax.set_xlabel(r'$R$ [angstrom]')
-    ax.set_ylabel(r'$E$')
-    ax.set_ylim(-0.1, 4)
+    yshift = (8.066308039 - 7.781734076) * HARTREE2EV 
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.4, 0.6], figsize=(5,5))
+    fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
+    ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
+    
+    ax2.set_ylim(-0.1, 2.5)
+    ax1.set_ylim(yshift-0.1, yshift - 0.1 + 0.4/0.6*(2.5+0.1))
     
     r = icec.Morse_D.make_rgrid(rmax=5*ANGSTROM2BOHR)
     V = icec.Morse_D.V(r)
-    ax.plot(r*BOHR2ANGSTROM, V*HARTREE2EV, label=r'$\mathrm{LiH}$')
+    ax2.plot(r*BOHR2ANGSTROM, V*HARTREE2EV, color='black', label=r'$\mathrm{LiH}$')
+    ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*BOHR2ANGSTROM, V[-100]*HARTREE2EV - 0.25))
     
     for vi in range(v_max+1):
         psi = [icec.Morse_D.psi(vi,r_i)/15 + icec.Morse_D.energy(vi)*HARTREE2EV for r_i in r]
-        ax.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
+        ax2.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
     
     V = icec.Morse_Dp.V(r)
-    ax.plot(r*BOHR2ANGSTROM, V*HARTREE2EV + 2.7, label=r'$\mathrm{LiH}^+$')
+    ax1.plot(r*BOHR2ANGSTROM, V*HARTREE2EV + yshift, color='black', ls='--', label=r'$\mathrm{LiH}^+$')
+    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-100]*BOHR2ANGSTROM, V[-100]*HARTREE2EV + yshift + 0.05))
     
-    psi = [icec.Morse_Dp.psi(0,r_i)/15 + 2.7 + icec.Morse_Dp.energy(0)*HARTREE2EV for r_i in r]
-    ax.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
+    psi = [icec.Morse_Dp.psi(0,r_i)/15 + yshift + icec.Morse_Dp.energy(0)*HARTREE2EV for r_i in r]
+    ax1.plot(r*BOHR2ANGSTROM, psi, color='black', lw=1)
     
-    ax.legend()
+    ax1.spines.bottom.set_visible(False)
+    ax2.spines.top.set_visible(False)
+    ax1.tick_params(bottom=False)
+    
+    # cut out slanted lines
+    d = .5  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
+    ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
+    
+    fig.text(0.04, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
+    
     fname = DIR + 'plots/' + system + ".PES.pdf"
     fig.savefig(fname)
 
 HLi = True
 BLi = False
+calculation = False
   
 if HLi:
     system = 'Hp-LiH'
@@ -286,7 +303,9 @@ if HLi:
     icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
     icec_FC.define_PI_xs_D(method="FC")
     
-    #plot_morse(icec, 'LiH')
+    #test_FC_factors(icec_fixed, icec, icec_FC)
+    
+    plot_morse(icec, 'LiH')
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
