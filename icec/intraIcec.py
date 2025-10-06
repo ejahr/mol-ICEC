@@ -92,8 +92,8 @@ class Morse:
 class IntraICEC:
     """ 
     - degeneracyFactor : g_{A^-} / g_A
-    - IP: Ionization potential (eV)
-    - PI_xs: Function, Fit for Photoionization cross section (eV -> Mb)
+    - IP: Ionization potential (a.u.)
+    - PI_xs_A: Function, Fit for Photoionization cross section (a.u. -> a.u.)
     - prefactor: terms that are neither energy nor R dependent 
     """
     def __init__(self, degeneracyFactor: float, IP_A: float, IP_D: float, PI_xs_A: Callable, file_PI_xs_D: str) :
@@ -150,10 +150,19 @@ class IntraICEC:
     
     def FC_factor(self, vD, vDp):
         '''<psi_vi|psi_vf>'''
-        def integrand(r):
-            return np.conjugate(self.Morse_D.psi(vDp, r)) * self.Morse_Dp.psi(vD, r)
-        result, error = sp.integrate.quad(integrand, 0, np.inf)
-        return abs(result)**2
+        if not hasattr(self, 'FC_factor_saved'):
+            # vmax+1 results in out of bound... temp fix: +10 
+            self.FC_factor_saved = np.zeros((self.Morse_D.vmax+10, self.Morse_Dp.vmax+10))
+        if self.FC_factor_saved[vD][vDp] > 0:
+            return self.FC_factor_saved[vD][vDp]
+        else:
+            def integrand(r):
+                return mpmath.conj(self.Morse_D.psi(vD, r)) * self.Morse_Dp.psi(vDp, r)
+        #result, error = sp.integrate.quad(integrand, 0, np.inf)
+            result = mpmath.quad(integrand, [0, 5*ANGSTROM2BOHR], maxdegree=10)
+            self.FC_factor_saved[vD][vDp] = np.abs(result)**2
+            print(vD, vDp, self.FC_factor_saved[vD][vDp])
+            return np.abs(result)**2
     
     def PI_xs_D_FC(self, vD, vDp, hbarOmega):
         if not hasattr(self, "PI_xs_D_interpolated"):
@@ -164,8 +173,9 @@ class IntraICEC:
                 )
         return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
     
-    def PI_xs_D_resolved(self, vi, vf, hbarOmega):
-        filename = self.file_PI_xs_D + f"{vi}_{vf}.txt"
+    # TODO keep interp_function in memory
+    def PI_xs_D_resolved(self, vD, vDp, hbarOmega):
+        filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
         data = np.loadtxt(filename)
         energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
         interp_func = sp.interpolate.interp1d(
@@ -173,13 +183,13 @@ class IntraICEC:
             )
         return interp_func(hbarOmega)
     
-    def energy_relation(self, electronE, v_D, v_Dp):
-        if v_Dp is None:
+    def energy_relation(self, electronE, vD, vDp):
+        if vDp is None:
             vib_energy_D = 0
         elif hasattr(self, 'vib_diff_to_v0_D'):
-            vib_energy_D = self.vib_diff_to_v0_Dp[v_Dp] - self.vib_diff_to_v0_D[v_D]
+            vib_energy_D = self.vib_diff_to_v0_Dp[vDp] - self.vib_diff_to_v0_D[vD]
         else:
-            vib_energy_D = (self.Morse_Dp.energy(v_Dp) - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(v_D) - self.Morse_D.energy(0))
+            vib_energy_D = (self.Morse_Dp.energy(vDp) - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         transition_D = self.IP_D + vib_energy_D
         
         hbarOmega = electronE + self.IP_A 
@@ -192,20 +202,20 @@ class IntraICEC:
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
 
     # ----- CROSS SECTION -----    
-    def xs(self, electronE, R, v_D=0, v_Dp=0):
+    def xs(self, electronE, R, vD=0, vDp=0):
         """ Calculate cross section (a.u.) of ICEC for some kinetic energy and R.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         - R: internuclear distance: (Bohr, a.u.)
         - v_A+ -> v_A (v_A -> v_A+ Photoionization)
         - v_D -> v_D+
         """   
-        hbarOmega, electronE_f = self.energy_relation(electronE, v_D, v_Dp)
+        hbarOmega, electronE_f = self.energy_relation(electronE, vD, vDp)
         if electronE_f <= 0: 
             return 0
         else: 
             # TODO
             PI_xs_A = self.PI_xs_A(hbarOmega)
-            PI_xs_D = self.PI_xs_D(v_D, v_Dp, hbarOmega)
+            PI_xs_D = self.PI_xs_D(vD, vDp, hbarOmega)
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_D / (electronE * hbarOmega**2 * R**6)
 
     def xs_vD_vDp(self, R, v_D=0, v_Dp=0):
@@ -239,16 +249,16 @@ class IntraICEC:
         )
         return avg/norm * AU2MB
     
-    def spectrum(self, electronE, R, v_D=0, v_Dp_max=0):
+    def spectrum(self, electronE, R, vD=0, vDp_max=0):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         """
         spectrum = []
-        for v_Dp in range(v_Dp_max+1):
-            hbarOmega, electronE_f = self.energy_relation(electronE, v_D, v_Dp)
+        for vDp in range(vDp_max+1):
+            hbarOmega, electronE_f = self.energy_relation(electronE, vD, vDp)
             if electronE_f >= 0:
-                xs = self.xs(electronE, R, v_D, v_Dp)
-                spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, v_Dp])
+                xs = self.xs(electronE, R, vD, vDp)
+                spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, vDp])
         return np.array(spectrum)
 
     def xs_R(self, electronE, v_D=0, v_Dp=None):

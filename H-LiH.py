@@ -22,9 +22,6 @@ min_kinE = 0.01 * EV2HARTREE
 max_kinE = 10 * EV2HARTREE
 resolution = 1000
 
-v_max = 2
-vp_max = 5
-
 electron_energies = np.array([1, 5]) * EV2HARTREE
 
 def plot_xs_vB_vBp(system, icec: IntraICEC, R):
@@ -56,7 +53,7 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, v_max, vp_max, modifier=
     for v in range(v_max+1):
         xs = icec.xs_vD(R, v, vp_max)
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + "results/" + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
+    file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def calculate_xs_R(system, icec, R, header):
@@ -78,20 +75,34 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, modifier='
     fname = DIR + "results/" + system + ".spectrum" + modifier + ".E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=new_header)  
     
-def read_results_file(system, R):
-    file_path = DIR + "results/" + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
+def read_results_file(system, R, modifier=''):
+    file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results = np.loadtxt(file_path, comments='#')
     return results
 
-def plot_xs(ax, system, R, v_B, label='icec', **kwargs):
+def plot_xs(ax, system, R, v_B, label='icec', modifier='', **kwargs):
     ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     # ax.plot(icec.energyGrid * HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*AU2MB, label=r'$\sigma_\text{PI}$')
-    results = read_results_file(system, R)
+    results = read_results_file(system, R, modifier=modifier)
     ax.plot(results[:,0], results[:, v_B+1], label=label, **kwargs)
     ax.legend()
+    
+def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
+    fig = plt.figure()
+    ax = plt.gca() 
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
+    if icec_fixed is not None:
+        energy = icec_fixed.energyGrid*HARTREE2EV
+        xs = icec_fixed.xs_energy(R)
+        ax.plot(energy, xs, color='gray', label=r'unresolved')
+    vi = 0
+    plot_xs(ax, system, R, vi, label=r'FC', modifier='-FC', color='tab:red')
+    plot_xs(ax, system, R, vi, label=r'resolved', color='tab:blue')
+    fname = DIR + 'plots/' + system + '.xs-FC.v0.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    fig.savefig(fname)
     
 def plot_xs_vi(system, icec: IntraICEC, R):
     fig = plt.figure()
@@ -104,6 +115,23 @@ def plot_xs_vi(system, icec: IntraICEC, R):
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     fig.savefig(fname)
     
+def plot_xs_vi_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
+    fig = plt.figure()
+    ax = plt.gca() 
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
+    if icec_fixed is not None:
+        energy = icec_fixed.energyGrid*HARTREE2EV
+        xs = icec_fixed.xs_energy(R)
+        ax.plot(energy, xs, color='gray', label='unresolved')
+    color = ['red', 'violet', 'blue']
+    for vi in range(0, v_max+1):
+        label = r'$v_i=$' + str(vi)
+        plot_xs(ax, system, R, vi, label, color=color[vi])
+        plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
+    fname = DIR + 'plots/' + system + '.xs-FC.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    fig.savefig(fname)
+    
+    
 def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     fig = plt.figure()
     ax = plt.gca() 
@@ -113,6 +141,7 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     ax.grid(True)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     results = read_results_file(system, R)
+    
     for t in T:
         if vib_energies is None:
             norm = sum(np.exp(-icec.Morse_D.energy(vi)/KB/t) 
@@ -155,7 +184,7 @@ def plot_xs_R(system, icec: IntraICEC, R):
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     fig.savefig(fname)
     
-def plot_spectrum(system, R, electronE, vi=0, title=None, modifier=''):
+def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, modifier=''):
     fname = DIR + "results/" + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results = np.loadtxt(fname, comments='#')
     
@@ -166,14 +195,21 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, modifier=''):
     ax.set_xlabel(r'$\epsilon_\text{out}$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
+    
     for vi in range(v_max+1):
-        label = r'$\epsilon=$' + str(round(electronE*HARTREE2EV)) + r', $\nu=$' + str(vi)
+        label = r'$\nu=$' + str(vi)
         ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label)
+        
+    if icec_fixed is not None:
+        hbarOmega, energy_out = icec_fixed.energy_relation(electronE)
+        xs = icec_fixed.xs(electronE, R)*AU2MB
+        ax.bar(energy_out*HARTREE2EV, xs, width=0.002, color='gray', label='unresolved')
+            
     ax.legend()
     fname = DIR + 'plots/' + system + ".spectrum" + modifier + ".E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     fig.savefig(fname)
     
-def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
+def plot_spectrum_FC(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None):
     fname = DIR + "results/" + system + ".spectrum-FC.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results_FC = np.loadtxt(fname, comments='#')
     
@@ -193,7 +229,12 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
         label = r'$\nu=$' + str(vi)
         ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.004, color=color_resolved[vi], label=label)
         ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label=label + ' FC')
-    ax.legend(ncols=3, fontsize='small')
+    if icec_fixed is not None:
+        hbarOmega, energy_out = icec_fixed.energy_relation(electronE)
+        xs = icec_fixed.xs(electronE, R)*AU2MB
+        ax.bar(energy_out*HARTREE2EV, xs, width=0.002, color='gray', label='unresolved')
+        
+    ax.legend(ncols=4, fontsize='small')
     fname = DIR + 'plots/' + system + ".spectrum-FC.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     fig.savefig(fname)
     
@@ -229,6 +270,9 @@ if HLi:
     system = 'Hp-LiH'
     title = r'$\text{H}^+ \text{LiH}$'
     
+    icec_fixed = ICEC(*input_HLiH_fixed)
+    icec_fixed.make_energy_grid(min_kinE*HARTREE2EV, max_kinE*HARTREE2EV, resolution)
+    
     icec = IntraICEC(*input_HLiH)
     #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
@@ -249,20 +293,25 @@ if HLi:
     header += f'Number of initial vibrational states: {v_max+1}\n' 
     header += f'Number of final vibrational states: {vp_max+1}\n' 
     
+    R=4*ANGSTROM2BOHR
+    if calculation:
+        calculate_xs_bb(system, header, icec, R, v_max, vp_max)
+        calculate_xs_bb(system, header, icec_FC, R, v_max, vp_max, modifier='-FC')
+        #calculate_xs_R(system, icec, R, header)
+    
+    plot_xs_vi(system, icec, R)
+    plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
 
-    #calculate_xs_R(system, icec, R, header)
-    #plot_xs_vi(system, icec, R=4*ANGSTROM2BOHR)
+    if calculation:
+        for electronE in electron_energies:
+            calculate_spectrum(system, header, icec, R, electronE)
+            calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
 
-    for electronE in electron_energies:
-        r = 4 * ANGSTROM2BOHR
-        #calculate_spectrum(system, header, icec, r, electronE)
-        #calculate_spectrum(system, header, icec_FC, r, electronE, modifier='-FC')
+    plot_spectrum(system, R, 1*EV2HARTREE, title=title, icec_fixed=icec_fixed)
+    plot_spectrum_FC(system, R, 1*EV2HARTREE, title=title, icec_fixed=icec_fixed)
 
-    #plot_spectrum(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE, title=title)
-    #plot_spectrum_FC(system, 4*ANGSTROM2BOHR, 1*EV2HARTREE, title=title)
-
-    #T = [15, 298, 2000] 
-    #plot_xs_boltzmann(system, icec, 4*ANGSTROM2BOHR, T, vib_energies_LiH)
+    T = [15, 298, 2000] 
+    plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
     #xs_vB_vBp(system, icec, 4*ANGSTROM2BOHR)
 
 if BLi:

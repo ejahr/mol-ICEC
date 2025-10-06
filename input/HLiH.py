@@ -56,6 +56,12 @@ deg_factor_H = deg_2S / 1
 fname = DIR + 'data/H/H.txt'
 PI_xs_H = generate_polyfit(fname, 15)
 
+xs_data = np.loadtxt(fname, comments='#')
+E_photon = xs_data[:,0]
+xs = xs_data[:,1]
+coefficients = np.polyfit(E_photon, xs, 15)
+PI_xs_H_eVMb = np.poly1d(coefficients)
+
 # =================== B+ ==========================
 deg_2P = 6
 deg_1S = 1
@@ -66,8 +72,9 @@ fname = DIR + 'data/B/B.txt'
 PI_xs_B = generate_linfit(fname)
 
 # ====================== LiH ==========================
+# https://doi.org/10.1063/1.479970
 IP_LiH = 7.7 * EV2HARTREE
-IP_LiH = 7.9 * EV2HARTREE
+#IP_LiH = 7.9 * EV2HARTREE
 
 m_p =  1836.152673426
 
@@ -80,7 +87,7 @@ mu      = m_H * m_Li / (m_H + m_Li)
 E_min   = -8.021321 
 De      = 2.4924 * EV2HARTREE
 Req     = 3.0148
-alpha   = 0.2124 * WAVENUMBER2HARTREE
+alpha   = 0.2124
 we      = 1406.18 * WAVENUMBER2HARTREE
 wexe    = 23.5777 * WAVENUMBER2HARTREE
 
@@ -100,11 +107,14 @@ vib_energies_LiH = vib_diff_to_v0_LiH + energy_v0
 mu      = m_H * m_Li / (m_H + m_Li)
 Req     = 4.136
 we      = 442.9 * WAVENUMBER2HARTREE
-alpha   = 0.507 * WAVENUMBER2HARTREE
+alpha   = 0.507 
 wexe    = 42.3 * WAVENUMBER2HARTREE
 De      = we**2 / 4 / wexe 
 
 state_LiHp = (mu, we, Req, De)
+
+v_max = 2
+vp_max = 5
 
 # Table V
 vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) 
@@ -114,7 +124,14 @@ vib_diff_to_v0_LiHp = np.cumsum(vib_spacing_LiHp)
 file_PI_xs_LiH_resolved = DIR + 'data/LiH/LiH_vi_vf_'
 file_PI_xs_LiH_unresolved = DIR + 'data/LiH/LiH'
 
+xs_data = np.loadtxt(file_PI_xs_LiH_unresolved + '.txt', comments='#')
+energies = xs_data[:,0]
+xs = xs_data[:,1]
+PI_xs_LiH_eVMb = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
+
 # ===================== H+ = LiH =================
+
+input_HLiH_fixed = (deg_factor_H, IP_H*HARTREE2EV, IP_LiH*HARTREE2EV, PI_xs_H_eVMb, PI_xs_LiH_eVMb)
 
 input_HLiH = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH_resolved]
 input_HLiH_unresolved = [deg_factor_H, IP_H, IP_LiH, PI_xs_H, file_PI_xs_LiH_unresolved]
