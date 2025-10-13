@@ -188,7 +188,7 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     fname = DIR + "results/" + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results = np.loadtxt(fname, comments='#')
     
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     ax.set_title(title)
     ax.set_yscale('log')
@@ -196,17 +196,24 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     
+    color = ['tab:red', 'tab:purple', 'tab:blue']
+    
+    bars = [None] * (v_max+1)
     for vi in range(v_max+1):
-        label = r'$\nu=$' + str(vi)
-        ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label)
+        label = r'$v_i=$' + str(vi)
+        bars[vi] = ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label, color=color[vi])
+    labels = [r'$v_i=$' + str(vi) for vi in range(v_max+1)] 
         
     if icec_fixed is not None:
         hbarOmega, energy_out = icec_fixed.energy_relation(electronE)
-        xs = icec_fixed.xs(electronE, R)*AU2MB
-        ax.bar(energy_out*HARTREE2EV, xs, width=0.002, color='gray', label='unresolved')
-            
-    ax.legend()
+        xs = icec_fixed.xs(electronE, R)
+        bars.append(ax.bar(energy_out*HARTREE2EV, xs*AU2MB, width=0.002, color='black', label='unresolved'))
+    labels.append('unresolved')
+        
+    ax.legend(handles=[bar[0] for bar in bars], labels=labels, ncols=2, fontsize='small', loc='upper right')
+    
     fname = DIR + 'plots/' + system + ".spectrum" + modifier + ".E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_spectrum_FC(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None):
