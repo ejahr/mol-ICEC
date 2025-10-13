@@ -330,7 +330,8 @@ if HLi:
     title = r'$\text{H}^+ \text{LiH}$'
     
     icec_fixed = ICEC(*input_HLiH_fixed)
-    icec_fixed.make_energy_grid(min_kinE*HARTREE2EV, max_kinE*HARTREE2EV, resolution)
+    
+    icec_fixed.make_energy_grid(min_kinE*HARTREE2EV, max_kinE_unresolved*HARTREE2EV, resolution)
     
     icec = IntraICEC(*input_HLiH)
     icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)

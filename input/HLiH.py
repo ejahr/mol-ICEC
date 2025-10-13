@@ -50,6 +50,7 @@ def test_linfit(interp_func, x, y):
 # H 2S1/2
 deg_2S = 2
 
+# NIST
 IP_H = 13.598434599702 * EV2HARTREE
 deg_factor_H = deg_2S / 1
 
@@ -115,7 +116,7 @@ De          = we**2 / 4 / wexe_LiHp
 state_LiHp = (mu, we, Req, De)
 
 v_max = 2
-vp_max = 5
+vp_max = 6
 
 # Table V
 vib_spacing_LiHp = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) 
@@ -129,6 +130,8 @@ xs_data = np.loadtxt(file_PI_xs_LiH_unresolved + '.txt', comments='#')
 energies = xs_data[:,0]
 xs = xs_data[:,1]
 PI_xs_LiH_eVMb = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
+
+max_kinE_unresolved = energies[-1]*EV2HARTREE - IP_H
 
 # ===================== H+ = LiH =================
 
