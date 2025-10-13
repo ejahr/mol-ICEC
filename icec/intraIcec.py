@@ -164,7 +164,6 @@ class IntraICEC:
         #result, error = sp.integrate.quad(integrand, 0, np.inf)
             result = mpmath.quad(integrand, [0, 5*ANGSTROM2BOHR], maxdegree=10)
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
-            print(vD, vDp, self.FC_factor_saved[vD][vDp])
             return np.abs(result)**2
     
     def PI_xs_D_FC(self, vD, vDp, hbarOmega):
@@ -227,12 +226,12 @@ class IntraICEC:
             PI_xs_D = self.PI_xs_D(vD, vDp, hbarOmega)
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_D / (electronE * hbarOmega**2 * R**6)
 
-    def xs_vD_vDp(self, R, v_D=0, v_Dp=0):
+    def xs_vD_vDp(self, R, vD=0, vDp=0):
         """ Calculate cross section (Mb) of ICEC for given range of kinetic energies.
         - R: internuclear distance: (Bohr, a.u.)
         """        
         xs = np.array([
-            self.xs(energy, R, v_D, v_Dp)
+            self.xs(energy, R, vD, vDp)
             for energy in self.energyGrid
         ]) 
         return xs * AU2MB
@@ -270,7 +269,7 @@ class IntraICEC:
                 spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, vDp])
         return np.array(spectrum)
 
-    def xs_R(self, electronE, v_D=0, v_Dp=None):
+    def xs_R(self, electronE, vD=0, vDp=None):
         """ Calculate cross section (Mb) of ICEC for given range of interatomic distances.
         - electronE : energy of incoming electron (eV) 
         - R : interatomic distance (Bohr, a.u.)
@@ -279,7 +278,7 @@ class IntraICEC:
         if not hasattr(self, 'rGrid'):
             self.make_R_grid()
         xs = np.array([
-            self.xs(electronE, r, v_D, v_Dp)
+            self.xs(electronE, r, vD, vDp)
             for r in self.rGrid
         ])
         return xs * AU2MB
