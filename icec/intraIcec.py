@@ -168,21 +168,27 @@ class IntraICEC:
             return np.abs(result)**2
     
     def PI_xs_D_FC(self, vD, vDp, hbarOmega):
-        if not hasattr(self, "PI_xs_D_interpolated"):
-            data = np.loadtxt(self.file_PI_xs_D + '.txt')
-            energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
-            self.PI_xs_D_interpolated = sp.interpolate.interp1d(
-                energies, xs, kind='linear', fill_value="extrapolate"
-                )
-        return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
+        #if not hasattr(self, "PI_xs_D_interpolated"):
+        data = np.loadtxt(self.file_PI_xs_D + '.txt')
+        energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
+        if hbarOmega >= energies[-1]:
+            return np.nan
+        #self.PI_xs_D_interpolated = sp.interpolate.interp1d(
+        interp_func = sp.interpolate.interp1d(
+            energies, xs, kind='linear', fill_value=np.nan
+            )
+        return interp_func(hbarOmega) * self.FC_factor(vD, vDp)
+        #return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
     
     # TODO keep interp_function in memory
     def PI_xs_D_resolved(self, vD, vDp, hbarOmega):
         filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
         data = np.loadtxt(filename)
         energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
+        if hbarOmega >= energies[-1]:
+            return np.nan
         interp_func = sp.interpolate.interp1d(
-            energies, xs, kind='linear', fill_value="extrapolate"
+            energies, xs, kind='linear'
             )
         return interp_func(hbarOmega)
     
