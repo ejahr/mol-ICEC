@@ -9,7 +9,8 @@ from icec.constants import *
 
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 16})
+width, height = 6, 4
 
 DIR = '/home/elena/intraICEC/dimers/'
 
@@ -33,7 +34,7 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R):
             ax.set_yscale('log')
             ax.set_xlabel(r'$\epsilon$ [eV]')
             ax.set_ylabel(r'$\sigma$ [Mb]')
-            ax.set_title(r'$\text{H}^+ \text{LiH}$, $v_{LiH}=$' + str(vi))
+            ax.set_xlim(-0.2, 8.5)
             ax.set_ylim(1e-5, 1e2)
             ax.grid(True)
             icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
@@ -85,13 +86,14 @@ def plot_xs(ax, system, R, v_B, label='icec', modifier='', **kwargs):
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
+    ax.set_xlim(-0.2, 8.6)
     # ax.plot(icec.energyGrid * HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*AU2MB, label=r'$\sigma_\text{PI}$')
     results = read_results_file(system, R, modifier=modifier)
     ax.plot(results[:,0], results[:, v_B+1], label=label, **kwargs)
     ax.legend()
     
 def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     if icec_fixed is not None:
@@ -102,21 +104,22 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     plot_xs(ax, system, R, vi, label=r'FC', modifier='-FC', color='tab:red')
     plot_xs(ax, system, R, vi, label=r'resolved', color='tab:blue')
     fname = DIR + 'plots/' + system + '.xs-FC.v0.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_xs_vi(system, icec: IntraICEC, R):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
-    ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     for vi in range(0, v_max+1):
-        label = r'$v_{LiH}=$' + str(vi)
+        label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label)
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_xs_vi_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     if icec_fixed is not None:
@@ -129,15 +132,17 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     fname = DIR + 'plots/' + system + '.xs-FC.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    plt.tight_layout()
     fig.savefig(fname)
     
     
 def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     ax.set_xlabel(r'$\epsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.set_yscale('log')
+    ax.set_xlim(-0.2, 8.5)
     ax.grid(True)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     results = read_results_file(system, R)
@@ -169,12 +174,12 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     ax.legend()
     plt.tight_layout()
     fname = DIR + 'plots/' + system + '.boltzmann.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_xs_R(system, icec: IntraICEC, R):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
-    ax.set_title('ICEC cross section ' + r'$\text{H}^+ \text{LiH}$')
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--')
     for r in R:
         label = r'$R=$' + str(round(R*BOHR2ANGSTROM)) + 'A'
@@ -182,6 +187,7 @@ def plot_xs_R(system, icec: IntraICEC, R):
     #fname = DIR + 'plots/' + system + '.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     plt.tight_layout()
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, modifier=''):
