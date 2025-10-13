@@ -216,33 +216,31 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_FC(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None):
+def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
     fname = DIR + "results/" + system + ".spectrum-FC.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results_FC = np.loadtxt(fname, comments='#')
     
     fname = DIR + "results/" + system + ".spectrum.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.txt"
     results_resolved = np.loadtxt(fname, comments='#')
     
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     ax.set_title(title)
     ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon_\text{out}$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
+    ax.set_ylim(2*1e-4, 5)
     ax.grid(True)
-    color_resolved = ['darkred', 'purple', 'darkblue']
-    color_FC = ['red', 'violet' ,'lightskyblue']
+    color_resolved = ['tab:red', 'tab:purple', 'tab:blue']
+    color_FC = ['tab:orange', 'violet' ,'lightskyblue']
     for vi in range(v_max+1):
-        label = r'$\nu=$' + str(vi)
+        label = r'$v_i=$' + str(vi)
         ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.004, color=color_resolved[vi], label=label)
         ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label=label + ' FC')
-    if icec_fixed is not None:
-        hbarOmega, energy_out = icec_fixed.energy_relation(electronE)
-        xs = icec_fixed.xs(electronE, R)*AU2MB
-        ax.bar(energy_out*HARTREE2EV, xs, width=0.002, color='gray', label='unresolved')
-        
-    ax.legend(ncols=4, fontsize='small')
+
+    ax.legend(ncols=3, fontsize='small', loc='upper center')
     fname = DIR + 'plots/' + system + ".spectrum-FC.E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
+    plt.tight_layout()
     fig.savefig(fname)
     
 def plot_morse(icec:IntraICEC, system):
@@ -364,8 +362,8 @@ if HLi:
             calculate_spectrum(system, header, icec, R, electronE)
             calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
 
-    plot_spectrum(system, R, 1*EV2HARTREE, title=title, icec_fixed=icec_fixed)
-    plot_spectrum_FC(system, R, 1*EV2HARTREE, title=title, icec_fixed=icec_fixed)
+    plot_spectrum(system, R, 1*EV2HARTREE, icec_fixed=icec_fixed)
+    plot_spectrum_FC(system, R, 1*EV2HARTREE)
 
     T = [15, 298, 2000] 
     plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
