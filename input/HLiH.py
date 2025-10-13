@@ -83,13 +83,13 @@ m_p =  1836.152673426
 m_H     = m_p + 1
 m_Li    = 7*m_p + 3
 
-mu      = m_H * m_Li / (m_H + m_Li)
-E_min   = -8.021321 
-De      = 2.4924 * EV2HARTREE
-Req     = 3.0148
-alpha   = 0.2124
-we      = 1406.18 * WAVENUMBER2HARTREE
-wexe    = 23.5777 * WAVENUMBER2HARTREE
+mu          = m_H * m_Li / (m_H + m_Li)
+E_min       = -8.021321 
+De          = 2.4924 * EV2HARTREE
+Req         = 3.0148
+alpha       = 0.2124
+we          = 1406.18 * WAVENUMBER2HARTREE
+wexe_LiH    = 23.5777 * WAVENUMBER2HARTREE
 
 #print('alpha =', alpha)
 #print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
@@ -104,12 +104,13 @@ vib_diff_to_v0_LiH = np.cumsum(vib_spacing_LiH)
 vib_energies_LiH = vib_diff_to_v0_LiH + energy_v0
 
 # https://doi.org/10.1063/1.479970
-mu      = m_H * m_Li / (m_H + m_Li)
-Req     = 4.136
-we      = 442.9 * WAVENUMBER2HARTREE
-alpha   = 0.507 
-wexe    = 42.3 * WAVENUMBER2HARTREE
-De      = we**2 / 4 / wexe 
+m_Lip       = 7*m_p + 2
+mu          = m_H * m_Lip/ (m_H + m_Lip)
+Req         = 4.136
+we          = 442.9 * WAVENUMBER2HARTREE
+alpha       = 0.507 
+wexe_LiHp   = 42.3 * WAVENUMBER2HARTREE
+De          = we**2 / 4 / wexe_LiHp 
 
 state_LiHp = (mu, we, Req, De)
 

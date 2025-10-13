@@ -21,11 +21,12 @@ class Morse:
     - rmax: r where V(r) = f*De, f<1
     """
 
-    def __init__(self, mu, we, req, De, E0=0):
+    def __init__(self, mu, we, req, De, wexe=0, E0=0):
         self.mu = mu  # in electron mass
-        self.we = we 
+        self.we = we # a.u.
         self.req = req 
         self.De = De 
+        self.wexe = wexe
         self.E0 = E0 
 
         self.alpha = self.we * np.sqrt(self.mu / 2 / self.De)
@@ -62,7 +63,9 @@ class Morse:
         )
 
     def energy(self, v):
-        """Energy [Hartree] of the v-th (bound) Morse state. E_bound < 0"""
+        """Energy [Hartree] of the v-th (bound) Morse state."""
+        if self.wexe > 0:
+            return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 
         return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) #- self.De
 
     def intersection_V(self, E):
@@ -113,23 +116,23 @@ class IntraICEC:
         else:
             print("not a valid method")
             
-    def define_Morse_D(self, mu, we, req, De):
+    def define_Morse_D(self, mu, we, req, De, wexe=0):
         """Morse potential for the initial vibrational mode of the system.
         - mu: reduced mass (proton mass)
         - we: Morse parameter (a.u.)
         - req: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_D = Morse(mu, we, req, De)
+        self.Morse_D = Morse(mu, we, req, De, wexe)
 
-    def define_Morse_Dp(self, mu, we, req, De):
+    def define_Morse_Dp(self, mu, we, req, De, wexe=0):
         """Morse potential for the initial vibrational mode of the system.
         - mu: reduced mass (proton mass)
         - we: Morse parameter (a.u.)
         - req: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_Dp = Morse(mu, we, req, De)
+        self.Morse_Dp = Morse(mu, we, req, De, wexe)
 
     def make_energy_grid(self, minEnergy=0.01*EV2HARTREE, maxEnergy=10*EV2HARTREE, resolution=100, geometric=True): 
         """ Make a suitable grid of incoming electron energies.

@@ -322,10 +322,10 @@ if HLi:
     icec_fixed.make_energy_grid(min_kinE*HARTREE2EV, max_kinE*HARTREE2EV, resolution)
     
     icec = IntraICEC(*input_HLiH)
-    #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
+    icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
-    icec.define_Morse_D(*state_LiH)
-    icec.define_Morse_Dp(*state_LiHp)
+    icec.define_Morse_D(*state_LiH, wexe=wexe_LiH)
+    icec.define_Morse_Dp(*state_LiHp, wexe=wexe_LiHp)
     icec.define_PI_xs_D(method="resolved")
     
     icec_FC = IntraICEC(*input_HLiH_unresolved)
