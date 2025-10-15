@@ -202,8 +202,10 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     
-    color = ['tab:red', 'tab:purple', 'tab:blue']
+    ax.hlines(icec.PR_xs_A(electronE)*AU2MB, 0, 10, color='gray', linestyle= '--', zorder=0)   
     
+    color = ['tab:red', 'tab:purple', 'tab:blue']
+
     bars = [None] * (v_max+1)
     for vi in range(v_max+1):
         label = r'$v_i=$' + str(vi)
@@ -217,6 +219,13 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     labels.append('unresolved')
         
     ax.legend(handles=[bar[0] for bar in bars], labels=labels, ncols=2, fontsize='small', loc='upper right')
+    
+    x_min = min(rect.get_x() for bar in bars for rect in bar)
+    x_max = max(rect.get_x() for bar in bars for rect in bar)
+    ax.set_xlim(x_min - 0.025, x_max + 0.025)
+    
+    ax.annotate(r'$\sigma_\text{PR}$', (x_max + 0.025, icec.PR_xs_A(electronE)*AU2MB), xytext=(3,-3),    # fraction, fraction
+            textcoords='offset points', color='gray')
     
     fname = DIR + 'plots/' + system + ".spectrum" + modifier + ".E"+ str(round(electronE*HARTREE2EV)) + '.R'+ str(round(R*BOHR2ANGSTROM)) + ".icec.pdf"
     plt.tight_layout()
@@ -237,6 +246,7 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.set_ylim(2*1e-4, 5)
     ax.grid(True)
+    
     color_resolved = ['tab:red', 'tab:purple', 'tab:blue']
     color_FC = ['tab:orange', 'violet' ,'lightskyblue']
     for vi in range(v_max+1):
@@ -365,9 +375,8 @@ if HLi:
     plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
 
     if calculation:
-        for electronE in electron_energies:
-            calculate_spectrum(system, header, icec, R, electronE)
-            calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
+        calculate_spectrum(system, header, icec, R, electronE)
+        calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
 
     plot_spectrum(system, R, 1*EV2HARTREE, icec_fixed=icec_fixed)
     plot_spectrum_FC(system, R, 1*EV2HARTREE)
