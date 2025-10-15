@@ -17,7 +17,7 @@ DIR = '/home/elena/intraICEC/dimers/'
 #https://doi.org/10.1021/jp9921295
 R = 2 * ANGSTROM2BOHR
 #R = 10 * ANGSTROM2BOHR
-R = np.array([2,4,6,8,10]) * ANGSTROM2BOHR
+R = np.array([4,6,8,10]) * ANGSTROM2BOHR
 
 min_kinE = 0.01 * EV2HARTREE
 max_kinE = 9 * EV2HARTREE
