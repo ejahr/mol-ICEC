@@ -279,6 +279,11 @@ class IntraICEC:
             for r in self.rGrid
         ])
         return xs * AU2MB
+    
+    def PR_xs_A(self, electronE):
+        hbarOmega = self.hbarOmega(electronE)
+        PI_xs = self.PI_xs_A(hbarOmega)
+        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
         '''Plots the Cross section xs [Mb]'''
