@@ -134,6 +134,10 @@ PI_xs_LiH_eVMb = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value
 max_kinE_unresolved = energies[-1]*EV2HARTREE - IP_H
 
 # ===================== H+ = LiH =================
+r_vdw_H = 3.1647
+r_vdw_Li = 5.2896
+R_min = (r_vdw_Li + r_vdw_H + Req)/2 + r_vdw_H
+print("R_min", R_min, R_min*BOHR2ANGSTROM)
 
 input_HLiH_fixed = (deg_factor_H, IP_H*HARTREE2EV, IP_LiH*HARTREE2EV, PI_xs_H_eVMb, PI_xs_LiH_eVMb)
 
