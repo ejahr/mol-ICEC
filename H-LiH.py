@@ -211,7 +211,7 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     labels = [r'$v_i=$' + str(vi) for vi in range(v_max+1)] 
         
     if icec_fixed is not None:
-        hbarOmega, energy_out = icec_fixed.energy_relation(electronE)
+        energy_out = icec_fixed.electronE_f(electronE)
         xs = icec_fixed.xs(electronE, R)
         bars.append(ax.bar(energy_out*HARTREE2EV, xs*AU2MB, width=0.002, color='black', label='unresolved'))
     labels.append('unresolved')

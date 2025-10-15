@@ -191,19 +191,17 @@ class IntraICEC:
             )
         return interp_func(hbarOmega)
     
-    def energy_relation(self, electronE, vD, vDp):
+    def hbarOmega(self, electronE):
+        return electronE + self.IP_A 
+    
+    def electronE_f(self, electronE, vD, vDp):
         if vDp is None:
             vib_energy_D = 0
         elif hasattr(self, 'vib_diff_to_v0_D'):
             vib_energy_D = self.vib_diff_to_v0_Dp[vDp] - self.vib_diff_to_v0_D[vD]
         else:
             vib_energy_D = (self.Morse_Dp.energy(vDp) - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
-        transition_D = self.IP_D + vib_energy_D
-        
-        hbarOmega = electronE + self.IP_A 
-        electronE_f = hbarOmega - transition_D
-        
-        return hbarOmega, electronE_f
+        return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
     
     def input_vib_spacing_D(self, vib_spacing_D, vib_spacing_Dp):
         self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
@@ -217,11 +215,11 @@ class IntraICEC:
         - v_A+ -> v_A (v_A -> v_A+ Photoionization)
         - v_D -> v_D+
         """   
-        hbarOmega, electronE_f = self.energy_relation(electronE, vD, vDp)
-        if electronE_f <= 0: 
+        if self.electronE_f(electronE, vD, vDp) <= 0: 
             return 0
         else: 
             # TODO
+            hbarOmega = self.hbarOmega(electronE)
             PI_xs_A = self.PI_xs_A(hbarOmega)
             PI_xs_D = self.PI_xs_D(vD, vDp, hbarOmega)
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_D / (electronE * hbarOmega**2 * R**6)
@@ -263,7 +261,7 @@ class IntraICEC:
         """
         spectrum = []
         for vDp in range(vDp_max+1):
-            hbarOmega, electronE_f = self.energy_relation(electronE, vD, vDp)
+            electronE_f = self.electronE_f(electronE, vD, vDp)
             if electronE_f >= 0:
                 xs = self.xs(electronE, R, vD, vDp)
                 spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, vDp])
@@ -271,10 +269,9 @@ class IntraICEC:
 
     def xs_R(self, electronE, vD=0, vDp=None):
         """ Calculate cross section (Mb) of ICEC for given range of interatomic distances.
-        - electronE : energy of incoming electron (eV) 
+        - electronE : energy of incoming electron (Hartree, a.u.) 
         - R : interatomic distance (Bohr, a.u.)
         """
-        electronE = electronE
         if not hasattr(self, 'rGrid'):
             self.make_R_grid()
         xs = np.array([

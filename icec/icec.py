@@ -48,10 +48,11 @@ class ICEC:
         """
         self.rGrid = np.linspace(Rmin, Rmax, num)
         
-    def energy_relation(self, electronE):
-        hbarOmega = electronE + self.IP_A
-        electronEf = hbarOmega - self.IP_B 
-        return hbarOmega, electronEf
+    def hbarOmega(self, electronE):
+        return electronE + self.IP_A 
+    
+    def electronE_f(self, electronE):
+        return self.hbarOmega(electronE) - self.IP_B 
 
     # ----- CROSS SECTION -----    
     def xs(self, electronE, R):
@@ -62,7 +63,7 @@ class ICEC:
         if electronE < self.thresholdEnergy: 
             return 0
         else: 
-            hbarOmega = electronE + self.IP_A
+            hbarOmega = self.hbarOmega(electronE)
             PI_xs_A = self.PI_xs_A(hbarOmega*HARTREE2EV)*MB2AU
             PI_xs_B = self.PI_xs_B(hbarOmega*HARTREE2EV)*MB2AU
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * hbarOmega**2 * R**6)
@@ -81,9 +82,8 @@ class ICEC:
 
     def xs_R(self, electronE):
         """ Calculate cross section (Mb) of ICEC for given range of interatomic distances.
-        - electronE : energy of incoming electron (eV) 
+        - electronE : energy of incoming electron (Hartree, a.u.) 
         """
-        electronE = electronE * EV2HARTREE
         if not hasattr(self, 'rGrid'):
             self.make_R_grid()
         xs = np.array([
