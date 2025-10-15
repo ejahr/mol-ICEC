@@ -17,7 +17,7 @@ DIR = '/home/elena/intraICEC/dimers/'
 #https://doi.org/10.1021/jp9921295
 R = 2 * ANGSTROM2BOHR
 #R = 10 * ANGSTROM2BOHR
-R = np.array([4,6,8,10]) * ANGSTROM2BOHR
+R = np.array([6,8,10]) * ANGSTROM2BOHR
 
 min_kinE = 0.01 * EV2HARTREE
 max_kinE = 9 * EV2HARTREE
@@ -41,7 +41,7 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R):
                 label = r'$v_{LiH^+}=$' + str(vf)
                 xs = icec.xs_vD_vDp(R, vi, vf)
                 ax.plot(energies, xs, label=label)
-            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--', zorder=0)
+            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
             plt.close(fig) 
@@ -115,7 +115,7 @@ def plot_xs_vi(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
         
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--', zorder=0)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
     
     ax.legend()
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
@@ -137,7 +137,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--', zorder=0)    
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)    
     
     fname = DIR + 'plots/' + system + '.xs-FC.vB.R'+ str(round(R*BOHR2ANGSTROM)) + '.icec.pdf'
     plt.tight_layout()
@@ -153,6 +153,7 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     ax.grid(True)
     results = read_results_file(system, R)
     
+    blues = plt.get_cmap("Blues_r")    
     for t in T:
         if vib_energies is None:
             norm = sum(np.exp(-icec.Morse_D.energy(vi)/KB/t) 
@@ -172,7 +173,8 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
                 for vi in range(v_max+1)
                 )
         label = r'$T=$' + str(t) + 'K'
-        ax.plot(results[:,0], avg/norm, label=label)
+        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
+        ax.plot(results[:,0], avg/norm, label=label, color=blue)
         
     #for vi in range(v_max + 1):
     #    plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')  
@@ -183,17 +185,25 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_xs_R(system, icec: IntraICEC, R):
+
+def plot_xs_R(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
 
+    blues = plt.get_cmap("Blues_r")
     for r in R:
-        label = r'$R=$' + str(round(R*BOHR2ANGSTROM)) + 'A'
-        plot_xs(ax, system, r, 0, label)
+        blue = blues(R.index(r) / (len(R) + 1 / len(R)))
+        label = r'$R=$' + str(round(r*BOHR2ANGSTROM)) + r'$\,\mathrm{\AA}$'
+        
+        if icec_fixed is not None:
+            energy = icec_fixed.energyGrid*HARTREE2EV
+            xs = icec_fixed.xs_energy(r)
+            ax.plot(energy, xs, color=blue, ls='--')
+                
+        plot_xs(ax, system, r, 0, label, color=blue)
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', linestyle= '--', zorder=0)
-    
-    plt.tight_layout()
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
+    plt.legend()
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     plt.tight_layout()
     fig.savefig(fname)
@@ -210,7 +220,7 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     
-    ax.hlines(icec.PR_xs_A(electronE)*AU2MB, 0, 10, color='gray', linestyle= '--', zorder=0)   
+    ax.hlines(icec.PR_xs_A(electronE)*AU2MB, 0, 10, color='gray', ls=':', zorder=0)   
     
     color = ['tab:red', 'tab:purple', 'tab:blue']
 
@@ -252,7 +262,7 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
     ax.set_yscale('log')
     ax.set_xlabel(r'$\epsilon_\text{out}$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
-    ax.set_ylim(2*1e-4, 5)
+    ax.set_ylim(2*1e-4, 0.2)
     ax.grid(True)
     
     color_resolved = ['tab:red', 'tab:purple', 'tab:blue']
@@ -341,10 +351,12 @@ def plot_H_PI_PR(icec:ICEC):
 
 HLi = True
 BLi = False
-calculation = True
+calculation = False
 
 electronE = 1*EV2HARTREE
 R = 6*ANGSTROM2BOHR
+R_list = [6,8,10]
+R_list = [r*ANGSTROM2BOHR for r in R_list]
   
 if HLi:
     system = 'Hp-LiH'
@@ -379,16 +391,17 @@ if HLi:
     if calculation:
         calculate_xs_bb(system, header, icec, R, v_max, vp_max)
         calculate_xs_bb(system, header, icec_FC, R, v_max, vp_max, modifier='-FC')
-        #calculate_xs_R(system, icec, R, header)
+        calculate_xs_R(system, icec, R_list, header)
     
-    plot_xs_vi(system, icec, R, icec_fixed=icec_fixed)
-    plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
+    #plot_xs_vi(system, icec, R, icec_fixed=icec_fixed)
+    #plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
+    plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
 
     if calculation:
         calculate_spectrum(system, header, icec, R, electronE)
         calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
 
-    plot_spectrum(system, R, 1*EV2HARTREE, icec_fixed=icec_fixed)
+    #plot_spectrum(system, R, 1*EV2HARTREE, icec_fixed=icec_fixed)
     plot_spectrum_FC(system, R, 1*EV2HARTREE)
 
     T = [15, 298, 2000] 
