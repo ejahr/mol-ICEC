@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-from .constants import *
+from .constants import Units, Constants, Config
 
 # ==========================================================
 # ============= Asymptotic ICEC cross section ==============
@@ -17,13 +17,13 @@ class ICEC:
     """
     def __init__(self, degeneracyFactor, IP_A, IP_B, PI_xs_A, PI_xs_B) :
         self.degeneracyFactor = degeneracyFactor
-        self.IP_A = IP_A * EV2HARTREE
-        self.IP_B = IP_B * EV2HARTREE
+        self.IP_A = IP_A * Units.EV2HARTREE
+        self.IP_B = IP_B * Units.EV2HARTREE
         self.PI_xs_A = PI_xs_A
         self.PI_xs_B = PI_xs_B
         
         self.thresholdEnergy = max(0, self.IP_B - self.IP_A)
-        self.prefactor = (3 * c**2) / (8 * np.pi)
+        self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
 
     def make_energy_grid(self, minEnergy=None, maxEnergy=10, num=100, geometric=True): 
         """ Make a suitable grid of incoming electron energies.
@@ -31,11 +31,11 @@ class ICEC:
         - num : number of grid points
         # TODO add function where you can define the energy grid directly
         """
-        maxEnergy = maxEnergy * EV2HARTREE
+        maxEnergy = maxEnergy * Units.EV2HARTREE
         if minEnergy is None:
             minEnergy = self.thresholdEnergy
         else:
-            minEnergy = minEnergy * EV2HARTREE        
+            minEnergy = minEnergy * Units.EV2HARTREE        
         if geometric:
             self.energyGrid = np.geomspace(minEnergy, maxEnergy, num)
         else:
@@ -64,8 +64,8 @@ class ICEC:
             return 0
         else: 
             hbarOmega = self.hbarOmega(electronE)
-            PI_xs_A = self.PI_xs_A(hbarOmega*HARTREE2EV)*MB2AU
-            PI_xs_B = self.PI_xs_B(hbarOmega*HARTREE2EV)*MB2AU
+            PI_xs_A = self.PI_xs_A(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
+            PI_xs_B = self.PI_xs_B(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * hbarOmega**2 * R**6)
 
     def xs_energy(self, R):
@@ -78,7 +78,7 @@ class ICEC:
             self.xs(energy, R)
             for energy in self.energyGrid
         ]) 
-        return xs * AU2MB
+        return xs * Units.AU2MB
 
     def xs_R(self, electronE):
         """ Calculate cross section (Mb) of ICEC for given range of interatomic distances.
@@ -90,11 +90,11 @@ class ICEC:
             self.xs(electronE, R)
             for R in self.rGrid
         ])
-        return xs * AU2MB
+        return xs * Units.AU2MB
 
     def plot_xs(self, ax, xs, label="ICEC", **kwargs):
         '''Plots the Cross section xs [Mb]'''
-        ax.plot(self.energyGrid*HARTREE2EV, xs, label=label, **kwargs)
+        ax.plot(self.energyGrid*Units.HARTREE2EV, xs, label=label, **kwargs)
         ax.set_xlabel(r'$E_\text{el}$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         ax.set_yscale('log')
@@ -113,11 +113,11 @@ class ICEC:
         PR_xs = np.array([])
         for electronE in self.energyGrid:
             hbarOmega = electronE + self.IP_A
-            PI_xs = self.PI_xs_A(hbarOmega*HARTREE2EV)*MB2AU
-            xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*c**2) * PI_xs
-            PR_xs = np.append(PR_xs, [xs * AU2MB])
+            PI_xs = self.PI_xs_A(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
+            xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
+            PR_xs = np.append(PR_xs, [xs * Units.AU2MB])
         mask = PR_xs>0
-        ax.plot(self.energyGrid[mask]*HARTREE2EV, PR_xs[mask], **kwargs)
+        ax.plot(self.energyGrid[mask]*Units.HARTREE2EV, PR_xs[mask], **kwargs)
         
         
 # ==========================================================

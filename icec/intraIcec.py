@@ -1,7 +1,7 @@
 import numpy as np
 import scipy as sp
 import mpmath
-from .constants import *
+from .constants import Constants, Units, Config
 from typing import Callable
 
 class Morse:
@@ -105,7 +105,7 @@ class IntraICEC:
         self.IP_D = IP_D # assumption: adiabatic ionization energy
         self.PI_xs_A = PI_xs_A
         self.file_PI_xs_D = file_PI_xs_D
-        self.prefactor = (3 * c**2) / (8 * np.pi)
+        self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
         
     def define_PI_xs_D(self, method="FC"):
         if method == 'FC':
@@ -134,7 +134,7 @@ class IntraICEC:
         """
         self.Morse_Dp = Morse(mu, we, req, De, wexe)
 
-    def make_energy_grid(self, minEnergy=0.01*EV2HARTREE, maxEnergy=10*EV2HARTREE, resolution=100, geometric=True): 
+    def make_energy_grid(self, minEnergy=0.01*Units.EV2HARTREE, maxEnergy=10*Units.EV2HARTREE, resolution=100, geometric=True): 
         """ Make a suitable grid of incoming electron energies.
         - Energy (a.u.)
         - resolution : number of grid points
@@ -144,7 +144,7 @@ class IntraICEC:
         else:
             self.energyGrid = np.linspace(minEnergy, maxEnergy, resolution)
 
-    def make_R_grid(self, Rmin=2*ANGSTROM2BOHR, Rmax=10*ANGSTROM2BOHR, resolution=100): 
+    def make_R_grid(self, Rmin=2*Units.ANGSTROM2BOHR, Rmax=10*Units.ANGSTROM2BOHR, resolution=100): 
         """ Make a suitable grid of interatomic distances.
         - R (Bohr, a.u.)
         - resolution : number of grid points
@@ -162,14 +162,14 @@ class IntraICEC:
             def integrand(r):
                 return mpmath.conj(self.Morse_D.psi(vD, r)) * self.Morse_Dp.psi(vDp, r)
         #result, error = sp.integrate.quad(integrand, 0, np.inf)
-            result = mpmath.quad(integrand, [0, 5*ANGSTROM2BOHR], maxdegree=10)
+            result = mpmath.quad(integrand, [0, 5*Units.ANGSTROM2BOHR], maxdegree=10)
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
             return np.abs(result)**2
     
     def PI_xs_D_FC(self, vD, vDp, hbarOmega):
         #if not hasattr(self, "PI_xs_D_interpolated"):
         data = np.loadtxt(self.file_PI_xs_D + '.txt')
-        energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
+        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
         if hbarOmega >= energies[-1]:
             return np.nan
         #self.PI_xs_D_interpolated = sp.interpolate.interp1d(
@@ -183,7 +183,7 @@ class IntraICEC:
     def PI_xs_D_resolved(self, vD, vDp, hbarOmega):
         filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
         data = np.loadtxt(filename)
-        energies, xs = data[:, 0]*EV2HARTREE, data[:, 1]*MB2AU
+        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
         if hbarOmega >= energies[-1]:
             return np.nan
         interp_func = sp.interpolate.interp1d(
@@ -232,7 +232,7 @@ class IntraICEC:
             self.xs(energy, R, vD, vDp)
             for energy in self.energyGrid
         ]) 
-        return xs * AU2MB
+        return xs * Units.AU2MB
     
     def xs_vD(self, R, vD, vDp_max):
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
@@ -246,14 +246,14 @@ class IntraICEC:
     
     def xs_boltzmann(self, R, t, vD_max, vDp_max):
         norm = sum(
-            np.exp(-self.Morse_D.energy(vD)/KB/t) 
+            np.exp(-self.Morse_D.energy(vD)/Constants.KB/t) 
             for vD in range(vD_max+1)
         )
         avg = sum(
-            np.exp(-self.Morse_D.energy(vD)/KB/t) * self.xs_vD(R, vD, vDp_max)
+            np.exp(-self.Morse_D.energy(vD)/Constants.KB/t) * self.xs_vD(R, vD, vDp_max)
             for vD in range(vD_max+1)
         )
-        return avg/norm * AU2MB
+        return avg/norm * Units.AU2MB
     
     def spectrum(self, electronE, R, vD=0, vDp_max=0):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
@@ -264,7 +264,7 @@ class IntraICEC:
             electronE_f = self.electronE_f(electronE, vD, vDp)
             if electronE_f >= 0:
                 xs = self.xs(electronE, R, vD, vDp)
-                spectrum.append([electronE_f * HARTREE2EV, xs * AU2MB, vDp])
+                spectrum.append([electronE_f * Units.HARTREE2EV, xs * Units.AU2MB, vDp])
         return np.array(spectrum)
 
     def xs_R(self, electronE, vD=0, vDp=None):
@@ -278,16 +278,16 @@ class IntraICEC:
             self.xs(electronE, r, vD, vDp)
             for r in self.rGrid
         ])
-        return xs * AU2MB
+        return xs * Units.AU2MB
     
     def PR_xs_A(self, electronE):
         hbarOmega = self.hbarOmega(electronE)
         PI_xs = self.PI_xs_A(hbarOmega)
-        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*c**2) * PI_xs
+        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
         '''Plots the Cross section xs [Mb]'''
-        ax.plot(self.energyGrid*HARTREE2EV, xs, label=label, **kwargs)
+        ax.plot(self.energyGrid*Units.HARTREE2EV, xs, label=label, **kwargs)
         ax.set_xlabel(r'$E_\text{el}$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         ax.set_yscale('log')
@@ -307,8 +307,8 @@ class IntraICEC:
         for electronE in self.energyGrid:
             hbarOmega = electronE + self.IP_A
             PI_xs = self.PI_xs_A(hbarOmega)
-            xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*c**2) * PI_xs
-            PR_xs = np.append(PR_xs, [xs * AU2MB])
-        ax.plot(self.energyGrid*HARTREE2EV, PR_xs, **kwargs)
+            xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
+            PR_xs = np.append(PR_xs, [xs * Units.AU2MB])
+        ax.plot(self.energyGrid*Units.HARTREE2EV, PR_xs, **kwargs)
         
         
