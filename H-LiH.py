@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from input.HLiH import * 
+from input.HLiH import LiH, LiHp, Hp_LiH, Bp_LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
@@ -26,7 +26,7 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R):
     fname = DIR + "plots/" + system + '.all_vib.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
     with PdfPages(fname) as pdf:
         energies = icec.energyGrid*Units.HARTREE2EV
-        for vi in range(v_max+1): 
+        for vi in range(LiH.v_max+1): 
             fig, ax = plt.subplots()
             ax.set_yscale('log')
             ax.set_xlabel(r'$\epsilon$ [eV]')
@@ -36,7 +36,7 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R):
             ax.grid(True)
             results = read_results_file(system, R)
             ax.plot(results[:,0], results[:, vi+1], label='total', color='grey')
-            for vf in range(vp_max+1):
+            for vf in range(LiHp.v_max+1):
                 label = r'$v_{LiH^+}=$' + str(vf)
                 xs = icec.xs_vD_vDp(R, vi, vf)
                 ax.plot(energies, xs, label=label)
@@ -57,14 +57,14 @@ def calculate_xs_R(system, icec, R, header):
     for r in R:
         headerR = header + f'R = {round(r*Units.BOHR2ANGSTROM)} Angstrom'
         headerR += 'E_in [eV] | xs [Mb]'
-        calculate_xs_bb(system, headerR, icec, r, v_max, vp_max)
+        calculate_xs_bb(system, headerR, icec, r, LiH.v_max, LiHp.v_max)
 
 def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, modifier=''): 
     new_header = header + "E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
     new_header += "| E_out [eV] : xs [Mb] |"  
     spectrum_all_vi = np.array([]) 
-    for vi in range(v_max+1):
-        spectrum = icec.spectrum(electronE, R, vi, vp_max)
+    for vi in range(LiH.v_max+1):
+        spectrum = icec.spectrum(electronE, R, vi, LiHp.v_max)
         if spectrum_all_vi.size == 0:
             spectrum_all_vi = spectrum
         else:
@@ -110,7 +110,7 @@ def plot_xs_vi(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         ax.plot(energy, xs, color='gray', label='unresolved')
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
-    for vi in range(0, v_max+1):
+    for vi in range(0, LiH.v_max+1):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
         
@@ -131,7 +131,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         ax.plot(energy, xs, color='gray', label='unresolved')
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
-    for vi in range(0, v_max+1):
+    for vi in range(0, LiH.v_max+1):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
@@ -156,20 +156,20 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     for t in T:
         if vib_energies is None:
             norm = sum(np.exp(-icec.Morse_D.energy(vi)/Constants.KB/t) 
-                       for vi in range(v_max+1)
+                       for vi in range(LiH.v_max+1)
                        )
             avg = sum(
                 np.exp(-icec.Morse_D.energy(vi)/Constants.KB/t) * results[:, vi+1] 
-                for vi in range(v_max+1)
+                for vi in range(LiH.v_max+1)
                 )
         else:
             norm = sum(
                 np.exp(-vib_energies[vi]/Constants.KB/t) 
-                for vi in range(v_max+1)
+                for vi in range(LiH.v_max+1)
                 )
             avg = sum(
                 np.exp(-vib_energies[vi]/Constants.KB/t) * results[:, vi+1]
-                for vi in range(v_max+1)
+                for vi in range(LiH.v_max+1)
                 )
         label = r'$T=$' + str(t) + 'K'
         blue = blues(T.index(t) / (len(T) + 1 / len(T)))
@@ -223,11 +223,11 @@ def plot_spectrum(system, R, electronE, vi=0, title=None, icec_fixed:ICEC=None, 
     
     color = ['tab:red', 'tab:purple', 'tab:blue']
 
-    bars = [None] * (v_max+1)
-    for vi in range(v_max+1):
+    bars = [None] * (LiH.v_max+1)
+    for vi in range(LiH.v_max+1):
         label = r'$v_i=$' + str(vi)
         bars[vi] = ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label, color=color[vi])
-    labels = [r'$v_i=$' + str(vi) for vi in range(v_max+1)] 
+    labels = [r'$v_i=$' + str(vi) for vi in range(LiH.v_max+1)] 
         
     if icec_fixed is not None:
         energy_out = icec_fixed.electronE_f(electronE)
@@ -266,7 +266,7 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
     
     color_resolved = ['tab:red', 'tab:purple', 'tab:blue']
     color_FC = ['tab:orange', 'violet' ,'lightskyblue']
-    for vi in range(v_max+1):
+    for vi in range(LiH.v_max+1):
         label = r'$v_i=$' + str(vi)
         ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.004, color=color_resolved[vi], label=label)
         ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label=label + ' FC')
@@ -290,7 +290,7 @@ def plot_morse(icec:IntraICEC, system):
     ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black', label=r'$\mathrm{LiH}$')
     ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
-    for vi in range(v_max+1):
+    for vi in range(LiH.v_max+1):
         psi = [icec.Morse_D.psi(vi,r_i)/15 + icec.Morse_D.energy(vi)*Units.HARTREE2EV for r_i in r]
         ax2.plot(r*Units.BOHR2ANGSTROM, psi, color='black', lw=1)
     
@@ -323,7 +323,7 @@ def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC):
     print('xs FC      ', icec_FC.PI_xs_D(0,0,omega))
     print('xs FC paper', icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)*Units.MB2AU*0.0153)
     
-    for vp in range(0, vp_max+1):
+    for vp in range(0, LiH.v_max+1):
         icec_FC.FC_factor(0,vp)
         
 def plot_H_PI_PR(icec:ICEC):
@@ -361,20 +361,20 @@ if HLi:
     system = 'Hp-LiH'
     title = r'$\text{H}^+ \text{LiH}$'
     
-    icec_fixed = ICEC(*input_HLiH_fixed)
+    icec_fixed = ICEC(*Hp_LiH.input_fixed)
     
-    icec_fixed.make_energy_grid(min_kinE*Units.HARTREE2EV, max_kinE_unresolved*Units.HARTREE2EV, resolution)
+    icec_fixed.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
     
-    icec = IntraICEC(*input_HLiH)
-    icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
+    icec = IntraICEC(*Hp_LiH.input)
+    icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
-    icec.define_Morse_D(*state_LiH, wexe=wexe_LiH)
-    icec.define_Morse_Dp(*state_LiHp, wexe=wexe_LiHp)
+    icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
+    icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
     icec.define_PI_xs_D(method="resolved")
     
-    icec_FC = IntraICEC(*input_HLiH_unresolved)
-    icec_FC.define_Morse_D(*state_LiH)
-    icec_FC.define_Morse_Dp(*state_LiHp)
+    icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
+    icec_FC.define_Morse_D(*LiH.morse_parameters)
+    icec_FC.define_Morse_Dp(*LiHp.morse_parameters)
     icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
     icec_FC.define_PI_xs_D(method="FC")
     
@@ -384,12 +384,12 @@ if HLi:
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
-    header += f'Number of initial vibrational states: {v_max+1}\n' 
-    header += f'Number of final vibrational states: {vp_max+1}\n' 
+    header += f'Number of initial vibrational states: {LiH.v_max+1}\n' 
+    header += f'Number of final vibrational states: {LiHp.v_max+1}\n' 
 
     if calculation:
-        calculate_xs_bb(system, header, icec, R, v_max, vp_max)
-        calculate_xs_bb(system, header, icec_FC, R, v_max, vp_max, modifier='-FC')
+        calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
+        calculate_xs_bb(system, header, icec_FC, R, LiH.v_max, LiHp.v_max, modifier='-FC')
         calculate_xs_R(system, icec, R_list, header)
     
     plot_xs_vi(system, icec, R, icec_fixed=icec_fixed)
@@ -404,31 +404,31 @@ if HLi:
     plot_spectrum_FC(system, R, 1*Units.EV2HARTREE)
 
     T = [15, 298, 2000] 
-    plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
+    plot_xs_boltzmann(system, icec, R, T, LiH.vib_energies)
     plot_xs_vB_vBp(system, icec, 4*Units.ANGSTROM2BOHR)
 
 if BLi:
     system = 'Bp-LiH'
     title = r'$\text{B}^+ \text{LiH}$'
     
-    icec = IntraICEC(*input_BLiH)  
+    icec = IntraICEC(*Bp_LiH.input)  
     #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
-    icec.define_Morse_D(*state_LiH)
-    icec.define_Morse_Dp(*state_LiHp)
+    icec.define_Morse_D(*LiH.morse_parameters)
+    icec.define_Morse_Dp(*LiHp.morse_parameters)
     icec.make_energy_grid(min_kinE, max_kinE, resolution) 
     
     R = 10 * Units.ANGSTROM2BOHR
     
     header = 'e- + B+ + LiH -> B + LiH+ + e-\n'
-    header += f'Number of initial vibrational states: {v_max+1}\n' 
-    header += f'Number of final vibrational states: {vp_max+1}\n' 
+    header += f'Number of initial vibrational states: {LiH.v_max+1}\n' 
+    header += f'Number of final vibrational states: {LiHp.v_max+1}\n' 
     header += f'R = {round(R*Units.BOHR2ANGSTROM)} Angstrom'
     header += 'E_in [eV] | xs [Mb]'
         
     #xs_bb(system, header, icec, R, v_max, vp_max)
     
     T = [15, 298, 2000] 
-    plot_xs_boltzmann(system, icec, R, T, vib_energies_LiH)
+    plot_xs_boltzmann(system, icec, R, T, LiH.vib_energies)
     plot_xs_vi(system, icec, R, title=r"\mathrm{B}^+ + \mathrm{LiH}")
 
     #for electronE in electron_energies:

@@ -36,6 +36,7 @@ class Units(metaclass=ReadOnly):
 class Constants(metaclass=ReadOnly):
     c = 137
     KB = 1.380649e-23 * Units.J2HARTREE # Hartree/K
+    m_p = 1836.152673426 # electron mass
     
 class Config(metaclass=ReadOnly):
     DEFAULT_BOX_LENGTH = 10*Units.ANGSTROM2BOHR 
