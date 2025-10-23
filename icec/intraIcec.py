@@ -139,7 +139,8 @@ class IntraICEC:
         self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
 
-    # ----- CROSS SECTION -----    
+    # ====== CROSS SECTION ======
+       
     def xs(self, electronE:float, R:float, vD:int=0, vDp:int=0) -> float:
         """ Calculates the ICEC cross section (a.u.) for some kinetic energy and R.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
@@ -211,6 +212,90 @@ class IntraICEC:
             for r in self.rGrid
         ])
         return xs * Units.AU2MB
+    
+    # ====== DISSOCIATION OF D ======
+    
+    def integrate_r(self, integrand, vi, E, lower_bound=None):
+        '''Integration over r
+        - integrand : function to be integrated
+        - electronE : kinetic energy of incoming electron [Hartree, a.u.]
+        - vi: initial vibrational quantum number
+        - E : energy of the dissociative Morse state [Hartree]
+        '''
+        if lower_bound is None:
+            lower_bound = self.Morse_Dp.get_lower_bound(E)
+        r_reflection = self.Morse_Dp.reflection_point_left(E)
+        rmax = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
+
+        num_intervals = self.Morse_Dp.estimate_oscillation(E)
+        if num_intervals < 10:
+            return mpmath.quadsubdiv(integrand, [lower_bound, r_reflection, rmax, self.Morse_Dp.box_length], maxdegree=10)
+        else:
+            result = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection], maxdegree=10)
+            factor = (max(1, vi + 4 - self.Morse_D.vmax))**2
+            intervals_mid = np.linspace(r_reflection, rmax, factor*num_intervals+1)
+            result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
+            intervals_high = np.linspace(rmax, self.Morse_Dp.box_length, num_intervals+1)
+            result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
+            return result
+        
+    def FC_bc_integrand(self, vi, E, r):
+        return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vi, r)
+    
+    def FC_bc(self, vi:int, E:float, lower_bound:float=None, norm:float=None):
+        '''Franck-Condon (FC) factor for a bound to continuum (bc) transition |<psi_E|psi_v>|^2
+        norm: normalization constant for the vibrational continuum state
+        divide integration into intervals to deal with highly oscillating integrand
+        '''
+        if norm is None:
+            norm = self.Morse_Dp.norm_diss(E)
+        def integrand(r):
+            return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vi, r)
+        result = self.integrate_r(integrand, vi, E, lower_bound=lower_bound)    
+        return (mpmath.fabs(norm * result)) ** 2
+    
+    def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
+        # TODO check how E is defined
+        vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
+        return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
+    
+    def PI_xs_D_electronic(self, hbarOmega:float) -> float:
+        data = np.loadtxt(self.file_PI_xs_D + '.txt')
+        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
+        if hbarOmega >= energies[-1]:
+            return np.nan
+        interp_func = sp.interpolate.interp1d(
+            energies, xs, kind='linear', fill_value=np.nan
+            )
+        return interp_func(hbarOmega) 
+
+    def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc:float=None, norm:float=None) -> float:
+        '''Cross section [a.u.] for one bound-continuum (bc) vibrational transition vi -> E.
+        - E [Hartree] : energy of the dissociative Morse state
+        - electronE [Hartree] : kinetic energy of the incoming electron
+        - FC_bc [a.u.] : |<psi_E|psi_v>|^2
+        '''
+        if FC_bc is None:
+            FC_bc = self.FC_bc(vD, E, norm=norm)
+        electronE_f = self.electronE_f_bc(electronE, vD, E)
+            
+        if electronE_f <= 0:
+            return 0
+        else:
+            hbarOmega = self.hbarOmega(electronE)
+            PI_xs_A = self.PI_xs_A(hbarOmega)
+            PI_xs_D = self.PI_xs_D_electronic(hbarOmega)
+            xs = (
+                self.prefactor
+                * self.degeneracyFactor
+                * PI_xs_A
+                * PI_xs_D
+                * FC_bc
+                / (electronE * hbarOmega**2 * R**6)
+            )
+            return float(xs)
+    
+    # ====== OTHER ======
     
     def PR_xs_A(self, electronE):
         hbarOmega = self.hbarOmega(electronE)
