@@ -1,52 +1,75 @@
 import numpy as np
 import scipy as sp
 import mpmath
-from .constants import Constants, Units, Config
+from .constants import Constants, Units
 from typing import Callable
 
 class Morse:
-    """Initialize the Morse model for a diatomic molecule in atomic units (hbar=1, me=1, hartree energy=1).
+    """Morse potential model for diatomic molecules.
+
+    Uses atomic units (hbar=1, me=1, hartree energy=1).
     Adapted from https://scipython.com/blog/the-morse-oscillator and https://liu-group.github.io/Morse-potential
-    Input arguments
-    - mu: reduced mass (electron mass)
-    - we: Morse parameter (cm-1)
-    - req: Equilibrium bond distance (Angstrom)
-    - De: Dissociation energy (cm-1)
-    - E0: Equilibrium energy E(req) (cm-1)
-    Class parameters
-    - alpha: Morse parameter
-    - lam: Morse parameter (not to be confused with lambda function)
-    - vmax: maximum vibrational quantum number
-    - rmin: r where V(r) = De on repulsive edge
-    - rmax: r where V(r) = f*De, f<1
+
+    Args:
+        mu (float): Reduced mass (electron mass).
+        we (float): Vibrational constant (Hartree).
+        re (float): Equilibrium bond distance (Bohr).
+        De (float): Dissociation energy (Hartree).
+        wexe (float, optional): Defaults to 0.
+        E0 (float, optional): Reference energy offset (Hartree). Defaults to 0.
+
+    Attributes:
+        mu (float): Reduced mass (electron mass).
+        we (float): Vibrational constant (Hartree).
+        re (float): Equilibrium bond distance (Bohr).
+        De (float): Dissociation energy (Hartree).
+        alpha (float): Morse alpha parameter.
+        lam (float): Morse lambda parameter. sqrt(2 * mu * De) / alpha
+        z0 (float): 2 * lam * exp(alpha * re)
+        vmax (int): Maximum bound vibrational quantum number.
+        rmin (float): Suggested lower radial bound (Bohr).
+        rmax (float): Suggested upper radial bound (Bohr).
+        
+    TODO put Morse class in separate file
     """
 
-    def __init__(self, mu, we, req, De, wexe=0, E0=0):
+    def __init__(self, mu:float, we:float, re:float, De:float, wexe:float=0, E0:float=0):
         self.mu = mu  # in electron mass
         self.we = we # a.u.
-        self.req = req 
+        self.re = re 
         self.De = De 
         self.wexe = wexe
         self.E0 = E0 
 
         self.alpha = self.we * np.sqrt(self.mu / 2 / self.De)
         self.lam = np.sqrt(2 * self.mu * self.De) / self.alpha
-        self.z0 = 2 * self.lam * np.exp(self.alpha * self.req)
+        self.z0 = 2 * self.lam * np.exp(self.alpha * self.re)
         self.vmax = int(self.lam - 0.5)
 
-        self.rmin = self.req - np.log(2) / self.alpha
+        self.rmin = self.re - np.log(2) / self.alpha
         f = 0.99
-        self.rmax = self.req - np.log(1 - f) / self.alpha
+        self.rmax = self.re - np.log(1 - f) / self.alpha
 
-    def V(self, r):
-        """Morse potential
-        - r : interatomic distance (Bohr, a.u.)
+    def V(self, r:float) -> float:
+        """Morse potential V(r), with V(inf) = 0.
+        
+        Args:
+            r (float): Interatomic distance (Bohr).
+
+        Returns:
+            float: Potential energy (Hartree).
         """
-        return self.De * (1 - np.exp(-self.alpha * (r - self.req))) ** 2 #- self.De
+        return self.De * (1 - np.exp(-self.alpha * (r - self.re))) ** 2 #- self.De
 
     def psi(self, v:int, r:float):
-        """v-th eigenstate of the Morse potential
-        - r : interatomic distance (Bohr, a.u.)
+        """Return the v-th bound-state eigenfunction at distance r.
+
+        Args:
+            v (int): Vibrational quantum number (0 <= v <= vmax).
+            r (float): Interatomic distance (Bohr).
+
+        Returns:
+            mpmath.mpf or complex: Wavefunction value at r.
         """
         z = self.z0 * mpmath.exp(-self.alpha * r)
         N = mpmath.sqrt(
@@ -62,18 +85,25 @@ class Morse:
             * mpmath.laguerre(v, 2 * self.lam - 2 * v - 1, z)
         )
 
-    def energy(self, v):
-        """Energy [Hartree] of the v-th (bound) Morse state."""
+    def energy(self, v:int) -> float:
+        """Return the energy of the v-th bound state.
+
+        Args:
+            v (int): Vibrational quantum number (0 <= v <= vmax).
+
+        Returns:
+            float: Energy value of the v-th bound state (Hartree).
+        """
         if self.wexe > 0:
             return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 
         return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) #- self.De
 
-    def intersection_V(self, E):
+    def intersection_V(self, E:float) -> float:
         arg = (-self.De + np.sqrt(self.De**2 + self.De * E)) / E
-        return self.req + np.log(arg) / self.alpha
+        return self.re + np.log(arg) / self.alpha
 
     def make_rgrid(self, resolution=1000, rmin=None, rmax=None):
-        """Make grid of interatomic distances r (Bohr, a.u.)
+        """Generates a grid of interatomic distances r (Bohr, a.u.)
         - resolution : number of grid points
         """
         if rmin is None:
@@ -84,6 +114,7 @@ class Morse:
         return self.r
 
     def plot_V(self, ax, **kwargs):
+        """ Plots the potential energy surface V(r)"""
         if not hasattr(self, "r"):
             self.make_rgrid()
         V = self.V(self.r)
@@ -93,12 +124,23 @@ class Morse:
 
 
 class IntraICEC:
-    """ 
-    - degeneracyFactor : g_{A^-} / g_A
-    - IP: Ionization potential (a.u.)
-    - PI_xs_A: Function, Fit for Photoionization cross section (a.u. -> a.u.)
-    - prefactor: terms that are neither energy nor R dependent 
-    """
+    """ICEC cross section with diatomic molecules.
+
+    Uses atomic units (hbar=1, me=1, hartree energy=1).
+
+    Args:
+        degeneracyFactor(float) : degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        IP (float): Ionization potential (Hartree)
+        PI_xs_A (float -> float): Fit for Photoionization cross section of A (a.u. -> a.u.)
+        file_PI_xs_D (str) : file name of the photionization cross section of D
+
+    Attributes:
+        degeneracyFactor(float) : degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        IP (float): Ionization potential (Hartree)
+        PI_xs_A (float -> float): Fit for Photoionization cross section of A (a.u. -> a.u.)
+        file_PI_xs_D (str) : file name of the photionization cross section of D
+        prefactor (float): collects terms that are neither energy nor R dependent 
+    """    
     def __init__(self, degeneracyFactor: float, IP_A: float, IP_D: float, PI_xs_A: Callable, file_PI_xs_D: str) :
         self.degeneracyFactor = degeneracyFactor # g_A / g_A+
         self.IP_A = IP_A 
@@ -116,23 +158,23 @@ class IntraICEC:
         else:
             print("not a valid method")
             
-    def define_Morse_D(self, mu, we, req, De, wexe=0):
+    def define_Morse_D(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         """Morse potential for the initial vibrational mode of the system.
         - mu: reduced mass (proton mass)
         - we: Morse parameter (a.u.)
-        - req: Equilibrium bond distance (a.u.)
+        - re: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_D = Morse(mu, we, req, De, wexe)
+        self.Morse_D = Morse(mu, we, re, De, wexe)
 
-    def define_Morse_Dp(self, mu, we, req, De, wexe=0):
+    def define_Morse_Dp(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         """Morse potential for the initial vibrational mode of the system.
         - mu: reduced mass (proton mass)
         - we: Morse parameter (a.u.)
-        - req: Equilibrium bond distance (a.u.)
+        - re: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_Dp = Morse(mu, we, req, De, wexe)
+        self.Morse_Dp = Morse(mu, we, re, De, wexe)
 
     def make_energy_grid(self, minEnergy=0.01*Units.EV2HARTREE, maxEnergy=10*Units.EV2HARTREE, resolution=100, geometric=True): 
         """ Make a suitable grid of incoming electron energies.
@@ -151,8 +193,16 @@ class IntraICEC:
         """
         self.rGrid = np.linspace(Rmin, Rmax, resolution)
     
-    def FC_factor(self, vD, vDp):
-        '''<psi_vi|psi_vf>'''
+    def FC_factor(self, vD:int, vDp:int) -> float:
+        """Returns the Franck-Condon factor <psi_vi|psi_vf> corresponding to the photionization.
+        
+        Args:
+            vD (int): vibrational quantum number of D.
+            vDp (int): vibrational quantum number of D+.
+
+        Returns:
+            float: Franck-Condon factor.
+        """
         if not hasattr(self, 'FC_factor_saved'):
             # vmax+1 results in out of bound... temp fix: +10 
             self.FC_factor_saved = np.zeros((self.Morse_D.vmax+10, self.Morse_Dp.vmax+10))
@@ -166,7 +216,7 @@ class IntraICEC:
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
             return np.abs(result)**2
     
-    def PI_xs_D_FC(self, vD, vDp, hbarOmega):
+    def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
         #if not hasattr(self, "PI_xs_D_interpolated"):
         data = np.loadtxt(self.file_PI_xs_D + '.txt')
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
@@ -180,7 +230,7 @@ class IntraICEC:
         #return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
     
     # TODO keep interp_function in memory
-    def PI_xs_D_resolved(self, vD, vDp, hbarOmega):
+    def PI_xs_D_resolved(self, vD:int, vDp:int, hbarOmega:float):
         filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
         data = np.loadtxt(filename)
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
@@ -191,10 +241,10 @@ class IntraICEC:
             )
         return interp_func(hbarOmega)
     
-    def hbarOmega(self, electronE):
+    def hbarOmega(self, electronE:float) -> float:
         return electronE + self.IP_A 
     
-    def electronE_f(self, electronE, vD, vDp):
+    def electronE_f(self, electronE:float, vD:int, vDp:int) -> float:
         if vDp is None:
             vib_energy_D = 0
         elif hasattr(self, 'vib_diff_to_v0_D'):
@@ -208,8 +258,8 @@ class IntraICEC:
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
 
     # ----- CROSS SECTION -----    
-    def xs(self, electronE, R, vD=0, vDp=0):
-        """ Calculate cross section (a.u.) of ICEC for some kinetic energy and R.
+    def xs(self, electronE:float, R:float, vD:int=0, vDp:int=0) -> float:
+        """ Calculates the ICEC cross section (a.u.) for some kinetic energy and R.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         - R: internuclear distance: (Bohr, a.u.)
         - v_A+ -> v_A (v_A -> v_A+ Photoionization)
@@ -224,8 +274,8 @@ class IntraICEC:
             PI_xs_D = self.PI_xs_D(vD, vDp, hbarOmega)
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_D / (electronE * hbarOmega**2 * R**6)
 
-    def xs_vD_vDp(self, R, vD=0, vDp=0):
-        """ Calculate cross section (Mb) of ICEC for given range of kinetic energies.
+    def xs_vD_vDp(self, R:float, vD:int=0, vDp:int=0):
+        """ Calculates the ICEC cross section (Mb) for given range of kinetic energies.
         - R: internuclear distance: (Bohr, a.u.)
         """        
         xs = np.array([
@@ -234,7 +284,7 @@ class IntraICEC:
         ]) 
         return xs * Units.AU2MB
     
-    def xs_vD(self, R, vD, vDp_max):
+    def xs_vD(self, R:float, vD:int, vDp_max:int):
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
         """
         # Element-wise summation sum(list_of_arrays)
@@ -244,7 +294,7 @@ class IntraICEC:
         )
         return xs
     
-    def xs_boltzmann(self, R, t, vD_max, vDp_max):
+    def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int):
         norm = sum(
             np.exp(-self.Morse_D.energy(vD)/Constants.KB/t) 
             for vD in range(vD_max+1)
@@ -255,7 +305,7 @@ class IntraICEC:
         )
         return avg/norm * Units.AU2MB
     
-    def spectrum(self, electronE, R, vD=0, vDp_max=0):
+    def spectrum(self, electronE:float, R:float, vD:int=0, vDp_max:int=0):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         """
@@ -267,8 +317,8 @@ class IntraICEC:
                 spectrum.append([electronE_f * Units.HARTREE2EV, xs * Units.AU2MB, vDp])
         return np.array(spectrum)
 
-    def xs_R(self, electronE, vD=0, vDp=None):
-        """ Calculate cross section (Mb) of ICEC for given range of interatomic distances.
+    def xs_R(self, electronE:float, vD:int=0, vDp:int=None):
+        """ Calculates ICEC cross section (Mb) for given range of interatomic distances.
         - electronE : energy of incoming electron (Hartree, a.u.) 
         - R : interatomic distance (Bohr, a.u.)
         """
@@ -286,7 +336,7 @@ class IntraICEC:
         return self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
-        '''Plots the Cross section xs [Mb]'''
+        """Plots the Cross section xs [Mb]"""
         ax.plot(self.energyGrid*Units.HARTREE2EV, xs, label=label, **kwargs)
         ax.set_xlabel(r'$E_\text{el}$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
@@ -294,7 +344,7 @@ class IntraICEC:
         ax.set_title(title)
 
     def plot_xs_R(self, ax, xs, **kwargs):
-        '''Plots the Cross section xs [Mb]'''
+        """Plots the Cross section xs [Mb]"""
         ax.plot(self.rGrid, xs, **kwargs)
         ax.set_xlabel(r'$R$ [a.u.]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
@@ -302,7 +352,7 @@ class IntraICEC:
         ax.set_title('ICEC cross section')
 
     def plot_PR_xs(self, ax, **kwargs):
-        '''Plots the Photorecombination Cross section [Mb]'''
+        """Plots the Photorecombination Cross section [Mb]"""
         PR_xs = np.array([])
         for electronE in self.energyGrid:
             hbarOmega = electronE + self.IP_A
@@ -310,5 +360,3 @@ class IntraICEC:
             xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
             PR_xs = np.append(PR_xs, [xs * Units.AU2MB])
         ax.plot(self.energyGrid*Units.HARTREE2EV, PR_xs, **kwargs)
-        
-        
