@@ -193,31 +193,30 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def find_roots(self, file_path:str, max_energy:float=1*Units.EV2HARTREE):
-        def psi_diss_L(E:float)->float:
+    def find_roots(self, file_path:str=None, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+        def psi_diss_L(E:float) -> float:
             if hasattr(E, "__len__"):
                 E = E[0]
-            if E > max_energy:
-                return 10
+            if E > max_energy: # don't go looking beyond max_energy
+                return 100
             else:
                 return np.abs(self.psi_diss(E, self.box_length))
 
-        first_root = sp.optimize.fsolve(psi_diss_L, 1e-6)[0]
-        print(first_root, psi_diss_L(first_root))
-        
-        resolution = 500
-        root_estimates = np.geomspace(first_root, max_energy, resolution)
-        
-        roots = np.unique([
-            sp.optimize.fsolve(psi_diss_L, root_estimate)[0] for root_estimate in root_estimates
+        first_root = sp.optimize.fsolve(psi_diss_L, 1e-7)[0]
+        print("first root", first_root, psi_diss_L(first_root))
+        root_estimates = np.geomspace(first_root, max_energy, num)
+        roots = np.array([
+            sp.optimize.fsolve(psi_diss_L, root_estimate)[0] 
+            for root_estimate in root_estimates
         ])
-        
+        roots = unique_mpf(roots, rtol=1e-8)
         true_roots = np.array([
-            E for E in roots if psi_diss_L([E]) < mpmath.mpf('1e-6')
+            E for E in roots if psi_diss_L([E]) < mpmath.mpf('1e-8')
         ])
         
-        header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
-        np.savetxt(file_path, np.transpose(true_roots*Units.HARTREE2EV), fmt='%1.3e', header=header)
+        if file_path is not None:
+            header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
+            np.savetxt(file_path, np.transpose(true_roots*Units.HARTREE2EV), fmt='%1.8e', header=header)
         return root_estimates, true_roots
     
 
@@ -240,3 +239,24 @@ class Morse:
         ax.set_xlabel(r"$R$ [a.u.]")
         ax.set_ylabel(r"$E$ [a.u.]")
         ax.plot(self.r, V, **kwargs)
+        
+        
+def equal_mpf(a, b, rtol=1e-5, atol=0.0):
+    if mpmath.fabs(a-b) <= atol + rtol * b:
+        return True
+    return False
+        
+def unique_mpf(arr, rtol=1e-5, atol=0.0):
+    """ Return unique floats     
+    """
+    arr = np.asarray(arr, dtype=float)
+    if arr.size == 0:
+        return arr
+    arr_sorted = np.unique(arr) # pre sort
+    unique_list = [arr_sorted[0]]
+
+    for x in arr_sorted[1:]:
+        if not equal_mpf(x, unique_list[-1], rtol, atol):
+            unique_list.append(x)
+
+    return np.array(unique_list)

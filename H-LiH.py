@@ -359,7 +359,7 @@ def test_roots(Morse:Morse):
     ax.set_xlabel(r'$E$ [eV]')
     ax.set_ylabel(r'$E$ [a.u.]')
     ax.set_yscale('log')
-    ax.bar(root_estimates*Units.HARTREE2EV, root_estimates, width=0.005, color='tab:blue', label='estimates')
+    ax.bar(root_estimates*Units.HARTREE2EV, root_estimates/2, width=0.005, color='tab:blue', label='estimates')
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
     fname = DIR + 'plots/LiHp_roots.pdf'
