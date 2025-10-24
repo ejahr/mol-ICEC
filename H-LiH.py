@@ -155,11 +155,12 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vib_energies=None):
     blues = plt.get_cmap("Blues_r")    
     for t in T:
         if vib_energies is None:
-            norm = sum(np.exp(-icec.Morse_D.energy(vi)/Constants.KB/t) 
+            # add De to energy(vi) to get positive values which increases numerical stability
+            norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
                        for vi in range(LiH.v_max+1)
                        )
             avg = sum(
-                np.exp(-icec.Morse_D.energy(vi)/Constants.KB/t) * results[:, vi+1] 
+                np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results[:, vi+1] 
                 for vi in range(LiH.v_max+1)
                 )
         else:
@@ -277,6 +278,7 @@ def plot_spectrum_FC(system, R, electronE, vi=0, title=None):
     fig.savefig(fname)
     
 def plot_morse(icec:IntraICEC, system):
+    # TODO I defined bound states to have negative energies, recheck the y values
     yshift = (8.066308039 - 7.781734076) * Units.HARTREE2EV 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.4, 0.6], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes

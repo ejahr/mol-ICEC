@@ -1,7 +1,6 @@
 import numpy as np
 import mpmath
-from .constants import Constants, Units
-from typing import Callable
+from .constants import Units
 
 class Morse:
     """Morse potential model for diatomic molecules.
@@ -33,8 +32,8 @@ class Morse:
     """
 
     def __init__(self, mu:float, we:float, re:float, De:float, wexe:float=0, E0:float=0):
-        self.mu = mu  # in electron mass
-        self.we = we # a.u.
+        self.mu = mu
+        self.we = we
         self.re = re 
         self.De = De 
         self.wexe = wexe
@@ -58,7 +57,7 @@ class Morse:
         Returns:
             float: Potential energy (Hartree).
         """
-        return self.De * (1 - np.exp(-self.alpha * (r - self.re))) ** 2 #- self.De
+        return self.De * (1 - np.exp(-self.alpha * (r - self.re))) ** 2 - self.De
 
     def psi(self, v:int, r:float):
         """Return the v-th bound-state eigenfunction at distance r.
@@ -91,11 +90,11 @@ class Morse:
             v (int): Vibrational quantum number (0 <= v <= vmax).
 
         Returns:
-            float: Energy value of the v-th bound state (Hartree).
+            float: Energy of the v-th bound state, E < 0 (Hartree).
         """
         if self.wexe > 0:
             return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 
-        return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) #- self.De
+        return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) - self.De
 
     def intersection_V(self, E:float) -> float:
         arg = (-self.De + np.sqrt(self.De**2 + self.De * E)) / E
@@ -173,8 +172,8 @@ class Morse:
         '''Dissociative (continuum) states of the Morse potential
         source: https://doi.org/10.1088/0953-4075/21/16/011
         mpmath.hyp1f1: https://mpmath.org/doc/current/functions/hypergeometric.html#hyp1f1
-        - E : energy (Hartree, a.u.)
-        - r : interatomic distance (Bohr, a.u.)
+        - E : energy above dissociation limit (Hartree)
+        - r : interatomic distance (Bohr)
         '''
         k = mpmath.sqrt(2 * self.mu * E)
         epsilon = k / self.alpha
@@ -193,7 +192,7 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
 
-    def make_rgrid(self, resolution=1000, rmin=None, rmax=None):
+    def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
         - resolution : number of grid points
         """
@@ -201,7 +200,7 @@ class Morse:
             rmin = self.rmin
         if rmax is None:
             rmax = self.rmax
-        self.r = np.linspace(rmin, rmax, resolution)
+        self.r = np.linspace(rmin, rmax, num)
         return self.r
 
     def plot_V(self, ax, **kwargs):

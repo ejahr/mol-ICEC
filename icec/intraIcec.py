@@ -178,12 +178,13 @@ class IntraICEC:
         return xs
     
     def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int):
+        # add De to energy(vi) to get positive values, increasing numerical stability
         norm = sum(
-            np.exp(-self.Morse_D.energy(vD)/Constants.KB/t) 
+            np.exp(-(self.Morse_D.energy(vD)+self.Morse_D.De)/Constants.KB/t) 
             for vD in range(vD_max+1)
         )
         avg = sum(
-            np.exp(-self.Morse_D.energy(vD)/Constants.KB/t) * self.xs_vD(R, vD, vDp_max)
+            np.exp(-(self.Morse_D.energy(vD)+self.Morse_D.De)/Constants.KB/t) * self.xs_vD(R, vD, vDp_max)
             for vD in range(vD_max+1)
         )
         return avg/norm * Units.AU2MB
@@ -255,6 +256,11 @@ class IntraICEC:
         return (mpmath.fabs(norm * result)) ** 2
     
     def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
+        """Kinetic energy of the outgoing electron
+        - electronE: kinetic energy of the incoming electron (Hartree)
+        - vD: vibrational quantum number of the initial state
+        - E: energy of the dissociative final state (Hartree)
+        """
         # TODO check how E is defined
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
