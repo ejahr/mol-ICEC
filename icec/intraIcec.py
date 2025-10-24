@@ -47,7 +47,7 @@ class IntraICEC:
         - re: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_D = Morse(mu, we, re, De, wexe)
+        self.Morse_D:Morse = Morse(mu, we, re, De, wexe)
 
     def define_Morse_Dp(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         """Morse potential for the initial vibrational mode of the system.
@@ -56,7 +56,7 @@ class IntraICEC:
         - re: Equilibrium bond distance (a.u.)
         - De: Dissociation energy (a.u.)
         """
-        self.Morse_Dp = Morse(mu, we, re, De, wexe)
+        self.Morse_Dp:Morse = Morse(mu, we, re, De, wexe)
 
     def make_energy_grid(self, minEnergy=0.01*Units.EV2HARTREE, maxEnergy=10*Units.EV2HARTREE, resolution=100, geometric=True): 
         """ Make a suitable grid of incoming electron energies.
@@ -76,7 +76,7 @@ class IntraICEC:
         self.rGrid = np.linspace(Rmin, Rmax, resolution)
     
     def FC_factor(self, vD:int, vDp:int) -> float:
-        """Returns the Franck-Condon factor <psi_vi|psi_vf> corresponding to the photionization.
+        """Returns the Franck-Condon factor <psi_vi|psi_vf> corresponding to the photoionization.
         
         Args:
             vD (int): vibrational quantum number of D.
@@ -225,18 +225,20 @@ class IntraICEC:
         '''
         if lower_bound is None:
             lower_bound = self.Morse_Dp.get_lower_bound(E)
-        r_reflection = self.Morse_Dp.reflection_point_left(E)
-        rmax = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
+        r_left = min(self.Morse_D.reflection_point_left(self.Morse_D.energy(vi)), self.Morse_Dp.reflection_point_left(E))
+        if r_left <= lower_bound:
+            raise Exception("r_left <= lower_bound\n")
+        r_right = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
 
-        num_intervals = self.Morse_Dp.estimate_oscillation(E)
+        num_oscillation = self.Morse_Dp.estimate_oscillation(E)
+        num_intervals = (vi + 1) * num_oscillation
         if num_intervals < 10:
-            return mpmath.quadsubdiv(integrand, [lower_bound, r_reflection, rmax, self.Morse_Dp.box_length], maxdegree=10)
+            return mpmath.quadsubdiv(integrand, [lower_bound, r_left, r_right, self.Morse_Dp.box_length], maxdegree=10)
         else:
-            result = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection], maxdegree=10)
-            factor = (max(1, vi + 4 - self.Morse_D.vmax))**2
-            intervals_mid = np.linspace(r_reflection, rmax, factor*num_intervals+1)
+            result = mpmath.quadsubdiv(integrand, [lower_bound, r_left], maxdegree=10)
+            intervals_mid = np.linspace(r_left, r_right, num_intervals)
             result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
-            intervals_high = np.linspace(rmax, self.Morse_Dp.box_length, num_intervals+1)
+            intervals_high = np.linspace(r_left, self.Morse_Dp.box_length, num_oscillation+1)
             result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
             return result
         
@@ -259,13 +261,13 @@ class IntraICEC:
         """Kinetic energy of the outgoing electron
         - electronE: kinetic energy of the incoming electron (Hartree)
         - vD: vibrational quantum number of the initial state
-        - E: energy of the dissociative final state (Hartree)
+        - E: energy of the dissociative final state, i.e. energy above dissociation limit (Hartree)
         """
-        # TODO check how E is defined
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
     
     def PI_xs_D_electronic(self, hbarOmega:float) -> float:
+        # TODO more elegant?
         data = np.loadtxt(self.file_PI_xs_D + '.txt')
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
         if hbarOmega >= energies[-1]:
