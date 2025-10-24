@@ -4,6 +4,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from input.HLiH import LiH, LiHp, Hp_LiH, Bp_LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
+from icec.morse import Morse
 from icec.constants import Units, Constants
 
 plt.rcParams['mathtext.fontset'] = 'stix'
@@ -349,6 +350,20 @@ def plot_H_PI_PR(icec:ICEC):
     fname = DIR + 'plots/H.PI.PR.pdf'
     fig.savefig(fname)
     
+def test_roots(Morse:Morse):
+    fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(int(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.txt'
+    root_estimates, roots = Morse.find_roots(fname)
+    fig = plt.figure()
+    ax = plt.gca() 
+    ax.set_title('Dissociative states')
+    ax.set_xlabel(r'$E$ [eV]')
+    ax.set_ylabel(r'$E$ [a.u.]')
+    ax.set_yscale('log')
+    ax.bar(root_estimates*Units.HARTREE2EV, root_estimates, width=0.005, color='tab:blue', label='estimates')
+    ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
+    ax.legend()
+    fname = DIR + 'plots/LiHp_roots.pdf'
+    fig.savefig(fname)
 
 HLi = True
 BLi = False
@@ -373,6 +388,9 @@ if HLi:
     icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
     icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
     icec.define_PI_xs_D(method="resolved")
+    
+    icec.Morse_Dp.define_box(10*Units.ANGSTROM2BOHR)
+    test_roots(icec.Morse_Dp)
     
     icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
     icec_FC.define_Morse_D(*LiH.morse_parameters)

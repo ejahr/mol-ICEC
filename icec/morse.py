@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 import mpmath
 from .constants import Units
 
@@ -191,6 +192,34 @@ class Morse:
             * mpmath.hyp1f1(-s - 1j * epsilon, -2j * epsilon + 1, z)
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
+    
+    def find_roots(self, file_path:str, max_energy:float=1*Units.EV2HARTREE):
+        def psi_diss_L(E:float)->float:
+            if hasattr(E, "__len__"):
+                E = E[0]
+            if E > max_energy:
+                return 10
+            else:
+                return np.abs(self.psi_diss(E, self.box_length))
+
+        first_root = sp.optimize.fsolve(psi_diss_L, 1e-6)[0]
+        print(first_root, psi_diss_L(first_root))
+        
+        resolution = 500
+        root_estimates = np.geomspace(first_root, max_energy, resolution)
+        
+        roots = np.unique([
+            sp.optimize.fsolve(psi_diss_L, root_estimate)[0] for root_estimate in root_estimates
+        ])
+        
+        true_roots = np.array([
+            E for E in roots if psi_diss_L([E]) < mpmath.mpf('1e-6')
+        ])
+        
+        header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
+        np.savetxt(file_path, np.transpose(true_roots*Units.HARTREE2EV), fmt='%1.3e', header=header)
+        return root_estimates, true_roots
+    
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
