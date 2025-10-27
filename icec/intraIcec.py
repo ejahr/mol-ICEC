@@ -281,6 +281,10 @@ class IntraICEC:
             return 0
         else:
             hbarOmega = self.hbarOmega(electronE)
+            if electronE == 0:
+                raise ZeroDivisionError('electronE must not be zero')
+            if hbarOmega == 0:
+                raise ZeroDivisionError('hbaromega must not be zero')
             PI_xs_A = self.PI_xs_A(hbarOmega)
             PI_xs_D = self.PI_xs_D_electronic(hbarOmega)
             xs = (
