@@ -1,6 +1,8 @@
 import numpy as np
 import scipy as sp
 import mpmath
+from itertools import repeat
+from multiprocessing import Pool
 from typing import Callable
 from .constants import Constants, Units
 from .morse import Morse
@@ -295,8 +297,65 @@ class IntraICEC:
                 * FC_bc
                 / (electronE * hbarOmega**2 * R**6)
             )
-            return float(xs)
+            return xs
+
+    def xs_vD_E(self, R:float, vD:int, E:float):
+        '''Cross section for vD -> E over range of electron energies.'''
+        if not hasattr(self, "energyGrid"):
+            self.make_energy_grid()
+        if not hasattr(self.Morse_Dp, "box_length"):
+            self.Morse_Dp.define_box()
+        lower_bound = self.Morse_Dp.get_lower_bound(E)
+        norm = self.Morse_Dp.norm_diss(E, lower_bound)
+        FC_bc = self.FC_bc(vD, E, lower_bound, norm)
+        xs_array = np.array(
+            [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]
+        )
+        return xs_array
+
+    def xs_vD_continuum(self, R:float, vD:int, diss_energies=None):
+        '''Cross section for vi -> continuum over range of electron energies.
+        - diss_energies [Hartree] : energies of allowed dissociative states (in a box)
+        '''   
+        if diss_energies is None:
+            if not hasattr(self.Morse_Dp, 'diss_energies'):
+                self.Morse_Dp.find_solutions_in_box()
+            diss_energies = self.Morse_Dp.diss_energies
+        with Pool() as pool:
+            result = pool.starmap(
+                self.xs_vD_E, 
+                zip(repeat(R), repeat(vD), diss_energies)
+            )
+        xs_array = sum(list(result))
+        return xs_array
     
+    def function_for_spectrum(self, electronE, R, vD, E, density_of_states_at_E):
+        electronE_f = self.electronE_f_bc(electronE, vD, E)
+        if electronE_f <= 0:
+            return electronE_f, 0, E
+        else:
+            # transform to energy normalization by multiplying with the density of states at E
+            xs = self.xs_bc(electronE, R, vD, E) * density_of_states_at_E
+            return electronE_f*Units.HARTREE2EV, xs*Units.AU2MB, E*Units.HARTREE2EV
+
+    def spectrum_bc(self, electronE, R, vD, diss_energies=None):
+        '''Cross sections for vi -> continuum given a single electron energy.
+        - electronE [Hartree] : kinetic energy of incoming electron 
+        - diss_energies [Hartree] : energies of all possible dissociative states (in a box of length self.box_length)
+        '''
+        if diss_energies is None:
+            if not hasattr(self.Morse_Dp, 'diss_energies'):
+                self.Morse_Dp.find_solutions_in_box()
+            diss_energies = self.Morse_Dp.diss_energies
+        if not hasattr(self.Morse_Dp, 'density_of_states'):
+            self.Morse_Dp.get_density_of_states(diss_energies)
+        with Pool() as pool:
+            result = pool.starmap(
+                self.function_for_spectrum, 
+                zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.density_of_states)
+            )
+        return np.array(result)
+            
     # ====== OTHER ======
     
     def PR_xs_A(self, electronE):
