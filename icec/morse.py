@@ -105,8 +105,13 @@ class Morse:
         '''Returns r where E = V(r), r in (0, Req]
         - E : energy (Hartree, a.u.)
         '''
+        E = mpmath.convert(E)
         arg = 1 + np.sqrt((E + self.De)/self.De)
-        return self.re - np.log(arg) / self.alpha
+        #if not isinstance(E, float):
+        #    raise TypeError(f'E is of type {type(E)} but should be of type float.')
+        if arg == mpmath.mpf('0'):
+            raise ValueError(f'Invalid Value: arg={E} in log(arg)')
+        return self.re - mpmath.log(arg) / self.alpha
     
     def reflection_point_right(self, E:float) -> float:
         '''Returns r where E = V(r), r in [Req, infty)
@@ -115,7 +120,7 @@ class Morse:
         if E >= 0:
             raise ValueError("Energy E must be negative.")
         arg = 1 - np.sqrt((E + self.De)/self.De)
-        return self.re - np.log(arg) / self.alpha
+        return self.re - mpmath.log(arg) / self.alpha
 
     def define_box(self, box_length:float = 10*Units.ANGSTROM2BOHR):
         '''Defines box length for discretizing the dissociative continuum
