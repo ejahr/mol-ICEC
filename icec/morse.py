@@ -94,7 +94,7 @@ class Morse:
             float: Energy of the v-th bound state, E < 0 (Hartree).
         """
         if self.wexe > 0:
-            return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 
+            return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 - self.De
         return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) - self.De
 
     def intersection_V(self, E:float) -> float:
