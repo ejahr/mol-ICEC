@@ -30,15 +30,6 @@ class IntraICEC:
         self.PI_xs_A = PI_xs_A
         self.file_PI_xs_D = file_PI_xs_D
         self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
-        
-    def define_PI_xs_D(self, method="FC"):
-        if method == 'FC':
-            self.PI_xs_D = self.PI_xs_D_FC
-        elif method == 'resolved':
-            self.PI_xs_D = self.PI_xs_D_resolved
-        # elif method == 'branching-ratio'
-        else:
-            print("not a valid method")
             
     def define_Morse_D(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         """Morse potential for the initial vibrational mode of the system.
@@ -74,6 +65,28 @@ class IntraICEC:
         - resolution : number of grid points
         """
         self.rGrid = np.linspace(Rmin, Rmax, resolution)
+        
+    def define_PI_xs_D(self, method="FC"):
+        if method == 'FC':
+            self.PI_xs_D = self.PI_xs_D_FC
+        elif method == 'resolved':
+            self.PI_xs_D = self.PI_xs_D_resolved
+        else:
+            raise ValueError(
+                f"Invalid method '{method}'. Valid options are: 'FC', 'resolved'."
+            )
+            
+    # TODO keep interp_function in memory
+    def PI_xs_D_resolved(self, vD:int, vDp:int, hbarOmega:float):
+        filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
+        data = np.loadtxt(filename)
+        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
+        if hbarOmega >= energies[-1]:
+            return np.nan
+        interp_func = sp.interpolate.interp1d(
+            energies, xs, kind='linear'
+            )
+        return interp_func(hbarOmega)
     
     def FC_factor(self, vD:int, vDp:int) -> float:
         """Returns the Franck-Condon factor <psi_vi|psi_vf> corresponding to the photoionization.
@@ -97,31 +110,19 @@ class IntraICEC:
             result = mpmath.quad(integrand, [0, 5*Units.ANGSTROM2BOHR], maxdegree=10)
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
             return np.abs(result)**2
-    
-    def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
-        #if not hasattr(self, "PI_xs_D_interpolated"):
+        
+    def PI_xs_D_electronic(self, hbarOmega:float) -> float:
         data = np.loadtxt(self.file_PI_xs_D + '.txt')
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
         if hbarOmega >= energies[-1]:
             return np.nan
-        #self.PI_xs_D_interpolated = sp.interpolate.interp1d(
         interp_func = sp.interpolate.interp1d(
             energies, xs, kind='linear', fill_value=np.nan
             )
-        return interp_func(hbarOmega) * self.FC_factor(vD, vDp)
-        #return self.PI_xs_D_interpolated(hbarOmega) * self.FC_factor(vD, vDp)
+        return interp_func(hbarOmega) 
     
-    # TODO keep interp_function in memory
-    def PI_xs_D_resolved(self, vD:int, vDp:int, hbarOmega:float):
-        filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
-        data = np.loadtxt(filename)
-        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
-        if hbarOmega >= energies[-1]:
-            return np.nan
-        interp_func = sp.interpolate.interp1d(
-            energies, xs, kind='linear'
-            )
-        return interp_func(hbarOmega)
+    def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
+        return self.PI_xs_D_electronic(hbarOmega) * self.FC_factor(vD, vDp)
     
     def hbarOmega(self, electronE:float) -> float:
         return electronE + self.IP_A 
@@ -265,17 +266,6 @@ class IntraICEC:
         """
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
-    
-    def PI_xs_D_electronic(self, hbarOmega:float) -> float:
-        # TODO more elegant?
-        data = np.loadtxt(self.file_PI_xs_D + '.txt')
-        energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
-        if hbarOmega >= energies[-1]:
-            return np.nan
-        interp_func = sp.interpolate.interp1d(
-            energies, xs, kind='linear', fill_value=np.nan
-            )
-        return interp_func(hbarOmega) 
 
     def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc:float=None, norm:float=None) -> float:
         '''Cross section [a.u.] for one bound-continuum (bc) vibrational transition vi -> E.
