@@ -198,7 +198,9 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def find_roots(self, file_path:str=None, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+    def find_solutions_in_box(self, file_path:str=None, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+        """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
+        """
         def psi_diss_L(E:float) -> float:
             if hasattr(E, "__len__"):
                 E = E[0]
@@ -208,7 +210,7 @@ class Morse:
                 return np.abs(self.psi_diss(E, self.box_length))
 
         first_root = sp.optimize.fsolve(psi_diss_L, 1e-7)[0]
-        print("first root", first_root, psi_diss_L(first_root))
+        #print("first root", first_root, psi_diss_L(first_root))
         root_estimates = np.geomspace(first_root, max_energy, num)
         roots = np.array([
             sp.optimize.fsolve(psi_diss_L, root_estimate)[0] 
@@ -222,8 +224,23 @@ class Morse:
         if file_path is not None:
             header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
             np.savetxt(file_path, np.transpose(true_roots*Units.HARTREE2EV), fmt='%1.8e', header=header)
-        return root_estimates, true_roots
+        self.diss_energies = true_roots
+        return true_roots, root_estimates
     
+    def get_density_of_states(self, energies=None):
+        '''Density of states according to rho(E_i) = 2/(E_{i-2} - E_{i+1})
+        - energies [Hartree] : energies of all possible dissociative states (in a box)
+        '''
+        if energies is None:
+            if not hasattr(self, 'diss_energies'):
+                self.find_solutions_in_box()
+            energies = self.diss_energies
+        density_of_states = np.zeros(len(energies))
+        density_of_states[1:-1] = 2/(energies[2:]-energies[0:-2])
+        density_of_states[0] = 1/(energies[1]-energies[0])
+        density_of_states[-1] = 1/(energies[-1]-energies[-2])
+        self.density_of_states = density_of_states
+        return density_of_states
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
