@@ -223,6 +223,7 @@ class IntraICEC:
         - electronE : kinetic energy of incoming electron [Hartree, a.u.]
         - vi: initial vibrational quantum number
         - E : energy of the dissociative Morse state [Hartree]
+        Divides integration into intervals to deal with highly oscillating integrand
         '''
         if lower_bound is None:
             lower_bound = self.Morse_Dp.get_lower_bound(E)
@@ -237,25 +238,24 @@ class IntraICEC:
             return mpmath.quadsubdiv(integrand, [lower_bound, r_left, r_right, self.Morse_Dp.box_length], maxdegree=10)
         else:
             result = mpmath.quadsubdiv(integrand, [lower_bound, r_left], maxdegree=10)
-            intervals_mid = np.linspace(r_left, r_right, num_intervals)
+            intervals_mid = np.linspace(r_left, r_right, num_intervals+1)
             result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
             intervals_high = np.linspace(r_left, self.Morse_Dp.box_length, num_oscillation+1)
             result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
             return result
         
-    def FC_bc_integrand(self, vi, E, r):
-        return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vi, r)
+    def FC_bc_integrand(self, vD, E, r):
+        return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
     
-    def FC_bc(self, vi:int, E:float, lower_bound:float=None, norm:float=None):
+    def FC_bc(self, vD:int, E:float, lower_bound:float=None, norm:float=None):
         '''Franck-Condon (FC) factor for a bound to continuum (bc) transition |<psi_E|psi_v>|^2
         norm: normalization constant for the vibrational continuum state
-        divide integration into intervals to deal with highly oscillating integrand
         '''
         if norm is None:
             norm = self.Morse_Dp.norm_diss(E)
         def integrand(r):
-            return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vi, r)
-        result = self.integrate_r(integrand, vi, E, lower_bound=lower_bound)    
+            return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
+        result = self.integrate_r(integrand, vD, E, lower_bound=lower_bound)    
         return (mpmath.fabs(norm * result)) ** 2
     
     def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
