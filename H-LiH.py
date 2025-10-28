@@ -451,6 +451,9 @@ if HLi:
     icec_FC.define_PI_xs_D(method="FC")
     
     icec_FC.Morse_Dp.define_box(L)
+    fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
+    icec_FC.Morse_Dp.save_diss_states(fname)
+    icec_FC.Morse_Dp.load_diss_states(fname)
     
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)

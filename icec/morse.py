@@ -197,7 +197,7 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def find_solutions_in_box(self, file_path:str=None, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
         """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         """
         def psi_diss_L(E:float) -> float:
@@ -240,6 +240,24 @@ class Morse:
         density_of_states[-1] = 1/(energies[-1]-energies[-2])
         self.density_of_states = density_of_states
         return density_of_states
+    
+    def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+        header = "Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom\n"
+        header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.]"
+        roots, _ = self.find_solutions_in_box(max_energy, num)   
+        norms = np.array([
+            self.norm_diss(E) for E in roots
+        ])
+        density_of_states = self.get_density_of_states() 
+        data = np.vstack((roots*Units.HARTREE2EV, roots, norms, density_of_states))
+        np.savetxt(file_path, np.transpose(data), fmt='%1.8e', header=header)
+        
+    def load_diss_states(self, file_path:str):
+        # TODO can I use dict for this?
+        data = np.loadtxt(file_path, comments='#')
+        self.diss_energies = data[:,1]
+        self.diss_norms = data[:,2]
+        self.density_of_states = data[:,3]
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
