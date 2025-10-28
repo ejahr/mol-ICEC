@@ -39,6 +39,11 @@ class Morse:
         self.De = De 
         self.wexe = wexe
         self.E0 = E0 
+        
+        if wexe > 0:
+            De = self.we**2 / 4 / self.wexe
+            print('De', self.De, De)
+            self.De = self.we**2 / 4 / self.wexe
 
         self.alpha = self.we * np.sqrt(self.mu / 2 / self.De)
         self.lam = np.sqrt(2 * self.mu * self.De) / self.alpha
