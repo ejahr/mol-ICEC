@@ -152,7 +152,7 @@ class Morse:
         n = self.box_length * np.sqrt(2 * self.mu * E) / np.pi
         return round(n / d)
 
-    def norm_diss(self, E:float, lower_bound:float=None) -> float:
+    def norm_diss(self, E:float, lower_bound:float=None):
         '''Box normalization of the dissociative Morse states.
         The integration is separated into intervals as these states can be highly-oscillating.
         - E : energy (Hartree, a.u.)
@@ -163,16 +163,15 @@ class Morse:
         if lower_bound is None:
             lower_bound = self.get_lower_bound(E)
         r_reflection = self.reflection_point_left(E)
-        num_intervals = self.estimate_oscillation(E)
-        if num_intervals < 10:
-            norm = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection, self.rmax, self.box_length], maxdegree=10)
-        else:
-            norm = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection], maxdegree=10)
-            intervals_mid = np.linspace(r_reflection, self.rmax, num_intervals + 1)
-            norm += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
-            intervals_high = np.linspace(self.rmax, self.box_length, num_intervals + 1)
-            norm += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
-        return 1 / mpmath.sqrt(norm)
+        num_oscillation = np.where(self.diss_energies==E)[0][0]
+        #num_intervals = min(1, int(round(num_oscillation/10)))
+        num_intervals = min(1, num_oscillation)
+        norm = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection], maxdegree=10)
+        intervals_mid = np.linspace(r_reflection, self.rmax, num_intervals+1)
+        norm += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
+        intervals_high = np.linspace(self.rmax, self.box_length, num_intervals+1)
+        norm += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
+        return 1 / mpmath.sqrt(mpmath.fabs(norm))
 
     def psi_diss(self, E:float, r:float):
         '''Dissociative (continuum) states of the Morse potential

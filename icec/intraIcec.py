@@ -233,18 +233,15 @@ class IntraICEC:
         if r_left <= lower_bound:
             raise Exception("r_left <= lower_bound\n")
         r_right = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
-
-        num_oscillation = self.Morse_Dp.estimate_oscillation(E)
-        num_intervals = (vi + 1) * num_oscillation
-        if num_intervals < 10:
-            return mpmath.quadsubdiv(integrand, [lower_bound, r_left, r_right, self.Morse_Dp.box_length], maxdegree=10)
-        else:
-            result = mpmath.quadsubdiv(integrand, [lower_bound, r_left], maxdegree=10)
-            intervals_mid = np.linspace(r_left, r_right, num_intervals+1)
-            result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
-            intervals_high = np.linspace(r_left, self.Morse_Dp.box_length, num_oscillation+1)
-            result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
-            return result
+        num_oscillation = np.where(self.Morse_Dp.diss_energies==E)[0][0]
+        #num_intervals = min(1, int(round(num_oscillation/10)))
+        num_intervals = min(1, num_oscillation)
+        result = mpmath.quadsubdiv(integrand, [lower_bound, r_left], maxdegree=10)
+        intervals_mid = np.linspace(r_left, r_right, (vi+1)*num_intervals+1)
+        result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
+        intervals_high = np.linspace(r_right, self.Morse_Dp.box_length, num_oscillation+1)
+        result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
+        return result
         
     def FC_bc_integrand(self, vD, E, r):
         return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)

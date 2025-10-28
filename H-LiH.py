@@ -465,21 +465,18 @@ if HLi:
     if calculation_bb:
         calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
         calculate_xs_bb(system, header, icec_FC, R, LiH.v_max, LiHp.v_max, modifier='-FC')
-        calculate_xs_R(system, icec, R_list, header)
+        calculate_xs_R(system, icec, R_list, header)        
+        calculate_spectrum(system, header, icec, R, electronE)
+        calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
         
     if calculation_bc:
         diss_energies, _ = icec_FC.Morse_Dp.find_solutions_in_box()
-        #calculate_xs_bc(system, header, icec_FC, R, LiH.v_max, modifier='-FC')
+        calculate_xs_bc(system, header, icec_FC, R, LiH.v_max, modifier='-FC')
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     #plot_xs_vi(system, icec, R, icec_fixed=icec_fixed)
     plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
     #plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
-
-    if calculation_bb:
-        calculate_spectrum(system, header, icec, R, electronE)
-        calculate_spectrum(system, header, icec_FC, R, electronE, modifier='-FC')
-
     plot_spectrum_bc(system, R, electronE)
     #plot_spectrum(system, R, 1*Units.EV2HARTREE, icec_fixed=icec_fixed)
     #plot_spectrum_FC(system, R, 1*Units.EV2HARTREE)
