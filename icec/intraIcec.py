@@ -109,7 +109,12 @@ class IntraICEC:
             def integrand(r):
                 return mpmath.conj(self.Morse_D.psi(vD, r)) * self.Morse_Dp.psi(vDp, r)
         #result, error = sp.integrate.quad(integrand, 0, np.inf)
-            result = mpmath.quad(integrand, [0, 5*Units.ANGSTROM2BOHR], maxdegree=10)
+            r_left = min(self.Morse_D.reflection_point_left(self.Morse_D.energy(vD)), 
+                         self.Morse_Dp.reflection_point_left(self.Morse_Dp.energy(vDp)))
+            r_right = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
+            intervals = [0, r_left, r_right, 10*Units.ANGSTROM2BOHR]
+            result = mpmath.quadsubdiv(integrand, intervals, maxdegree=10)
+            #result = mpmath.quad(integrand, [0, 10*Units.ANGSTROM2BOHR], maxdegree=10)
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
             return np.abs(result)**2
         
