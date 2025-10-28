@@ -1,5 +1,5 @@
 # Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = 10 Angstrom
-E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.]
+# E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.]
 7.08575334e-04 2.60396475e-05 2.27446765e-01 1.20981128e+04
 2.95780240e-03 1.08697168e-04 9.03578728e-03 9.57356674e+03
 6.39327016e-03 2.34948203e-04 1.12336256e-02 6.93036919e+03
