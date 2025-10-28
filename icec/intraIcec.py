@@ -175,9 +175,11 @@ class IntraICEC:
         ]) 
         return xs * Units.AU2MB
     
-    def xs_vD(self, R:float, vD:int, vDp_max:int):
+    def xs_vD(self, R:float, vD:int, vDp_max:int=None):
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
         """
+        if vDp_max is None:
+            vDp_max = self.Morse_Dp.vmax
         # Element-wise summation sum(list_of_arrays)
         xs = sum(
             self.xs_vD_vDp(R, vD, vDp) 
@@ -185,8 +187,10 @@ class IntraICEC:
         )
         return xs
     
-    def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int):
+    def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int=None):
         # add De to energy(vi) to get positive values, increasing numerical stability
+        if vDp_max is None:
+            vDp_max = self.Morse_Dp.vmax
         norm = sum(
             np.exp(-(self.Morse_D.energy(vD)+self.Morse_D.De)/Constants.KB/t) 
             for vD in range(vD_max+1)
@@ -197,10 +201,12 @@ class IntraICEC:
         )
         return avg/norm * Units.AU2MB
     
-    def spectrum(self, electronE:float, R:float, vD:int=0, vDp_max:int=0):
+    def spectrum(self, electronE:float, R:float, vD:int=0, vDp_max:int=None):
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         """
+        if vDp_max is None:
+            vDp_max = self.Morse_Dp.vmax
         spectrum = []
         for vDp in range(vDp_max+1):
             electronE_f = self.electronE_f(electronE, vD, vDp)
