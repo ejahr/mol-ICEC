@@ -348,33 +348,52 @@ def plot_spectrum_bc(system, R, electronE, vi=0):
     fname = DIR + 'plots/' + system + ".spectrum-FC.bc.v0.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
     plt.tight_layout()
     fig.savefig(fname)
+
+def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
+    psi = [morse.psi(vi,r_i) * scale
+               + morse.energy(vi)*Units.HARTREE2EV + yshift 
+               for r_i in morse.r]
+    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi, color='tab:blue', lw=1)
     
-    
-def plot_morse(icec:IntraICEC, system):
+def plot_diss_state(ax, morse:Morse, energy, scale=1, yshift=0):
+    norm = morse.norm_diss(energy)
+    psi_diss = [mpmath.re(norm * morse.psi_diss(energy,r_i)) * scale
+                + energy*Units.HARTREE2EV + yshift 
+                for r_i in morse.r]
+    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color='lightskyblue', lw=1)
+
+def plot_morse(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     # TODO I defined bound states to have negative energies, recheck the y values
-    yshift = (8.066308039 - 7.781734076) * Units.HARTREE2EV 
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.4, 0.6], figsize=(5,5))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
     ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
     
-    ax2.set_ylim(-0.1, 2.5)
-    ax1.set_ylim(yshift-0.1, yshift - 0.1 + 0.4/0.6*(2.5+0.1))
+    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV-0.1, 0.1)
+    height = 0.3/0.7*(0.1 - (-icec.Morse_D.De*Units.HARTREE2EV-0.1))
+    ax1.set_ylim(yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1, yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1 + height)
     
-    r = icec.Morse_D.make_rgrid(rmax=5*Units.ANGSTROM2BOHR)
+    r = icec.Morse_D.make_rgrid(rmax=L)
+    icec.Morse_Dp.r = r
+    scale = 1./15
+    # D
+    for vi in range(3):
+        plot_vib_state(ax2, icec.Morse_D, vi, scale)
+        
     V = icec.Morse_D.V(r)
-    ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black', label=r'$\mathrm{LiH}$')
+    ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
     ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
-    for vi in range(LiH.v_max+1):
-        psi = [icec.Morse_D.psi(vi,r_i)/15 + icec.Morse_D.energy(vi)*Units.HARTREE2EV for r_i in r]
-        ax2.plot(r*Units.BOHR2ANGSTROM, psi, color='black', lw=1)
+    # Dp
+    energy = icec.Morse_Dp.diss_energies[30]
+    plot_diss_state(ax1, icec.Morse_Dp, energy, scale, yshift)
+    energy = icec.Morse_Dp.diss_energies[0]
+    plot_diss_state(ax1, icec.Morse_Dp, energy, 1./80, yshift)
+    plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
+    plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
     
     V = icec.Morse_Dp.V(r)
-    ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black', ls='--', label=r'$\mathrm{LiH}^+$')
-    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.05))
-    
-    psi = [icec.Morse_Dp.psi(0,r_i)/15 + yshift + icec.Morse_Dp.energy(0)*Units.HARTREE2EV for r_i in r]
-    ax1.plot(r*Units.BOHR2ANGSTROM, psi, color='black', lw=1)
+    ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
+    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
     
     ax1.spines.bottom.set_visible(False)
     ax2.spines.top.set_visible(False)
@@ -387,10 +406,9 @@ def plot_morse(icec:IntraICEC, system):
     ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
     ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
     
-    fig.text(0.04, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
-    
+    fig.text(0, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
     fname = DIR + 'plots/' + system + ".PES.pdf"
-    fig.savefig(fname)
+    fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
 def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC):
     omega = 10*Units.EV2HARTREE
@@ -423,8 +441,7 @@ def plot_H_PI_PR(icec:ICEC):
     fig.savefig(fname)
     
 def test_roots(Morse:Morse):
-    fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(int(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.txt'
-    root_estimates, roots = Morse.find_roots(fname)
+    roots, root_estimates = Morse.find_solutions_in_box()
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('Dissociative states')
@@ -434,7 +451,7 @@ def test_roots(Morse:Morse):
     ax.bar(root_estimates*Units.HARTREE2EV, root_estimates/2, width=0.005, color='tab:blue', label='estimates')
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
-    fname = DIR + 'plots/LiHp_roots.pdf'
+    fname = DIR + 'plots/LiHp.roots.' + str(round(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.pdf'
     fig.savefig(fname)
 
 HLi = True
@@ -475,7 +492,8 @@ if HLi:
     
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)
-    #plot_morse(icec, 'LiH')
+    energy_difference = (7.974721285 - 7.776735464) * Units.HARTREE2EV # difference at R=inf
+    plot_morse(icec_FC, 'LiH', L, energy_difference)
     #test_roots(icec_FC.Morse_Dp)
     
     system = 'Hp-LiH'
