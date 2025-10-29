@@ -444,7 +444,7 @@ calculation_bc = 0
 
 electronE = 1*Units.EV2HARTREE
 R = 6*Units.ANGSTROM2BOHR
-L = 10*Units.ANGSTROM2BOHR
+L = 8*Units.ANGSTROM2BOHR
 R_list = [6,8,10]
 R_list = [r*Units.ANGSTROM2BOHR for r in R_list]
 
@@ -480,23 +480,22 @@ if HLi:
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
-    header += f'Number of initial vibrational states: {LiH.v_max+1}\n' 
 
     if calculation_bb:
         calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
-        calculate_xs_bb(system, header, icec_FC, R, LiH.v_max, modifier='-FC')
-        calculate_xs_R(system, icec, R_list, header)        
+        calculate_xs_bb(system, header, icec_FC, R, modifier='-FC')
+        calculate_xs_R(system, header, icec, R_list, LiH.v_max, LiHp.v_max)        
         calculate_spectrum(system, header, icec, R, electronE, LiH.v_max, LiHp.v_max,)
         calculate_spectrum(system, header, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
         
     if calculation_bc:
-        calculate_xs_bc(system, header, icec_FC, R, LiH.v_max, modifier='-FC')
+        calculate_xs_bc(system, header, icec_FC, R, modifier='-FC')
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     #plot_xs_vi(system, icec, R, icec_fixed=icec_fixed)
     plot_xs_FC(system, icec, R, icec_fixed=icec_fixed)
     #plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
-    plot_spectrum_bc(system, R, electronE)
+    plot_spectrum_bc(system, R, electronE, vi=0)
     #plot_spectrum(system, R, 1*Units.EV2HARTREE, icec_fixed=icec_fixed)
     plot_spectrum_FC(system, R, 1*Units.EV2HARTREE)
 
