@@ -1,5 +1,6 @@
 # e- + H+ + LiH -> H + LiH+ + e-
 # Number of initial vibrational states: 3
+# Number of final vibrational states: 7
 # E_in = 1 eV
 # | E_out [eV] : xs [Mb] |
 6.898e+00 2.565e-03 0.000e+00 7.067e+00 9.259e-03 0.000e+00 7.230e+00 1.686e-02 0.000e+00

@@ -46,8 +46,16 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R):
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
             plt.close(fig) 
-    
+            
+
 def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifier=''):
+    if vD_max is None:
+        vD_max = icec.Morse_D.vmax
+    if vDp_max is None:
+        vDp_max = icec.Morse_Dp.vmax
+    header += f'Number of initial vibrational states: {vD_max+1}\n'
+    header += f'Number of final vibrational states: {vDp_max+1}\n'  
+    header += 'E_in [eV] | xs [Mb]'
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max)
@@ -55,16 +63,18 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
     file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
-def calculate_xs_R(system, icec, R, header):
+def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
     for r in R:
-        headerR = header + f'R = {round(r*Units.BOHR2ANGSTROM)} Angstrom'
-        headerR += 'E_in [eV] | xs [Mb]'
-        calculate_xs_bb(system, headerR, icec, r, LiH.v_max, LiHp.v_max)
+        headerR = header + f'R_AD = {round(r*Units.BOHR2ANGSTROM)} Angstrom\n'
+        calculate_xs_bb(system, headerR, icec, r, vD_max, vDp_max)
     
 def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''):
-    xs_array = icec.energyGrid*Units.HARTREE2EV
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
+    header += f'Number of initial vibrational states: {vD_max+1}\n'
+    header += f'Box length for dissociative states of D^+: {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}\n' 
+    header += 'E_in [eV] | xs [Mb]'
+    xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD)*Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
@@ -73,15 +83,18 @@ def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''
         
 def calculate_xs_bc_R(system, icec, R, header):
     for r in R:
-        headerR = header + f'R = {round(r*Units.BOHR2ANGSTROM)} Angstrom'
-        headerR += 'E_in [eV] | xs [Mb]'
+        headerR = header + f'R_AD = {round(r*Units.BOHR2ANGSTROM)} Angstrom\n'
         calculate_xs_bc(system, headerR, icec, r, LiH.v_max)
 
 def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=None, vDp_max=None, modifier=''): 
-    new_header = header + "E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
-    new_header += "| E_out [eV] : xs [Mb] |"  
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
+    if vDp_max is None:
+        vDp_max = icec.Morse_Dp.vmax
+    header += f'Number of initial vibrational states: {vD_max+1}\n'
+    header += f'Number of final vibrational states: {vDp_max+1}\n'
+    header += "E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
+    header += "| E_out [eV] : xs [Mb] |"  
     spectrum_all_vi = np.array([]) 
     for vi in range(vD_max+1):
         spectrum = icec.spectrum(electronE, R, vi, vDp_max)
@@ -90,15 +103,16 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=Non
         else:
             spectrum_all_vi = np.hstack((spectrum_all_vi, spectrum))          
     fname = DIR + "results/" + system + ".spectrum" + modifier + ".E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
-    np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=new_header)  
+    np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=header)  
     
 def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifier=''): 
-    new_header = header + "Spectrum for ICEC with E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
-    new_header += "E_out [eV] | xs [Mb] | diss_energy [eV]"  
+    header += "Spectrum for ICEC with E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
+    header += f'Box length for dissociative states of D^+: {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
+    header += "E_out [eV] | xs [Mb] | diss_energy [eV]"  
     vD = 0
     spectrum = icec.spectrum_bc(electronE, R, vD)   
     fname = DIR + "results/" + system + ".spectrum" + modifier + ".bc.v0.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
-    np.savetxt(fname, spectrum, fmt='%1.3e', header=new_header)  
+    np.savetxt(fname, spectrum, fmt='%1.3e', header=header)  
     
 def read_results_file(system, R, modifier=''):
     file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
