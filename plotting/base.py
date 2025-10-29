@@ -1,0 +1,1 @@
+DIR = '/home/elena/intraICEC/dimers/'
