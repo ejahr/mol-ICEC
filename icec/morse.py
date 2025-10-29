@@ -185,6 +185,8 @@ class Morse:
         - E : energy above dissociation limit (Hartree)
         - r : interatomic distance (Bohr)
         '''
+        if E < 0:
+            raise ValueError(f'E should be > 0. But E = {E}')
         k = mpmath.sqrt(2 * self.mu * E)
         epsilon = k / self.alpha
         s = self.lam - 0.5
@@ -208,7 +210,7 @@ class Morse:
         def psi_diss_L(E:float) -> float:
             if hasattr(E, "__len__"):
                 E = E[0]
-            if E > max_energy: # don't go looking beyond max_energy
+            if E > max_energy or E <= 0: # don't go looking beyond (0,max_energy]
                 return 100
             else:
                 return np.abs(self.psi_diss(E, self.box_length))
