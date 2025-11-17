@@ -239,7 +239,7 @@ class IntraICEC:
         - E : energy of the dissociative Morse state [Hartree]
         '''
         lower_bound = self.Morse_Dp.get_lower_bound(E)
-        result = mpmath.quadsubdiv(integrand, [lower_bound, self.Morse_Dp.box_length], maxdegree=20)
+        result = mpmath.quadsubdiv(integrand, [lower_bound, self.Morse_Dp.box_length], maxdegree=30)
         return result
         
     def FC_bc_integrand(self, vD, E, r):

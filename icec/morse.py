@@ -135,7 +135,7 @@ class Morse:
         '''
         self.box_length = box_length
 
-    def get_lower_bound(self, E:float, num:int=200) -> float:
+    def get_lower_bound(self, E:float, num:int=500) -> float:
         '''Lower bound for neglecting the diverging r->0 behaviour of the dissociative Morse states. 
         - E : energy (Hartree, a.u.)
         - num : number of sample points
@@ -167,7 +167,7 @@ class Morse:
         def integrand(r):
             return mpmath.conj(self.psi_diss(E, r)) * self.psi_diss(E, r)
         lower_bound = self.get_lower_bound(E)
-        norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=20)
+        norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
         return 1 / mpmath.sqrt(mpmath.fabs(norm))
 
     def psi_diss(self, E:float, r:float):
