@@ -1,6 +1,8 @@
 import numpy as np
 import scipy as sp
 import mpmath
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from .constants import Units
 
 class Morse:
@@ -168,8 +170,10 @@ class Morse:
         if lower_bound is None:
             lower_bound = self.get_lower_bound(E)
         r_reflection = self.reflection_point_left(E)
-        num_oscillation = np.where(self.diss_energies==E)[0][0]
-        #num_intervals = min(1, int(round(num_oscillation/10)))
+        if hasattr(self, 'diss_energies'):
+            num_oscillation = np.where(self.diss_energies==E)[0][0]
+        else:
+            num_oscillation = 1
         num_intervals = min(1, num_oscillation)
         norm = mpmath.quadsubdiv(integrand, [lower_bound, r_reflection], maxdegree=10)
         intervals_mid = np.linspace(r_reflection, self.rmax, num_intervals+1)
@@ -204,34 +208,50 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
-        """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
-        """
-        def psi_diss_L(E:float) -> float:
+    def solve_root(self, max_energy, root_estimate):
+        def psi_diss_L(E:float):
             if hasattr(E, "__len__"):
                 E = E[0]
             if E > max_energy or E <= 0: # don't go looking beyond (0,max_energy]
                 return 100
             else:
-                return np.abs(self.psi_diss(E, self.box_length))
+                return mpmath.fabs(self.psi_diss(E, self.box_length))
+          
+        def psi_float(E:float) -> float:
+            return float(psi_diss_L(E))  
 
-        first_root = sp.optimize.fsolve(psi_diss_L, 1e-7)[0]
-        #print("first root", first_root, psi_diss_L(first_root))
-        root_estimates = np.geomspace(first_root, max_energy, num)
+        rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-6)[0]
+        root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
+        return np.abs(root)
+    
+    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
+        """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
+        """
+        first_root = self.solve_root(max_energy, root_estimate=1e-10)
+        print("first root", first_root, mpmath.fabs(self.psi_diss(first_root, self.box_length)))
+        root_estimates = np.geomspace(float(first_root), max_energy, num)
+            
+        t0 = time.perf_counter()
+        roots = []
+        with ProcessPoolExecutor() as executor:
+            futures = [executor.submit(self.solve_root, max_energy, root) for root in root_estimates]
+            for future in as_completed(futures):
+                try:
+                    roots.append(future.result())
+                except Exception as e:
+                    print("root solve failed", e)
+        t1 = time.perf_counter()
+        print("time for parallel root finding:", t1 - t0)
+        roots = unique_mpf(np.array(roots), rtol=1e-8)
         roots = np.array([
-            sp.optimize.fsolve(psi_diss_L, root_estimate)[0] 
-            for root_estimate in root_estimates
-        ])
-        roots = unique_mpf(roots, rtol=1e-8)
-        true_roots = np.array([
-            E for E in roots if psi_diss_L([E]) < mpmath.mpf('1e-8')
+            E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8') #*self.norm_diss(E)
         ])
         
         if file_path is not None:
             header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
-            np.savetxt(file_path, np.transpose(true_roots*Units.HARTREE2EV), fmt='%1.8e', header=header)
-        self.diss_energies = true_roots
-        return true_roots, root_estimates
+            np.savetxt(file_path, np.transpose(roots*Units.HARTREE2EV), fmt='%1.8e', header=header)
+        self.diss_energies = roots
+        return roots, root_estimates
     
     def get_density_of_states(self, energies=None):
         '''Density of states according to rho(E_i) = 2/(E_{i-2} - E_{i+1})
@@ -251,13 +271,25 @@ class Morse:
     def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE, num:int=500):
         header = "Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom\n"
         header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.]"
-        roots, _ = self.find_solutions_in_box(max_energy, num)   
-        norms = np.array([
-            self.norm_diss(E) for E in roots
-        ])
+        roots, root_estimates = self.find_solutions_in_box(max_energy, num)   
+        
+        t0 = time.perf_counter()
+        norms = []
+        with ProcessPoolExecutor() as executor:
+            futures = [executor.submit(self.norm_diss, root) for root in roots]
+            for future in as_completed(futures):
+                try:
+                    norms.append(future.result())
+                except Exception as e:
+                    print("calculation of norm failed", e)
+        norms = np.array(norms)
+        t1 = time.perf_counter()
+        print("time for parallel norm calculation:", t1 - t0)
+        
         density_of_states = self.get_density_of_states() 
         data = np.vstack((roots*Units.HARTREE2EV, roots, norms, density_of_states))
         np.savetxt(file_path, np.transpose(data), fmt='%1.8e', header=header)
+        return roots, root_estimates
         
     def load_diss_states(self, file_path:str):
         # TODO can I use dict for this?

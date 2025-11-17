@@ -122,8 +122,8 @@ def plot_H_PI_PR(icec:ICEC):
     fname = DIR + 'plots/H.PI.PR.pdf'
     fig.savefig(fname)
     
-def test_roots(Morse:Morse):
-    roots, root_estimates = Morse.find_solutions_in_box()
+def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+    roots, root_estimates = Morse.save_diss_states(fname, max_energy, num)
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('Dissociative states')
@@ -133,8 +133,10 @@ def test_roots(Morse:Morse):
     ax.bar(root_estimates*Units.HARTREE2EV, root_estimates/2, width=0.005, color='tab:blue', label='estimates')
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
+    plt.tight_layout()
     fname = DIR + 'plots/LiHp.roots.' + str(round(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.pdf'
     fig.savefig(fname)
+    print("roots done")
 
 HLi = True
 BLi = False
