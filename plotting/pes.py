@@ -15,12 +15,13 @@ def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
                for r_i in morse.r]
     ax.plot(morse.r*Units.BOHR2ANGSTROM, psi, color='tab:blue', lw=1)
     
-def plot_diss_state(ax, morse:Morse, energy, scale=1, yshift=0):
-    norm = morse.norm_diss(energy)
+def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color='lightskyblue'):
+    if norm is None:
+        norm = morse.norm_diss(energy)
     psi_diss = [mpmath.re(norm * morse.psi_diss(energy,r_i)) * scale
                 + energy*Units.HARTREE2EV + yshift 
                 for r_i in morse.r]
-    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color='lightskyblue', lw=1)
+    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color=color, lw=1)
 
 def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     # TODO I defined bound states to have negative energies, recheck the y values
@@ -45,10 +46,11 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
     # Dp
-    energy = icec.Morse_Dp.diss_energies[30]
-    plot_diss_state(ax1, icec.Morse_Dp, energy, scale, yshift)
-    energy = icec.Morse_Dp.diss_energies[0]
-    plot_diss_state(ax1, icec.Morse_Dp, energy, 1./80, yshift)
+    energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
+    plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    energy, norm = icec.Morse_Dp.diss_energies[0], icec.Morse_Dp.diss_norms[0]
+    plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    
     plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
     plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
     
@@ -68,5 +70,5 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
     
     fig.text(0, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
-    fname = DIR + 'plots/' + system + ".PES.pdf"
+    fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
