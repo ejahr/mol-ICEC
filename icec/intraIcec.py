@@ -236,22 +236,9 @@ class IntraICEC:
         - electronE : kinetic energy of incoming electron [Hartree, a.u.]
         - vi: initial vibrational quantum number
         - E : energy of the dissociative Morse state [Hartree]
-        Divides integration into intervals to deal with highly oscillating integrand
         '''
-        if lower_bound is None:
-            lower_bound = self.Morse_Dp.get_lower_bound(E)
-        r_left = min(self.Morse_D.reflection_point_left(self.Morse_D.energy(vi)), self.Morse_Dp.reflection_point_left(E))
-        if r_left <= lower_bound:
-            raise Exception("r_left <= lower_bound\n")
-        r_right = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
-        num_oscillation = np.where(self.Morse_Dp.diss_energies==E)[0][0]
-        #num_intervals = min(1, int(round(num_oscillation/10)))
-        num_intervals = min(1, num_oscillation)
-        result = mpmath.quadsubdiv(integrand, [lower_bound, r_left], maxdegree=10)
-        intervals_mid = np.linspace(r_left, r_right, (vi+1)*num_intervals+1)
-        result += mpmath.quadsubdiv(integrand, intervals_mid, maxdegree=10)
-        intervals_high = np.linspace(r_right, self.Morse_Dp.box_length, num_oscillation+1)
-        result += mpmath.quadsubdiv(integrand, intervals_high, maxdegree=10)
+        lower_bound = self.Morse_Dp.get_lower_bound(E)
+        result = mpmath.quadsubdiv(integrand, [lower_bound, self.Morse_Dp.box_length], maxdegree=20)
         return result
         
     def FC_bc_integrand(self, vD, E, r):
