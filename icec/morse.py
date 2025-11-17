@@ -242,7 +242,7 @@ class Morse:
                     print("root solve failed", e)
         t1 = time.perf_counter()
         print("time for parallel root finding:", t1 - t0)
-        roots = unique_mpf(np.array(roots), rtol=1e-8)
+        roots = unique_mpf(np.array(roots), rtol=1e-8) # also sorts the array
         roots = np.array([
             E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8') #*self.norm_diss(E)
         ])
@@ -274,15 +274,8 @@ class Morse:
         roots, root_estimates = self.find_solutions_in_box(max_energy, num)   
         
         t0 = time.perf_counter()
-        norms = []
         with ProcessPoolExecutor() as executor:
-            futures = [executor.submit(self.norm_diss, root) for root in roots]
-            for future in as_completed(futures):
-                try:
-                    norms.append(future.result())
-                except Exception as e:
-                    print("calculation of norm failed", e)
-        norms = np.array(norms)
+            norms = list(executor.map(self.norm_diss, roots)) 
         t1 = time.perf_counter()
         print("time for parallel norm calculation:", t1 - t0)
         
@@ -325,7 +318,7 @@ def equal_mpf(a, b, rtol=1e-5, atol=0.0):
     return False
         
 def unique_mpf(arr, rtol=1e-5, atol=0.0):
-    """ Return unique floats     
+    """ Returns sorted array of unique floats     
     """
     arr = np.asarray(arr, dtype=float)
     if arr.size == 0:
