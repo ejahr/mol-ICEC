@@ -21,12 +21,12 @@ def read_results_file(system, electronE, R, modifier='', L=None):
     if L is not None:
         file_path += f'.L{str(round(L*Units.BOHR2ANGSTROM))}.txt'
     else:
-        file_path += 'icec.txt'
+        file_path += '.icec.txt'
     results = np.loadtxt(file_path, comments='#')
     return results    
     
 def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_fixed:ICEC=None, modifier=''):
-    results = read_results_file(electronE, R)
+    results = read_results_file(system, electronE, R)
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     set_axes(ax)
@@ -62,8 +62,8 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     fig.savefig(fname)
     
 def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None):
-    results_FC = read_results_file(electronE, R, modifier='-FC')
-    results_resolved = read_results_file(electronE, R)
+    results_FC = read_results_file(system, electronE, R, modifier='-FC')
+    results_resolved = read_results_file(system, electronE, R)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -85,8 +85,8 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None):
     
 def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
     L=icec.Morse_Dp.box_length
-    results_bb = read_results_file(electronE, R, modifier='-FC')
-    results_bc = read_results_file(electronE, R, modifier='-FC.bc.v0', L=L)
+    results_bb = read_results_file(system, electronE, R, modifier='-FC')
+    results_bc = read_results_file(system, electronE, R, modifier='-FC.bc.v0', L=L)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 

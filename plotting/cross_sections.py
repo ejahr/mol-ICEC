@@ -16,7 +16,7 @@ def read_results_file(system, R, modifier='', L=None):
     if L is not None:
         file_path += f'.L{str(round(L*Units.BOHR2ANGSTROM))}.txt'
     else:
-        file_path += 'icec.txt'
+        file_path += '.icec.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
 

@@ -87,7 +87,7 @@ def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC):
     omega = 10*Units.EV2HARTREE
     print('xs         ', icec.PI_xs_D(0,0,omega))
     print('xs FC      ', icec_FC.PI_xs_D(0,0,omega))
-    print('xs FC paper', icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)*Units.MB2AU*0.0153)
+    print('xs FC paper', icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)*Units.MB2AU*0.0153)             
     
     for vp in range(0, LiH.v_max+1):
         icec_FC.FC_factor(0,vp)
@@ -172,13 +172,12 @@ if HLi:
     icec_FC.Morse_Dp.define_box(L)
     fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
     calculate_roots(icec_FC.Morse_Dp, fname, max_energy=1*Units.EV2HARTREE, num=1000)
-    #icec_FC.Morse_Dp.save_diss_states(fname)
-    #icec_FC.Morse_Dp.load_diss_states(fname)
+    icec_FC.Morse_Dp.load_diss_states(fname)
     
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)
     energy_difference = (7.974721285 - 7.776735464) * Units.HARTREE2EV # difference at R=inf
-    #plot_PES(icec_FC, 'LiH', L, energy_difference)
+    plot_PES(icec_FC, 'LiH', L, energy_difference)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
@@ -205,8 +204,8 @@ if HLi:
         plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
         
     if plot_bc:
-        plot_xs_FC(system, icec, R, icec_fixed)
-        plot_spectrum_bc(system, R, electronE, vi=0)
+        plot_xs_FC(system, icec_FC, R, icec_fixed)
+        plot_spectrum_bc(system, icec_FC, R, electronE, vi=0)
 
 if BLi:
     system = 'Bp-LiH'

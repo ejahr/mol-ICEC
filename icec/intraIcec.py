@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import mpmath
+import time
 from itertools import repeat
 from multiprocessing import Pool
 from typing import Callable
@@ -316,13 +317,15 @@ class IntraICEC:
             if not hasattr(self.Morse_Dp, 'diss_energies'):
                 self.Morse_Dp.find_solutions_in_box()
             diss_energies = self.Morse_Dp.diss_energies
+        t0 = time.perf_counter()
         with Pool() as pool:
             result = pool.starmap(
                 self.xs_vD_E, 
                 zip(repeat(R), repeat(vD), diss_energies)
             )
-        xs_array = sum(list(result))
-        return xs_array
+        t1 = time.perf_counter()
+        print('time for parallelized xs:', t1-t0)
+        return sum(list(result))
     
     def function_for_spectrum(self, electronE, R, vD, E, density_of_states_at_E):
         electronE_f = self.electronE_f_bc(electronE, vD, E)
@@ -344,11 +347,14 @@ class IntraICEC:
             diss_energies = self.Morse_Dp.diss_energies
         if not hasattr(self.Morse_Dp, 'density_of_states'):
             self.Morse_Dp.get_density_of_states(diss_energies)
+        t0 = time.perf_counter()
         with Pool() as pool:
             result = pool.starmap(
                 self.function_for_spectrum, 
                 zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.density_of_states)
             )
+        t1 = time.perf_counter()
+        print('time for parallelized spectrum:', t1-t0)
         return np.array(result)
             
     # ====== OTHER ======
