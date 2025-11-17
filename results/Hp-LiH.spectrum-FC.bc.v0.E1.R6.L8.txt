@@ -1,8 +1,8 @@
 # e- + H+ + LiH -> H + LiH+ + e-
 # Spectrum for ICEC with E_in = 1 eV
-# Box length for dissociative states of D^+: 8
+# Box length for dissociative states of D^+: 8 Angstrom
 # E_out [eV] | xs [Mb] | diss_energy [eV]
-6.779e+00 1.538e-01 1.788e-03
+6.779e+00 9.026e+00 1.788e-03
 6.774e+00 1.263e+01 6.667e-03
 6.767e+00 1.303e+01 1.345e-02
 6.759e+00 1.362e+01 2.181e-02
