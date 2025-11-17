@@ -16,15 +16,6 @@ width, height = 6, 4
 
 DIR = '/home/elena/intraICEC/dimers/'
 
-#https://doi.org/10.1021/jp9921295
-R = 2 * Units.ANGSTROM2BOHR
-#R = 10 * Units.ANGSTROM2BOHR
-R = np.array([6,8,10]) * Units.ANGSTROM2BOHR
-
-min_kinE = 0.01 * Units.EV2HARTREE
-max_kinE = 9 * Units.EV2HARTREE
-resolution = 1000
-
 def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
@@ -142,12 +133,21 @@ HLi = True
 BLi = False
 calculation_bb = 0
 calculation_bc = 0
+plot_bb = 0
+plot_bc = 0
+
+#https://doi.org/10.1021/jp9921295
+R = 2 * Units.ANGSTROM2BOHR
 
 electronE = 1*Units.EV2HARTREE
 R = 6*Units.ANGSTROM2BOHR
 L = 8*Units.ANGSTROM2BOHR
-R_list = [6,8,10]
-R_list = [r*Units.ANGSTROM2BOHR for r in R_list]
+L = 16*Units.ANGSTROM2BOHR
+R_list = np.array([6,8,10]) * Units.ANGSTROM2BOHR
+
+min_kinE = 0.01 * Units.EV2HARTREE
+max_kinE = 9 * Units.EV2HARTREE
+resolution = 1000
 
 if HLi:
     system = 'Hp-LiH'
@@ -171,14 +171,14 @@ if HLi:
     
     icec_FC.Morse_Dp.define_box(L)
     fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
+    calculate_roots(icec_FC.Morse_Dp, fname, max_energy=1*Units.EV2HARTREE, num=1000)
     #icec_FC.Morse_Dp.save_diss_states(fname)
-    icec_FC.Morse_Dp.load_diss_states(fname)
+    #icec_FC.Morse_Dp.load_diss_states(fname)
     
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)
     energy_difference = (7.974721285 - 7.776735464) * Units.HARTREE2EV # difference at R=inf
-    plot_PES(icec_FC, 'LiH', L, energy_difference)
-    #test_roots(icec_FC.Morse_Dp)
+    #plot_PES(icec_FC, 'LiH', L, energy_difference)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
