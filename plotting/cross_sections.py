@@ -11,8 +11,12 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 plt.rcParams.update({'font.size': 16})
 width, height = 6, 4
 
-def read_results_file(system, R, modifier=''):
-    file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+def read_results_file(system, R, modifier='', L=None):
+    file_path = DIR + f"results/{system}.xs{modifier}.R{str(round(R*Units.BOHR2ANGSTROM))}"
+    if L is not None:
+        file_path += f'.L{str(round(L*Units.BOHR2ANGSTROM))}.txt'
+    else:
+        file_path += 'icec.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
 
@@ -46,12 +50,12 @@ def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     ax.grid(True)
     ax.set_xlim(-0.2, 8.6)
     # ax.plot(icec.energyGrid * Units.HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*Units.AU2MB, label=r'$\sigma_\text{PI}$')
-    results = read_results_file(system, R, modifier=modifier)
+    results = read_results_file(system, R, modifier)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
-def plot_xs_bc(ax, system, R, vD, label='icec', modifier='', **kwargs):
+def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     modifier += ".bc"
-    results = read_results_file(system, R, modifier=modifier)
+    results = read_results_file(system, R, modifier, L)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
@@ -62,11 +66,12 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
         xs = icec_fixed.xs_energy(R)
         ax.plot(energy, xs, color='gray', label=r'unresolved')
     vi = 0
-    plot_xs_bc(ax, system, R, vi, label=r'dissociation', modifier='-FC', color='tab:red', ls='--')
+    L = icec.Morse_Dp.box_length
+    plot_xs_bc(ax, system, R, vi, L, label=r'dissociation', modifier='-FC', color='tab:red', ls='--')
     plot_xs(ax, system, R, vi, label=r'FC', modifier='-FC', color='tab:red')
     plot_xs(ax, system, R, vi, label=r'resolved', color='tab:blue')
     ax.legend()
-    fname = DIR + 'plots/' + system + '.xs-FC.v0.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
+    fname = DIR + f'plots/{system}.xs-FC.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout()
     fig.savefig(fname)
     

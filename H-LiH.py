@@ -37,7 +37,7 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max)
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + "results/" + system + '.xs' + modifier + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    file_path = DIR + f"results/{system}.xs{modifier}.R"+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
@@ -55,7 +55,7 @@ def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD)*Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + "results/" + system + '.xs' + modifier + '.bc.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    file_path = DIR + f"results/{system}.xs{modifier}.bc.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
 def calculate_xs_bc_R(system, icec, R, header):
@@ -79,7 +79,7 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=Non
             spectrum_all_vi = spectrum
         else:
             spectrum_all_vi = np.hstack((spectrum_all_vi, spectrum))          
-    fname = DIR + "results/" + system + ".spectrum" + modifier + ".E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    fname = DIR + f"results/{system}.spectrum{modifier}.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vi, fmt='%1.3e', header=header)  
     
 def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifier=''): 
@@ -88,7 +88,7 @@ def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifie
     header += "E_out [eV] | xs [Mb] | diss_energy [eV]"  
     vD = 0
     spectrum = icec.spectrum_bc(electronE, R, vD)   
-    fname = DIR + "results/" + system + ".spectrum" + modifier + ".bc.v0.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    fname = DIR + f'results/{system}.spectrum{modifier}.bc.v0.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt'
     np.savetxt(fname, spectrum, fmt='%1.3e', header=header)  
  
 
@@ -192,16 +192,19 @@ if HLi:
         calculate_xs_bc(system, header, icec_FC, R, modifier='-FC')
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
-    plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
-    plot_xs_FC(system, icec, R, icec_fixed)
-    plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
-    plot_spectrum_bc(system, R, electronE, vi=0)
-    plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
-    plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max)
-
-    T = [15, 298, 2000] 
-    plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
-    plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
+    if plot_bb:
+        plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
+        plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
+        plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
+        plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max)
+    
+        T = [15, 298, 2000] 
+        plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
+        plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
+        
+    if plot_bc:
+        plot_xs_FC(system, icec, R, icec_fixed)
+        plot_spectrum_bc(system, R, electronE, vi=0)
 
 if BLi:
     system = 'Bp-LiH'
