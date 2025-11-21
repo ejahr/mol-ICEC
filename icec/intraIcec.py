@@ -256,7 +256,6 @@ class IntraICEC:
         if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
             if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
                 dps = 50
-                print('norm', dps)
         with mpmath.workdps(dps):
             result = self.integrate_r(integrand, vD, E, lower_bound=lower_bound)    
         return (mpmath.fabs(norm * result)) ** 2
@@ -307,7 +306,11 @@ class IntraICEC:
         if not hasattr(self.Morse_Dp, "box_length"):
             self.Morse_Dp.define_box()
         lower_bound = self.Morse_Dp.get_lower_bound(E)
-        norm = self.Morse_Dp.norm_diss(E, lower_bound)
+        if hasattr(self.Morse_Dp, 'diss_norms'):
+            i = np.where(self.Morse_Dp.diss_energies==E)[0][0]
+            norm = self.Morse_Dp.diss_norms[i]
+        else:
+            norm = self.Morse_Dp.norm_diss(E, lower_bound)
         FC_bc = self.FC_bc(vD, E, lower_bound, norm)
         xs_array = np.array(
             [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]
@@ -329,7 +332,7 @@ class IntraICEC:
                 zip(repeat(R), repeat(vD), diss_energies)
             )
         t1 = time.perf_counter()
-        print('time for parallelized xs:', t1-t0)
+        print(f'time for xs vD={vD} : {t1-t0}')
         return sum(list(result))
     
     def function_for_spectrum(self, electronE, R, vD, E, density_of_states_at_E):
@@ -359,7 +362,7 @@ class IntraICEC:
                 zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.density_of_states)
             )
         t1 = time.perf_counter()
-        print('time for parallelized spectrum:', t1-t0)
+        print('time for spectrum:', t1-t0)
         return np.array(result)
             
     # ====== OTHER ======
