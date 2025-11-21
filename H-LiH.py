@@ -21,7 +21,7 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
-    header += f'Number of initial vibrational states: {vD_max+1}\n'
+    header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
     header += f'Number of final vibrational states: {vDp_max+1}\n'  
     header += 'E_in [eV] | xs [Mb]'
     xs_array = icec.energyGrid*Units.HARTREE2EV
@@ -40,7 +40,9 @@ def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
-    header += f'Box length for dissociative states of D^+: {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
+    header += f'Dissociative states of D^+: \
+        Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV)}, \
+        Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
     header += 'E_in [eV] | xs [Mb]'
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
@@ -59,7 +61,7 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=Non
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
-    header += f'Number of initial vibrational states: {vD_max+1}\n'
+    header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
     header += f'Number of final vibrational states: {vDp_max+1}\n'
     header += "E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
     header += "| E_out [eV] : xs [Mb] |"  
@@ -146,6 +148,7 @@ R_list = np.array([6,8,10]) * Units.ANGSTROM2BOHR
 
 min_kinE = 0.01 * Units.EV2HARTREE
 max_kinE = 9 * Units.EV2HARTREE
+max_dissE = 1.3 * Units.EV2HARTREE
 resolution = 1000
 
 if HLi:
@@ -191,7 +194,7 @@ if HLi:
         
     if calculation_bc:
         calculate_xs_bc(system, header, icec_FC, R, vD_max=5, modifier='-FC')
-        #calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
+        calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     if plot_bb:
         plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
