@@ -39,8 +39,8 @@ def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
 def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
-    header += f'Number of initial vibrational states: {vD_max+1}\n'
-    header += f'Box length for dissociative states of D^+: {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}\n' 
+    header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
+    header += f'Box length for dissociative states of D^+: {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
     header += 'E_in [eV] | xs [Mb]'
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
@@ -131,9 +131,9 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
 HLi = True
 BLi = False
 calculation_bb = 0
-calculation_bc = 0
+calculation_bc = 1
 plot_bb = 0
-plot_bc = 0
+plot_bc = 1
 
 #https://doi.org/10.1021/jp9921295
 R = 2 * Units.ANGSTROM2BOHR
@@ -141,7 +141,7 @@ R = 2 * Units.ANGSTROM2BOHR
 electronE = 1*Units.EV2HARTREE
 R = 6*Units.ANGSTROM2BOHR
 L = 8*Units.ANGSTROM2BOHR
-L = 16*Units.ANGSTROM2BOHR
+#L = 16*Units.ANGSTROM2BOHR
 R_list = np.array([6,8,10]) * Units.ANGSTROM2BOHR
 
 min_kinE = 0.01 * Units.EV2HARTREE
@@ -190,8 +190,8 @@ if HLi:
         calculate_spectrum(system, header, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
         
     if calculation_bc:
-        calculate_xs_bc(system, header, icec_FC, R, modifier='-FC')
-        calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
+        calculate_xs_bc(system, header, icec_FC, R, vD_max=5, modifier='-FC')
+        #calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     if plot_bb:
         plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
@@ -206,6 +206,7 @@ if HLi:
     if plot_bc:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
         plot_spectrum_bc(system, icec_FC, R, electronE, vi=0)
+        
 
 if BLi:
     system = 'Bp-LiH'
