@@ -11,6 +11,12 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 plt.rcParams.update({'font.size': 16})
 width, height = 6, 4
 
+def set_axes(ax):
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\varepsilon$ [eV]')
+    ax.set_ylabel(r'$\sigma$ [Mb]')
+    ax.grid(True)
+
 def read_results_file(system, R, modifier='', L=None):
     file_path = DIR + f"results/{system}.xs{modifier}.R{str(round(R*Units.BOHR2ANGSTROM))}"
     if L is not None:
@@ -26,12 +32,9 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
         energies = icec.energyGrid*Units.HARTREE2EV
         for vi in range(vD_max+1): 
             fig, ax = plt.subplots()
-            ax.set_yscale('log')
-            ax.set_xlabel(r'$\epsilon$ [eV]')
-            ax.set_ylabel(r'$\sigma$ [Mb]')
+            set_axes(ax)
             ax.set_xlim(-0.2, 8.5)
             ax.set_ylim(1e-5, 1e2)
-            ax.grid(True)
             results = read_results_file(system, R)
             ax.plot(results[:,0], results[:, vi+1], label='total', color='grey')
             for vf in range(vDp_max+1):
@@ -44,10 +47,6 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
             plt.close(fig) 
 
 def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
-    ax.set_yscale('log')
-    ax.set_xlabel(r'$\epsilon$ [eV]')
-    ax.set_ylabel(r'$\sigma$ [Mb]')
-    ax.grid(True)
     ax.set_xlim(-0.2, 8.6)
     # ax.plot(icec.energyGrid * Units.HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*Units.AU2MB, label=r'$\sigma_\text{PI}$')
     results = read_results_file(system, R, modifier)
@@ -58,18 +57,27 @@ def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     results = read_results_file(system, R, modifier, L)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
+def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
+    results_bb = read_results_file(system, R, modifier)
+    modifier += ".bc"
+    results_bc = read_results_file(system, R, modifier, L)
+    results = results_bb[:, vD+1] + results_bc[:, vD+1]
+    ax.plot(results_bb[:,0], results, label=label, **kwargs)
+    
 def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
+    set_axes(ax)
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
         xs = icec_fixed.xs_energy(R)
-        ax.plot(energy, xs, color='gray', label=r'unresolved')
+        ax.plot(energy, xs, color='gray', label=r'$R^{\mathrm{LiH}}_e$')
     vi = 0
     L = icec.Morse_Dp.box_length
-    plot_xs_bc(ax, system, R, vi, L, label=r'dissociation', modifier='-FC', color='tab:red', ls='--')
-    plot_xs(ax, system, R, vi, label=r'FC', modifier='-FC', color='tab:red')
-    plot_xs(ax, system, R, vi, label=r'resolved', color='tab:blue')
+    plot_xs_tot(ax, system, R, vi, L, label=r'FC tot', modifier='-FC', color='tab:red', ls=':')
+    plot_xs_bc(ax, system, R, vi, L, label=r'FC b-d', modifier='-FC', color='tab:red', ls='--')
+    plot_xs(ax, system, R, vi, label=r'FC b-b', modifier='-FC', color='tab:red')
+    plot_xs(ax, system, R, vi, label=r'reference', color='tab:blue')
     ax.legend()
     fname = DIR + f'plots/{system}.xs-FC.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout()
@@ -78,6 +86,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
 def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
+    set_axes(ax)
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
         xs = icec_fixed.xs_energy(R)
@@ -98,6 +107,7 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
 def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
+    set_axes(ax)
     
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
@@ -119,11 +129,8 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
 def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
-    ax.set_xlabel(r'$\epsilon$ [eV]')
-    ax.set_ylabel(r'$\sigma$ [Mb]')
-    ax.set_yscale('log')
+    set_axes(ax)
     ax.set_xlim(-0.2, 8.5)
-    ax.grid(True)
     results = read_results_file(system, R)
     
     blues = plt.get_cmap("Blues_r")    
@@ -162,6 +169,7 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
 def plot_xs_R(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
+    set_axes(ax)
 
     blues = plt.get_cmap("Blues_r")
     for r in R:
