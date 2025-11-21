@@ -77,7 +77,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     plot_xs_tot(ax, system, R, vi, L, label=r'FC tot', modifier='-FC', color='tab:red', ls=':')
     plot_xs_bc(ax, system, R, vi, L, label=r'FC b-d', modifier='-FC', color='tab:red', ls='--')
     plot_xs(ax, system, R, vi, label=r'FC b-b', modifier='-FC', color='tab:red')
-    plot_xs(ax, system, R, vi, label=r'reference', color='tab:blue')
+    plot_xs(ax, system, R, vi, label=r'b-b', color='tab:blue')
     ax.legend()
     fname = DIR + f'plots/{system}.xs-FC.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout()

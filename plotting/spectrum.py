@@ -84,24 +84,26 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None):
     
 def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
     L=icec.Morse_Dp.box_length
-    results_bb = read_results_file(system, electronE, R, modifier='-FC')
-    results_bc = read_results_file(system, electronE, R, modifier='-FC.bc.v0', L=L)
+    results_bb = read_results_file(system, electronE, R)
+    results_bb_FC = read_results_file(system, electronE, R, modifier='-FC')
+    results_bc_FC = read_results_file(system, electronE, R, modifier='-FC.bc.v0', L=L)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     set_axes(ax)
     ax.set_ylim(2*1e-4, 20)
 
-    ax.plot(results_bc[:,0], results_bc[:,1], color='tab:red', marker='.', label='FC b-d')
-    ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.005, color='tab:blue', label='FC b-b')
+    ax.plot(results_bc_FC[:,0], results_bc_FC[:,1], color='tab:red', ls='--', label='FC b-d') # marker='.',
+    ax.bar(results_bb_FC[:,3*vi], results_bb_FC[:,3*vi+1], width=0.005, color='tab:red', label='FC b-b')
+    ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.0075, color='tab:blue', label='b-b')
     
-    x_min = min(results_bc[:,0])
-    x_max = max(results_bb[:,3*vi])
-    ax.set_xlim(x_min - 0.025, x_max + 0.025)
+    x_min = min(results_bc_FC[:,0])
+    x_max = max(results_bb_FC[:,3*vi])
+    ax.set_xlim(x_min, x_max + 0.02)
     ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)  
     ax.annotate(r'$\sigma_\text{PR}$', 
-                (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), 
-                xytext=(3,-3),
+                (x_min, icec.PR_xs_A(electronE)*Units.AU2MB), 
+                xytext=(-26,-1),
                 textcoords='offset points', color='gray') 
 
     ax.legend(fontsize='small', loc='upper left')
