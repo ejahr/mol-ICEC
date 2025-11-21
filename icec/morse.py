@@ -171,7 +171,6 @@ class Morse:
         if dps==15 and hasattr(self, 'diss_energies'):
             if np.where(self.diss_energies==E)[0][0] == 0:
                 dps = 50
-                print('norm', dps)
         with mpmath.workdps(dps):
             norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
         return 1 / mpmath.sqrt(mpmath.fabs(norm))
@@ -234,9 +233,10 @@ class Morse:
                 try:
                     roots.append(future.result())
                 except Exception as e:
-                    print("root solve failed", e)
+                    if str(e):
+                        print("root solve failed", e)
         t1 = time.perf_counter()
-        print("time for parallel root finding:", t1 - t0)
+        print("time for root finding:", t1 - t0)
         roots = unique_mpf(np.array(roots), rtol=1e-8) # also sorts the array
         roots = np.array([
             E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8') #*self.norm_diss(E)
@@ -249,7 +249,7 @@ class Morse:
         return roots, root_estimates
     
     def get_density_of_states(self, energies=None):
-        '''Density of states according to rho(E_i) = 2/(E_{i-2} - E_{i+1})
+        '''Density of states rho(E_i) = 1/(E_{i+1} - E_i)
         - energies [Hartree] : energies of all possible dissociative states (in a box)
         '''
         if energies is None:
@@ -257,9 +257,8 @@ class Morse:
                 self.find_solutions_in_box()
             energies = self.diss_energies
         density_of_states = np.zeros(len(energies))
-        density_of_states[1:-1] = 2/(energies[2:]-energies[0:-2])
-        density_of_states[0] = 1/(energies[1]-energies[0])
-        density_of_states[-1] = 1/(energies[-1]-energies[-2])
+        density_of_states[0:-1] = 1/(energies[1:]-energies[0:-1])
+        density_of_states[-1] = density_of_states[-2]
         self.density_of_states = density_of_states
         return density_of_states
     
@@ -272,7 +271,7 @@ class Morse:
         with ProcessPoolExecutor() as executor:
             norms = list(executor.map(self.norm_diss, roots)) 
         t1 = time.perf_counter()
-        print("time for parallel norm calculation:", t1 - t0)
+        print("time for norm calculation:", t1 - t0)
         
         density_of_states = self.get_density_of_states() 
         data = np.vstack((roots*Units.HARTREE2EV, roots, norms, density_of_states))
