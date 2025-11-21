@@ -92,7 +92,7 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
     set_axes(ax)
     ax.set_ylim(2*1e-4, 20)
 
-    ax.plot(results_bc[:,0], results_bc[:,1], color='tab:red', label='FC b-d')
+    ax.plot(results_bc[:,0], results_bc[:,1], color='tab:red', marker='.', label='FC b-d')
     ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.005, color='tab:blue', label='FC b-b')
     
     x_min = min(results_bc[:,0])
