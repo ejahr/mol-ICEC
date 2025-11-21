@@ -159,15 +159,21 @@ class Morse:
         n = self.box_length * np.sqrt(2 * self.mu * E) / np.pi
         return round(n / d)
 
-    def norm_diss(self, E:float):
+    def norm_diss(self, E:float, dps=15):
         '''Box normalization of the dissociative Morse states.
         - E : energy (Hartree, a.u.)
         - lower_bound : lower bound for the integration
         '''
+
         def integrand(r):
             return mpmath.conj(self.psi_diss(E, r)) * self.psi_diss(E, r)
         lower_bound = self.get_lower_bound(E)
-        norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
+        if dps==15 and hasattr(self, 'diss_energies'):
+            if np.where(self.diss_energies==E)[0][0] == 0:
+                dps = 50
+                print('norm', dps)
+        with mpmath.workdps(dps):
+            norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
         return 1 / mpmath.sqrt(mpmath.fabs(norm))
 
     def psi_diss(self, E:float, r:float):
@@ -196,7 +202,7 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def solve_root(self, max_energy, root_estimate):
+    def solve_root(self, max_energy, root_estimate, scale=1, dps=15):
         def psi_diss_L(E:float):
             if hasattr(E, "__len__"):
                 E = E[0]
@@ -209,13 +215,14 @@ class Morse:
             return float(psi_diss_L(E))  
 
         rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-6)[0]
-        root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
+        with mpmath.workdps(dps):
+            root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
         return np.abs(root)
     
     def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
         """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         """
-        first_root = self.solve_root(max_energy, root_estimate=1e-10)
+        first_root = self.solve_root(max_energy, root_estimate=1e-10, scale=1e-3, dps=50)
         print("first root", first_root, mpmath.fabs(self.psi_diss(first_root, self.box_length)))
         root_estimates = np.geomspace(float(first_root), max_energy, num)
             
