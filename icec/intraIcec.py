@@ -254,7 +254,7 @@ class IntraICEC:
         norm: normalization constant for the vibrational continuum state
         '''
         if norm is None:
-            norm = self.Morse_Dp.norm_diss(E)
+            norm = self.Morse_Dp.get_norm_diss(E)
         def integrand(r):
             return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
         if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
@@ -316,7 +316,7 @@ class IntraICEC:
             i = np.where(self.Morse_Dp.diss_energies==E)[0][0]
             norm = self.Morse_Dp.diss_norms[i]
         else:
-            norm = self.Morse_Dp.norm_diss(E, lower_bound)
+            norm = self.Morse_Dp.get_norm_diss(E, lower_bound)
         FC_bc = self.FC_bc(vD, E, lower_bound, norm)
         xs_array = np.array(
             [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]

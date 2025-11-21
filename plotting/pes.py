@@ -18,7 +18,7 @@ def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
     
 def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color='lightskyblue'):
     if norm is None:
-        norm = morse.norm_diss(energy)
+        norm = morse.get_norm_diss(energy)
     psi_diss = [mpmath.re(norm * morse.psi_diss(energy,r_i)) * scale
                 + energy*Units.HARTREE2EV + yshift 
                 for r_i in morse.r]

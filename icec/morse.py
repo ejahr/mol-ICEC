@@ -159,7 +159,7 @@ class Morse:
         n = self.box_length * np.sqrt(2 * self.mu * E) / np.pi
         return round(n / d)
 
-    def norm_diss(self, E:float, dps=15):
+    def get_norm_diss(self, E:float, dps=15):
         '''Box normalization of the dissociative Morse states.
         - E : energy (Hartree, a.u.)
         - lower_bound : lower bound for the integration
@@ -218,7 +218,7 @@ class Morse:
             root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
         return mpmath.re(root)
     
-    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
+    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500):
         """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         """
         first_root = self.solve_root(max_energy, root_estimate=1e-10, scale=1e-3, dps=50)
@@ -239,12 +239,8 @@ class Morse:
         print("time for root finding:", t1 - t0)
         roots = unique_mpf(np.array(roots), rtol=1e-8) # also sorts the array
         roots = np.array([
-            E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8') #*self.norm_diss(E)
+            E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8')
         ])
-        
-        if file_path is not None:
-            header = "Energies [eV] of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom"
-            np.savetxt(file_path, np.transpose(roots*Units.HARTREE2EV), fmt='%1.8e', header=header)
         self.diss_energies = roots
         return roots, root_estimates
     
@@ -269,10 +265,11 @@ class Morse:
         
         t0 = time.perf_counter()
         with ProcessPoolExecutor() as executor:
-            norms = list(executor.map(self.norm_diss, roots)) 
+            norms = list(executor.map(self.get_norm_diss, roots)) 
         t1 = time.perf_counter()
         print("time for norm calculation:", t1 - t0)
         
+        self.diss_norms = norms
         density_of_states = self.get_density_of_states() 
         data = np.vstack((roots*Units.HARTREE2EV, roots, norms, density_of_states))
         np.savetxt(file_path, np.transpose(data), fmt='%1.8e', header=header)
