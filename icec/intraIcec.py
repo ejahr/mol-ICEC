@@ -130,7 +130,11 @@ class IntraICEC:
         return interp_func(hbarOmega) 
     
     def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
-        return self.PI_xs_D_electronic(hbarOmega) * self.FC_factor(vD, vDp)
+        PI_xs_electronic = self.PI_xs_D_electronic(hbarOmega)
+        if np.isnan(PI_xs_electronic):
+            return np.nan
+        else:
+            return PI_xs_electronic * self.FC_factor(vD, vDp)
     
     def hbarOmega(self, electronE:float) -> float:
         return electronE + self.IP_A 
@@ -275,8 +279,6 @@ class IntraICEC:
         - electronE [Hartree] : kinetic energy of the incoming electron
         - FC_bc [a.u.] : |<psi_E|psi_v>|^2
         '''
-        if FC_bc is None:
-            FC_bc = self.FC_bc(vD, E, norm=norm)
         electronE_f = self.electronE_f_bc(electronE, vD, E)
             
         if electronE_f <= 0:
@@ -289,6 +291,10 @@ class IntraICEC:
                 raise ZeroDivisionError('hbaromega must not be zero')
             PI_xs_A = self.PI_xs_A(hbarOmega)
             PI_xs_D = self.PI_xs_D_electronic(hbarOmega)
+            if np.isnan(PI_xs_D):
+                return np.nan
+            if FC_bc is None:
+                FC_bc = self.FC_bc(vD, E, norm=norm)
             xs = (
                 self.prefactor
                 * self.degeneracyFactor
