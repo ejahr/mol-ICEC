@@ -1,4 +1,5 @@
 import mpmath
+import numpy as np
 import matplotlib.pyplot as plt
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
@@ -72,3 +73,19 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     fig.text(0, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
     fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
+
+
+def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
+    fig = plt.figure(figsize=(6,4))
+    ax = plt.gca() 
+    def psi_at_L(E):
+        return mpmath.re(morse.psi_diss(E,L))
+    x = np.geomspace(1e-5, 1, 1000) 
+    y = np.array([psi_at_L(E*Units.EV2HARTREE) for E in x])
+
+    ax.plot(x,y)
+    ax.set_xlabel(r'$E$ [$\mathrm{eV}$]')
+    ax.set_ylabel(r'$\psi_E(L)$')
+    ax.set_ylim(-1,1)
+    fname = DIR + f"plots/{system}.psi_at_L.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fig.savefig(fname, bbox_inches='tight')

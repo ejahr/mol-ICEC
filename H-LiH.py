@@ -5,7 +5,7 @@ from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
-from plotting.pes import plot_PES
+from plotting.pes import plot_PES, plot_diss_at_L
 from plotting.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
 from plotting.cross_sections import plot_xs_vi, plot_xs_FC, plot_xs_boltzmann, plot_xs_R, plot_xs_vB_vBp
 
@@ -127,7 +127,6 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
     plt.tight_layout()
     fname = DIR + 'plots/LiHp.roots.' + str(round(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.pdf'
     fig.savefig(fname)
-    print("roots done")
 
 HLi = True
 BLi = False
@@ -178,6 +177,7 @@ if HLi:
     #test_FC_factors(icec_fixed, icec, icec_FC)
     energy_difference = (7.974721285 - 7.776735464) * Units.HARTREE2EV # difference at R=inf
     plot_PES(icec_FC, 'LiH', L, energy_difference)
+    plot_diss_at_L(icec_FC.Morse_Dp, system, L)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
