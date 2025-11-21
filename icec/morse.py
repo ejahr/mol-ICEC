@@ -144,7 +144,7 @@ class Morse:
         R_samples = np.linspace(R / 2, R, num=num)
         psi_samples = np.array(
             [  # psi_diss() does not work with np.array directly due to mpmath
-                np.abs(self.psi_diss(E, r)) for r in R_samples
+                mpmath.fabs(self.psi_diss(E, r)) for r in R_samples
             ]
         )
         min_index = np.nanargmin(psi_samples)
@@ -183,7 +183,7 @@ class Morse:
         - E : energy above dissociation limit (Hartree)
         - r : interatomic distance (Bohr)
         '''
-        if E < 0:
+        if mpmath.fabs(E) < 0:
             raise ValueError(f'E should be > 0. But E = {E}')
         k = mpmath.sqrt(2 * self.mu * E)
         epsilon = k / self.alpha
@@ -206,18 +206,18 @@ class Morse:
         def psi_diss_L(E:float):
             if hasattr(E, "__len__"):
                 E = E[0]
-            if E > max_energy or E <= 0: # don't go looking beyond (0,max_energy]
-                return 100
+            if mpmath.im(E) > 0 or mpmath.re(E) > max_energy or mpmath.re(E) <= 0: # don't go looking beyond (0,max_energy]
+                return 1e100
             else:
-                return mpmath.fabs(self.psi_diss(E, self.box_length))
+                return scale*self.psi_diss(E, self.box_length)
           
         def psi_float(E:float) -> float:
-            return float(psi_diss_L(E))  
-
+            return float(mpmath.re(psi_diss_L(E)))
+    
         rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-6)[0]
         with mpmath.workdps(dps):
             root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
-        return np.abs(root)
+        return mpmath.re(root)
     
     def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500, file_path:str=None):
         """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
