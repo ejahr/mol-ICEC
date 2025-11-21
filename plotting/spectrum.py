@@ -32,8 +32,6 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     set_axes(ax)
     ax.set_title(title)
     
-    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)   
-    
     color = ['tab:red', 'tab:purple', 'tab:blue']
 
     bars = [None] * (vD_max+1)
@@ -54,6 +52,7 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     x_max = max(rect.get_x() for bar in bars for rect in bar)
     ax.set_xlim(x_min - 0.025, x_max + 0.025)
     
+    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)   
     ax.annotate(r'$\sigma_\text{PR}$', (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), xytext=(3,-3),    # fraction, fraction
             textcoords='offset points', color='gray')
     
@@ -93,10 +92,19 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
     set_axes(ax)
     ax.set_ylim(2*1e-4, 20)
 
-    ax.plot(results_bc[:,0], results_bc[:,1], color='tab:red', label='dissociation')
-    ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.002, color='tab:blue', label='bound')
+    ax.plot(results_bc[:,0], results_bc[:,1], color='tab:red', label='FC b-d')
+    ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.005, color='tab:blue', label='FC b-b')
+    
+    x_min = min(results_bc[:,0])
+    x_max = max(results_bb[:,3*vi])
+    ax.set_xlim(x_min - 0.025, x_max + 0.025)
+    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)  
+    ax.annotate(r'$\sigma_\text{PR}$', 
+                (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), 
+                xytext=(3,-3),
+                textcoords='offset points', color='gray') 
 
-    ax.legend(ncols=3, fontsize='small', loc='upper center')
+    ax.legend(fontsize='small', loc='upper left')
     fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout()
     fig.savefig(fname)
