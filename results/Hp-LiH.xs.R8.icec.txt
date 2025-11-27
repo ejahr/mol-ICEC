@@ -1,6 +1,6 @@
 # e- + H+ + LiH -> H + LiH+ + e-
 # R_AD = 8 Angstrom
-# Number of initial vibrational states: 3
+# Number of initial vibrational states: 3/30
 # Number of final vibrational states: 7
 # E_in [eV] | xs [Mb]
 1.000e-02 5.635e-01 1.237e+00 1.280e+00
