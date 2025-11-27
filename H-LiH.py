@@ -155,15 +155,18 @@ if HLi:
     system = 'Hp-LiH'
     title = r'$\text{H}^+ \text{LiH}$'
     
-    icec_fixed = ICEC(*Hp_LiH.input_fixed)
-    icec_fixed.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
-    
     icec = IntraICEC(*Hp_LiH.input)
     icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
     icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
     icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
     icec.define_PI_xs_D(method="resolved")
+    
+    icec_fixed = ICEC(*Hp_LiH.input_fixed)
+    IP_vertical = icec_fixed.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
+    icec_fixed.IP_B = IP_vertical
+    print("vertical ionization energy", icec_fixed.IP_B*Units.HARTREE2EV)
+    icec_fixed.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
     
     icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
     icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
