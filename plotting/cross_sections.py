@@ -173,7 +173,8 @@ def plot_xs_R(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
 
     blues = plt.get_cmap("Blues_r")
     for r in R:
-        blue = blues(R.index(r) / (len(R) + 1 / len(R)))
+        index = np.where(R==r)[0][0]
+        blue = blues(index / (len(R) + 1 / len(R)))
         label = r'$R=$' + str(round(r*Units.BOHR2ANGSTROM)) + r'$\,\mathrm{\AA}$'
         
         if icec_fixed is not None:
