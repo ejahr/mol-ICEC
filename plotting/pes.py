@@ -100,12 +100,12 @@ def plot_energy_sketch():
     x = np.linspace(-1, 1, 400)
     
     
-    x_D = 1.2
+    x_D = 1.1
     shift_D = 2
-    x_A = -1.2
+    x_A = -1.1
     shift_A = 2
     
-    a = 3
+    a = 5
     
     def potD(x):
         return a*(x-x_D)**2
@@ -128,16 +128,16 @@ def plot_energy_sketch():
         return x_A - root, x_A + root
     
     
-    E_D = 0.25
+    E_D = 0.3
     E_Dp = E_D + shift_D
     
-    E_A = 0.25
+    E_A = 0.3
     E_Ap = E_A + shift_A
 
-    fig, ax = plt.subplots(figsize=(6,4))
+    fig, ax = plt.subplots(figsize=(6,3))
     
     # Harmonic oscillators
-    x = np.linspace(x_A-0.5, x_A+0.5, 400)
+    x = np.linspace(x_A-0.44, x_A+0.44, 400)
     ax.plot(x, potA(x), color = 'black')
     ax.plot(x, potAp(x), color = 'black')
     
@@ -150,20 +150,20 @@ def plot_energy_sketch():
     ax.annotate(
         "",
         xytext=(x_A, shift_A+E_A),
-        xy=(x_A, 0+E_A),
+        xy=(x_A, 0+E_A-0.01),
         arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
     )
 
     # Labels
-    ax.text(potA_inv(E_A)[0]-0.7, E_A-0.05, r"$A^-$")
+    ax.text(potA_inv(E_A)[0]-0.65, E_A-0.05, r"$A^-$")
     ax.text(potA_inv(E_A)[1]+0.1, E_A-0.05, r"$\nu_{\mathrm{A}^-}$")
     
-    ax.text(potA_inv(E_A)[0]-0.7, E_Ap-0.05, r"$A + e^-$")
+    ax.text(potA_inv(E_A)[0]-0.65, E_Ap-0.05, r"$A + e^-$")
     ax.text(potA_inv(E_A)[1]+0.1, E_Ap-0.05, r"$\nu_\mathrm{A}$")
     
     
     # Harmonic oscillators
-    x = np.linspace(x_D-0.5, x_D+0.5, 400)
+    x = np.linspace(x_D-0.44, x_D+0.44, 400)
     ax.plot(x, potD(x), color = 'black')
     ax.plot(x, potDp(x), color = 'black')
     
@@ -175,7 +175,7 @@ def plot_energy_sketch():
     # Arrow
     ax.annotate(
         "",
-        xy=(x_D, shift_D+E_D),
+        xy=(x_D, shift_D+E_D+0.01),
         xytext=(x_D, 0+E_D),
         arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
     )
@@ -191,13 +191,12 @@ def plot_energy_sketch():
     # hbaromega
     # https://stackoverflow.com/questions/33707162/zigzag-or-wavy-lines-in-matplotlib
     rcParams['path.sketch'] = (4, 15, 1)
-    ax.plot([x_A+0.01, x_D-0.01], [(shift_A+E_A)/2, (shift_D+E_D)/2], lw=2, color='tab:red')
+    ax.plot([x_A+0.01, x_D-0.01], [E_A+shift_A/2, E_D+shift_D/2], lw=2, color='tab:red')
     
 
     #ax.set_xlim(-2, 2)
     #ax.set_ylim(-0.2, 3)
     ax.axis("off")
-    
     fname = DIR + "/plots/icec_energy_sketch.pdf"
     fig.savefig(fname, bbox_inches='tight')
     
