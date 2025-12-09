@@ -1,6 +1,10 @@
 import mpmath
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
@@ -89,3 +93,112 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     ax.set_ylim(-1,1)
     fname = DIR + f"plots/{system}.psi_at_L.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight')
+    
+    
+    
+def plot_energy_sketch():
+    x = np.linspace(-1, 1, 400)
+    
+    
+    x_D = 1.2
+    shift_D = 2
+    x_A = -1.2
+    shift_A = 2
+    
+    a = 3
+    
+    def potD(x):
+        return a*(x-x_D)**2
+    
+    def potD_inv(y):
+        root = np.sqrt(y/a)
+        return x_D - root, x_D + root
+    
+    def potDp(x):
+        return shift_D + a*(x-x_D)**2
+    
+    def potA(x):
+        return a*(x-x_A)**2
+    
+    def potAp(x):
+        return shift_A + a*(x-x_A)**2
+    
+    def potA_inv(y):
+        root = np.sqrt(y/a)
+        return x_A - root, x_A + root
+    
+    
+    E_D = 0.25
+    E_Dp = E_D + shift_D
+    
+    E_A = 0.25
+    E_Ap = E_A + shift_A
+
+    fig, ax = plt.subplots(figsize=(6,4))
+    
+    # Harmonic oscillators
+    x = np.linspace(x_A-0.5, x_A+0.5, 400)
+    ax.plot(x, potA(x), color = 'black')
+    ax.plot(x, potAp(x), color = 'black')
+    
+    # Level lines
+    x1,x2 = potA_inv(E_A)
+    ax.plot([x1,x2], [E_A, E_A], color = 'tab:blue')
+    ax.plot([x1,x2], [E_Ap, E_Ap], color = 'tab:blue')
+
+    # Arrow
+    ax.annotate(
+        "",
+        xytext=(x_A, shift_A+E_A),
+        xy=(x_A, 0+E_A),
+        arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
+    )
+
+    # Labels
+    ax.text(potA_inv(E_A)[0]-0.7, E_A-0.05, r"$A^-$")
+    ax.text(potA_inv(E_A)[1]+0.1, E_A-0.05, r"$\nu_{\mathrm{A}^-}$")
+    
+    ax.text(potA_inv(E_A)[0]-0.7, E_Ap-0.05, r"$A + e^-$")
+    ax.text(potA_inv(E_A)[1]+0.1, E_Ap-0.05, r"$\nu_\mathrm{A}$")
+    
+    
+    # Harmonic oscillators
+    x = np.linspace(x_D-0.5, x_D+0.5, 400)
+    ax.plot(x, potD(x), color = 'black')
+    ax.plot(x, potDp(x), color = 'black')
+    
+    # Level lines
+    x1,x2= potD_inv(E_D)
+    ax.plot([x1,x2], [E_D, E_D], color = 'tab:blue')
+    ax.plot([x1,x2], [E_Dp, E_Dp], color = 'tab:blue')
+
+    # Arrow
+    ax.annotate(
+        "",
+        xy=(x_D, shift_D+E_D),
+        xytext=(x_D, 0+E_D),
+        arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
+    )
+
+    # Labels
+    
+    ax.text(potD_inv(E_D)[1]+0.2, E_D-0.05, r"$\mathrm{D}$")
+    ax.text(potD_inv(E_D)[0]-0.3, E_D-0.05, r"$\nu_{\mathrm{D}}$")
+    
+    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e^-$")
+    ax.text(potD_inv(E_D)[0]-0.3, E_Dp-0.05, r"$\nu_{\mathrm{D}^+}$")
+    
+    # hbaromega
+    # https://stackoverflow.com/questions/33707162/zigzag-or-wavy-lines-in-matplotlib
+    rcParams['path.sketch'] = (4, 15, 1)
+    ax.plot([x_A+0.01, x_D-0.01], [(shift_A+E_A)/2, (shift_D+E_D)/2], lw=2, color='tab:red')
+    
+
+    #ax.set_xlim(-2, 2)
+    #ax.set_ylim(-0.2, 3)
+    ax.axis("off")
+    
+    fname = DIR + "/plots/icec_energy_sketch.pdf"
+    fig.savefig(fname, bbox_inches='tight')
+    
+plot_energy_sketch()
