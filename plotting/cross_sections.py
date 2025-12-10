@@ -34,12 +34,12 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
             ax.set_xlim(-0.2, 8.5)
             ax.set_ylim(1e-5, 1e2)
             results = read_results_file(system, R)
-            ax.plot(results[:,0], results[:, vi+1], label='total', color='grey')
+            ax.plot(results[:,0], results[:, vi+1], label='total', color='dimgray')
             for vf in range(vDp_max+1):
                 label = r'$v_{LiH^+}=$' + str(vf)
                 xs = icec.xs_vD_vDp(R, vi, vf)
                 ax.plot(energies, xs, label=label)
-            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
+            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
             plt.close(fig) 
@@ -69,7 +69,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
         xs = icec_fixed.xs_energy(R)
-        ax.plot(energy, xs, color='gray', label=r'$R^{\mathrm{LiH}}_e$')
+        ax.plot(energy, xs, color='dimgray', label="electronic") #r'$R^{\mathrm{LiH}}_e$'
     vi = 0
     L = icec.Morse_Dp.box_length
     plot_xs_tot(ax, system, R, vi, L, label=r'FC tot', modifier='-FC', color='tab:red', ls=':')
@@ -88,14 +88,14 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
         xs = icec_fixed.xs_energy(R)
-        ax.plot(energy, xs, color='gray', label='unresolved')
+        ax.plot(energy, xs, color='dimgray', label='electronic')
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
         
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
     
     ax.legend()
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
@@ -110,7 +110,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
     if icec_fixed is not None:
         energy = icec_fixed.energyGrid*Units.HARTREE2EV
         xs = icec_fixed.xs_energy(R)
-        ax.plot(energy, xs, color='gray', label='unresolved')
+        ax.plot(energy, xs, color='dimgray', label='electronic')
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
@@ -118,7 +118,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)    
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)    
     
     fname = DIR + 'plots/' + system + '.xs-FC.vB.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
     plt.tight_layout()
@@ -182,7 +182,7 @@ def plot_xs_R(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
                 
         plot_xs(ax, system, r, 0, label, color=blue)
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='gray', ls=':', zorder=0)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
     plt.legend()
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     plt.tight_layout()

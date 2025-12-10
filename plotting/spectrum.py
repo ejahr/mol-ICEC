@@ -30,7 +30,7 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     set_axes(ax)
     ax.set_title(title)
     
-    color = ['tab:red', 'tab:purple', 'tab:blue']
+    color = ['tab:blue', 'tab:purple', 'tab:red']
 
     bars = [None] * (vD_max+1)
     for vi in range(vD_max+1):
@@ -41,8 +41,8 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     if icec_fixed is not None:
         energy_out = icec_fixed.electronE_f(electronE)
         xs = icec_fixed.xs(electronE, R)
-        bars.append(ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.002, color='black', label='unresolved'))
-    labels.append('unresolved')
+        bars.append(ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.002, color='dimgray', label='electronic'))
+    labels.append('electronic')
         
     ax.legend(handles=[bar[0] for bar in bars], labels=labels, ncols=2, fontsize='small', loc='upper right')
     
@@ -50,9 +50,13 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     x_max = max(rect.get_x() for bar in bars for rect in bar)
     ax.set_xlim(x_min - 0.025, x_max + 0.025)
     
-    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)   
-    ax.annotate(r'$\sigma_\text{PR}$', (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), xytext=(3,-3),    # fraction, fraction
-            textcoords='offset points', color='gray')
+    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=0)   
+    #ax.annotate(r'$\sigma_\text{PR}$', (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), xytext=(3,-3),    # fraction, fraction
+    #        textcoords='offset points', color='dimgray')
+    ax.annotate(r'$\sigma_\text{PR}$', 
+            (x_min-0.025, icec.PR_xs_A(electronE)*Units.AU2MB), 
+            xytext=(-26,-1),
+            textcoords='offset points', color='dimgray') 
     
     fname = DIR + 'plots/' + system + ".spectrum" + modifier + ".E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
     plt.tight_layout()
@@ -80,7 +84,7 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
+def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_fixed:ICEC=None):
     L=icec.Morse_Dp.box_length
     results_bb = read_results_file(system, electronE, R)
     results_bb_FC = read_results_file(system, electronE, R, modifier='-FC')
@@ -95,14 +99,19 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0):
     ax.bar(results_bb_FC[:,3*vi], results_bb_FC[:,3*vi+1], width=0.005, color='tab:red', label='FC b-b')
     ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.0075, color='tab:blue', label='b-b')
     
+    if icec_fixed is not None:
+        energy_out = icec_fixed.electronE_f(electronE)
+        xs = icec_fixed.xs(electronE, R)
+        ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.005, color='dimgray', label='electronic')
+    
     x_min = min(results_bc_FC[:,0])
     x_max = max(results_bb_FC[:,3*vi])
     ax.set_xlim(x_min, x_max + 0.02)
-    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='gray', ls=':', zorder=0)  
+    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=0)  
     ax.annotate(r'$\sigma_\text{PR}$', 
                 (x_min, icec.PR_xs_A(electronE)*Units.AU2MB), 
                 xytext=(-26,-1),
-                textcoords='offset points', color='gray') 
+                textcoords='offset points', color='dimgray') 
 
     ax.legend(fontsize='small', loc='upper left')
     fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
