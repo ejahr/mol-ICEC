@@ -1,6 +1,7 @@
 import mpmath
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib import rcParams
 import sys
 import os
@@ -29,6 +30,9 @@ def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color
 def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     # TODO I defined bound states to have negative energies, recheck the y values
     # TODO annotations as inputs
+    print("num of vib states for D :", icec.Morse_D.vmax + 1)
+    print("num of vib states for B+:", icec.Morse_Dp.vmax + 1)
+    
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
     ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
@@ -95,12 +99,9 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     
     
 def plot_energy_sketch():
-    x = np.linspace(-1, 1, 400)
-    
-    
-    x_D = 1.1
+    x_D = 1
     shift_D = 2
-    x_A = -1.1
+    x_A = -1
     shift_A = 2
     
     a = 5
@@ -134,65 +135,67 @@ def plot_energy_sketch():
 
     fig, ax = plt.subplots(figsize=(6,3))
     
+    # Arrow
+    arrowstyle = patches.ArrowStyle("-|>", head_width=0.12, head_length=0.35)
+    arrowprops=dict(arrowstyle=arrowstyle, lw=1.5, color='tab:red', capstyle='butt', joinstyle="miter", zorder=0)
+    ax.annotate(
+        "",
+        xytext=(x_A, shift_A+E_A+0.025),
+        xy=(x_A, 0+E_A-0.01),
+        arrowprops=arrowprops
+    )
+
+    
+    # Level lines
+    x1,x2 = potA_inv(E_A)
+    ax.plot([x1+0.01,x2-0.01], [E_A, E_A], color = 'tab:blue')
+    ax.plot([x1+0.01,x2-0.01], [E_Ap, E_Ap], color = 'tab:blue')
+    
     # Harmonic oscillators
     x = np.linspace(x_A-0.44, x_A+0.44, 400)
     ax.plot(x, potA(x), color = 'black')
     ax.plot(x, potAp(x), color = 'black')
     
-    # Level lines
-    x1,x2 = potA_inv(E_A)
-    ax.plot([x1,x2], [E_A, E_A], color = 'tab:blue')
-    ax.plot([x1,x2], [E_Ap, E_Ap], color = 'tab:blue')
-
-    # Arrow
-    ax.annotate(
-        "",
-        xytext=(x_A, shift_A+E_A),
-        xy=(x_A, 0+E_A-0.01),
-        arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
-    )
-
     # Labels
-    ax.text(potA_inv(E_A)[0]-0.65, E_A-0.05, r"$A^-$")
+    ax.text(potA_inv(E_A)[0]-0.65, E_A-0.05, r"$\mathrm{A}^-$")
     ax.text(potA_inv(E_A)[1]+0.1, E_A-0.05, r"$\nu_{\mathrm{A}^-}$")
     
-    ax.text(potA_inv(E_A)[0]-0.65, E_Ap-0.05, r"$A + e^-$")
+    ax.text(potA_inv(E_A)[0]-0.65, E_Ap-0.05, r"$\mathrm{A} + e_k^-$")
     ax.text(potA_inv(E_A)[1]+0.1, E_Ap-0.05, r"$\nu_\mathrm{A}$")
     
+    # Level lines
+    x1,x2= potD_inv(E_D)
+    ax.plot([x1+0.01,x2-0.01], [E_D, E_D], color = 'tab:blue')
+    ax.plot([x1+0.01,x2-0.01], [E_Dp, E_Dp], color = 'tab:blue')
     
     # Harmonic oscillators
     x = np.linspace(x_D-0.44, x_D+0.44, 400)
     ax.plot(x, potD(x), color = 'black')
     ax.plot(x, potDp(x), color = 'black')
-    
-    # Level lines
-    x1,x2= potD_inv(E_D)
-    ax.plot([x1,x2], [E_D, E_D], color = 'tab:blue')
-    ax.plot([x1,x2], [E_Dp, E_Dp], color = 'tab:blue')
 
     # Arrow
     ax.annotate(
         "",
         xy=(x_D, shift_D+E_D+0.01),
-        xytext=(x_D, 0+E_D),
-        arrowprops=dict(arrowstyle="->", lw=2, color='tab:red')
+        xytext=(x_D, E_D-0.025),
+        arrowprops=arrowprops
     )
 
     # Labels
-    
     ax.text(potD_inv(E_D)[1]+0.2, E_D-0.05, r"$\mathrm{D}$")
     ax.text(potD_inv(E_D)[0]-0.3, E_D-0.05, r"$\nu_{\mathrm{D}}$")
     
-    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e^-$")
+    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e_{k'}^-$")
     ax.text(potD_inv(E_D)[0]-0.3, E_Dp-0.05, r"$\nu_{\mathrm{D}^+}$")
     
-    # hbaromega
+    # omega
     # https://stackoverflow.com/questions/33707162/zigzag-or-wavy-lines-in-matplotlib
+    ax.text((x_A+x_D)/2 - 0.075, E_A+shift_A/2 + 0.15, r"$\omega$", color='tab:red')
     rcParams['path.sketch'] = (4, 15, 1)
-    ax.plot([x_A+0.01, x_D-0.01], [E_A+shift_A/2, E_D+shift_D/2], lw=2, color='tab:red')
-    
+    ax.plot([x_A+0.005, x_D-0.005], [E_A+shift_A/2, E_D+shift_D/2], lw=1.5, color='tab:red')
+    set_rcParams()
 
-    #ax.set_xlim(-2, 2)
+    #ax.set_xlim(-2.5, 2.5)
     #ax.set_ylim(-0.2, 3)
     ax.axis("off")
     fname = DIR + "/plots/icec_energy_sketch.pdf"
