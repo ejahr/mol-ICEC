@@ -4,11 +4,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
-from plotting.base import DIR
+from plotting.base import DIR, set_rcParams
 
-plt.rcParams['mathtext.fontset'] = 'stix'
-plt.rcParams['font.family'] = 'STIXGeneral'
-plt.rcParams.update({'font.size': 16})
+set_rcParams()
 width, height = 6, 4
 
 def set_axes(ax):

@@ -8,11 +8,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
-from plotting.base import DIR
+from plotting.base import DIR, set_rcParams
 
-plt.rcParams['mathtext.fontset'] = 'stix'
-plt.rcParams['font.family'] = 'STIXGeneral'
-plt.rcParams.update({'font.size': 16})
+set_rcParams()
 
 def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
     psi = [morse.psi(vi,r_i) * scale

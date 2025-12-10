@@ -3,11 +3,9 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
-from plotting.base import DIR
+from plotting.base import DIR, set_rcParams
 
-plt.rcParams['mathtext.fontset'] = 'stix'
-plt.rcParams['font.family'] = 'STIXGeneral'
-plt.rcParams.update({'font.size': 16})
+set_rcParams()
 
 def set_axes(ax):
     ax.set_yscale('log')
