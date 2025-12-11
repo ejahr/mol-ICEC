@@ -83,19 +83,19 @@ class B:
 # ====================== LiH ==========================
 
 class LiH(metaclass=ReadOnly):
-    # https://doi.org/10.1063/1.479970
-    # Lundsgaard 1999: 
-    IP = 7.7 * Units.EV2HARTREE # E_+(Re_+) - E(Re) ?
-    #IP = 7.9 * Units.EV2HARTREE
-    
+    # Huber
+    IP = 7.7 * Units.EV2HARTREE # adiabatic?
+       
     IP_vert_approx = np.abs(-8.066308039 + 7.770884366)*Units.HARTREE2EV
     IP_min_approx = np.abs(-8.066308039 + 7.78173407)*Units.HARTREE2EV
 
     m_Li    = 7*Constants.m_p + 3
     mu      = H.m * m_Li / (H.m + m_Li)
-    #Huber
+    # Huber p. 382
     mu = 0.88123833*Constants.m_p
     # https://doi.org/10.1063/1.479970
+    IP      = 7.743 * Units.EV2HARTREE
+    # IP + Ep_0 - E_0 = 7.68 eV
     # Table IV
     E_min   = -8.021321 
     De      = 2.4924 * Units.EV2HARTREE
@@ -170,13 +170,10 @@ class Bp_LiH:
 #print('Vertical Ionization potential:', LiH.IP_vert)
 print('Approx E_p(Re)  -E(Re):', LiH.IP_vert_approx)
 print('Approx E_p(Re_p)-E(Re):', LiH.IP_min_approx)
-IP_adiab_approx = LiH.IP_min_approx + (- LiH.vib_energies[0])*Units.HARTREE2EV
 
 # Huber p. 382
 print("De Lundsgaard", LiH.De*Units.HARTREE2EV)
-print("De Huber     ", 8617*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV)
 print("m calculated ", H.m * LiH.m_Li / (H.m + LiH.m_Li))
-print("m LiHp       ", H.m * LiHp.m_Lip / (H.m + LiHp.m_Lip))
 print("m Huber      ", 0.88123833*Constants.m_p)
 print("w Lundsgaard ", LiH.we*Units.HARTREE2EV)
 print("w Huber      ", 1405.65*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV)
