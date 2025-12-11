@@ -183,6 +183,7 @@ class IntraICEC:
     def xs_vD(self, R:float, vD:int, vDp_max:int=None):
         """ Cross section [Mb] for vi -> bound states over range of electron energies.
         """
+        t0 = time.perf_counter()
         if vDp_max is None:
             vDp_max = self.Morse_Dp.vmax
         # Element-wise summation sum(list_of_arrays)
@@ -190,6 +191,8 @@ class IntraICEC:
             self.xs_vD_vDp(R, vD, vDp) 
             for vDp in range(vDp_max + 1)
         )
+        t1 = time.perf_counter()
+        print(f'time for b-b xs vD={vD} : {t1-t0}')
         return xs
     
     def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int=None):
@@ -210,6 +213,7 @@ class IntraICEC:
         """ Cross sections [Mb] for vi -> bound states given some electron energy.
         - electronE : kinetic energy of incoming electron (Hartree, a.u.)
         """
+        t0 = time.perf_counter()
         if vDp_max is None:
             vDp_max = self.Morse_Dp.vmax
         spectrum = []
@@ -218,6 +222,8 @@ class IntraICEC:
             if electronE_f >= 0:
                 xs = self.xs(electronE, R, vD, vDp)
                 spectrum.append([electronE_f * Units.HARTREE2EV, xs * Units.AU2MB, vDp])
+        t1 = time.perf_counter()
+        print(f'time for b-b spectrum vD={vD} : {t1-t0}')
         return np.array(spectrum)
 
     def xs_R(self, electronE:float, vD:int=0, vDp:int=None):
