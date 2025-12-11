@@ -211,7 +211,7 @@ if HLi:
         
     if plot_bc:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
-        plot_spectrum_bc(system, icec_FC, R, electronE, vi=0)
+        plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_fixed=icec_fixed)
         
 
 if BLi:
