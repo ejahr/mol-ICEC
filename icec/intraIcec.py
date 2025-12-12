@@ -241,7 +241,7 @@ class IntraICEC:
     
     # ====== DISSOCIATION OF D ======
     
-    def integrate_r(self, integrand, vi, E, lower_bound=None):
+    def integrate_r(self, integrand, E):
         '''Integration over r
         - integrand : function to be integrated
         - electronE : kinetic energy of incoming electron [Hartree, a.u.]
@@ -249,13 +249,11 @@ class IntraICEC:
         - E : energy of the dissociative Morse state [Hartree]
         '''
         lower_bound = self.Morse_Dp.get_lower_bound(E)
-        result = mpmath.quadsubdiv(integrand, [lower_bound, self.Morse_Dp.box_length], maxdegree=30)
+        upper_bound = self.Morse_Dp.box_length
+        result = mpmath.quadsubdiv(integrand, [lower_bound, upper_bound], maxdegree=30)
         return result
-        
-    def FC_bc_integrand(self, vD, E, r):
-        return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
-    
-    def FC_bc(self, vD:int, E:float, lower_bound:float=None, norm:float=None, dps=15):
+ 
+    def FC_bc_D(self, vD:int, E:float, norm:float=None, dps=15):
         '''Franck-Condon (FC) factor for a bound to continuum (bc) transition |<psi_E|psi_v>|^2
         norm: normalization constant for the vibrational continuum state
         '''
@@ -267,7 +265,7 @@ class IntraICEC:
             if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
                 dps = 50
         with mpmath.workdps(dps):
-            result = self.integrate_r(integrand, vD, E, lower_bound=lower_bound)    
+            result = self.integrate_r(integrand, E)    
         return (mpmath.fabs(norm * result)) ** 2
     
     def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
@@ -279,7 +277,7 @@ class IntraICEC:
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
 
-    def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc:float=None, norm:float=None) -> float:
+    def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc_D:float=None, norm:float=None) -> float:
         '''Cross section [a.u.] for one bound-continuum (bc) vibrational transition vi -> E.
         - E [Hartree] : energy of the dissociative Morse state
         - electronE [Hartree] : kinetic energy of the incoming electron
@@ -299,14 +297,14 @@ class IntraICEC:
             PI_xs_D = self.PI_xs_D_electronic(hbarOmega)
             if np.isnan(PI_xs_D):
                 return np.nan
-            if FC_bc is None:
-                FC_bc = self.FC_bc(vD, E, norm=norm)
+            if FC_bc_D is None:
+                FC_bc_D = self.FC_bc_D(vD, E, norm=norm)
             xs = (
                 self.prefactor
                 * self.degeneracyFactor
                 * PI_xs_A
                 * PI_xs_D
-                * FC_bc
+                * FC_bc_D
                 / (electronE * hbarOmega**2 * R**6)
             )
             return xs
@@ -323,7 +321,7 @@ class IntraICEC:
             norm = self.Morse_Dp.diss_norms[i]
         else:
             norm = self.Morse_Dp.get_norm_diss(E, lower_bound)
-        FC_bc = self.FC_bc(vD, E, lower_bound, norm)
+        FC_bc = self.FC_bc_D(vD, E, lower_bound, norm)
         xs_array = np.array(
             [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]
         )
