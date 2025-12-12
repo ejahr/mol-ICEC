@@ -187,7 +187,7 @@ if HLi:
     #test_FC_factors(icec_fixed, icec, icec_FC)
     energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
     #plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
-    #plot_diss_at_L(icec_FC.Morse_Dp, system, L)
+    #plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
@@ -204,10 +204,10 @@ if HLi:
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     if plot_bb:
-        plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
-        plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
-        plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
-        plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max)
+        #plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
+        #plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
+        #plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
+        plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
     
         T = [15, 298, 2000] 
         plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
