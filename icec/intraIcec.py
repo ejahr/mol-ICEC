@@ -366,12 +366,12 @@ class IntraICEC:
                 self.Morse_Dp.find_solutions_in_box()
             diss_energies = self.Morse_Dp.diss_energies
         if not hasattr(self.Morse_Dp, 'density_of_states'):
-            self.Morse_Dp.get_density_of_states(diss_energies)
+            self.Morse_Dp.get_DoS(diss_energies)
         t0 = time.perf_counter()
         with Pool() as pool:
             result = pool.starmap(
                 self.function_for_spectrum, 
-                zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.density_of_states)
+                zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.DoS)
             )
         t1 = time.perf_counter()
         print('time for spectrum:', t1-t0)

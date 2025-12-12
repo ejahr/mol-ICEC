@@ -173,7 +173,7 @@ class Morse:
                 dps = 50
         with mpmath.workdps(dps):
             norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
-        return 1 / mpmath.sqrt(mpmath.fabs(norm))
+        return 1 / mpmath.sqrt(mpmath.re(norm))
 
     def psi_diss(self, E:float, r:float):
         '''Dissociative (continuum) states of the Morse potential
@@ -244,23 +244,26 @@ class Morse:
         self.diss_energies = roots
         return roots, root_estimates
     
-    def get_density_of_states(self, energies=None):
-        '''Density of states rho(E_i) = 1/(E_{i+1} - E_i)
+    def DoS_box(self, energy):
+        return np.sqrt(2*self.mu/energy) * self.box_length / (2*np.pi)
+    
+    def get_DoS(self, energies=None):
+        '''Density of states (DoS) rho(E_i) = 1/(E_{i+1} - E_i)
         - energies [Hartree] : energies of all possible dissociative states (in a box)
         '''
         if energies is None:
             if not hasattr(self, 'diss_energies'):
                 self.find_solutions_in_box()
             energies = self.diss_energies
-        density_of_states = np.zeros(len(energies))
-        density_of_states[0:-1] = 1/(energies[1:]-energies[0:-1])
-        density_of_states[-1] = density_of_states[-2]
-        self.density_of_states = density_of_states
-        return density_of_states
+        DoS = np.zeros(len(energies))
+        DoS[0:-1] = 1/(energies[1:]-energies[0:-1])
+        DoS[-1] = DoS[-2]
+        self.DoS = DoS
+        return DoS
     
     def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE, num:int=500):
         header = "Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom\n"
-        header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.]"
+        header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.] | DoS in 1D box [a.u.]"
         roots, root_estimates = self.find_solutions_in_box(max_energy, num)   
         
         t0 = time.perf_counter()
@@ -270,8 +273,10 @@ class Morse:
         print("time for norm calculation:", t1 - t0)
         
         self.diss_norms = norms
-        density_of_states = self.get_density_of_states() 
-        data = np.vstack((roots*Units.HARTREE2EV, roots, norms, density_of_states))
+        DoS = self.get_DoS(roots) 
+        DoS_box = self.DoS_box(roots)
+        
+        data = np.vstack((roots*Units.HARTREE2EV, roots, norms, DoS, DoS_box))
         np.savetxt(file_path, np.transpose(data), fmt='%1.8e', header=header)
         return roots, root_estimates
         
@@ -280,7 +285,7 @@ class Morse:
         data = np.loadtxt(file_path, comments='#')
         self.diss_energies = data[:,1]
         self.diss_norms = data[:,2]
-        self.density_of_states = data[:,3]
+        self.DoS = data[:,3]
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
