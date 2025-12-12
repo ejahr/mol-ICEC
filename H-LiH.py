@@ -132,10 +132,10 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
 
 HLi = True
 BLi = False
-calculation_bb = 0
-calculation_bc = 1
-plot_bb = 0
-plot_bc = 1
+calculation_bb  = 0
+calculation_bc  = 0
+plot_bb         = 0
+plot_bc         = 1
 
 #https://doi.org/10.1021/jp9921295
 R = 2 * Units.ANGSTROM2BOHR
@@ -160,15 +160,19 @@ if HLi:
     icec.make_energy_grid(min_kinE, max_kinE, resolution)
     icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
     icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
+    IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
+    icec.IP_D = IP_adiabatic
+    print("adiabatic ionizaton energy", IP_adiabatic*Units.HARTREE2EV)
     icec.define_PI_xs_D(method="resolved")
     
-    icec_fixed = ICEC(*Hp_LiH.input_fixed)
+    icec_fixed = ICEC(*Hp_LiH.input_electronic)
     IP_vertical = icec_fixed.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
     icec_fixed.IP_B = IP_vertical
     print("vertical ionization energy", icec_fixed.IP_B*Units.HARTREE2EV)
     icec_fixed.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
     
     icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
+    icec_FC.IP_D = IP_adiabatic
     icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
     icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
     icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
@@ -176,14 +180,14 @@ if HLi:
     
     icec_FC.Morse_Dp.define_box(L)
     fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
-    calculate_roots(icec_FC.Morse_Dp, fname, max_energy=1*Units.EV2HARTREE, num=1000)
+    #calculate_roots(icec_FC.Morse_Dp, fname, max_energy=max_dissE, num=1000)
     icec_FC.Morse_Dp.load_diss_states(fname)
     
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)
-    energy_difference = (7.974721285 - 7.776735464) * Units.HARTREE2EV # difference at R=inf
-    plot_PES(icec_FC, 'LiH', L, energy_difference)
-    plot_diss_at_L(icec_FC.Morse_Dp, system, L)
+    energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
+    #plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
+    #plot_diss_at_L(icec_FC.Morse_Dp, system, L)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
@@ -196,7 +200,7 @@ if HLi:
         calculate_spectrum(system, header, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
         
     if calculation_bc:
-        calculate_xs_bc(system, header, icec_FC, R, vD_max=5, modifier='-FC')
+        #calculate_xs_bc(system, header, icec_FC, R, vD_max=5, modifier='-FC')
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     if plot_bb:
