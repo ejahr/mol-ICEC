@@ -7,7 +7,7 @@ from icec.morse import Morse
 from icec.constants import Units
 from plotting.pes import plot_PES, plot_diss_at_L
 from plotting.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
-from plotting.cross_sections import plot_xs_vi, plot_xs_FC, plot_xs_boltzmann, plot_xs_R, plot_xs_vB_vBp
+from plotting.cross_sections import plot_xs_vi, plot_xs_FC, plot_xs_boltzmann, plot_xs_R, plot_xs_vB_vBp, plot_xs_boltzmann_FC
 
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
@@ -212,6 +212,9 @@ if HLi:
     if plot_bc:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
         plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_fixed=icec_fixed)
+        
+        T = [15, 298, 2000] 
+        plot_xs_boltzmann_FC(system, icec_FC, R, T, LiH.v_max)
         
 
 if BLi:

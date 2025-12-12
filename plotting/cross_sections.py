@@ -163,6 +163,54 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
     fname = DIR + 'plots/' + system + '.boltzmann.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
     plt.tight_layout()
     fig.savefig(fname)
+    
+    
+def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max):
+    fig = plt.figure(figsize=(width, height))
+    ax = plt.gca() 
+    set_axes(ax)
+    ax.set_xlim(-0.2, 8.5)
+    
+    modifier = "-FC"
+    results_bb = read_results_file(system, R, modifier)
+    L = icec.Morse_Dp.box_length
+    results_bc = read_results_file(system, R, modifier+'.bc', L)
+
+    results = results_bc
+    for col in range(1,results.shape[1]):
+        results[:, col] += results_bb[:, col]
+            
+    blues = plt.get_cmap("Blues_r")    
+    for t in T:
+        # add De to energy(vi) to get positive values which increases numerical stability
+        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
+                    for vi in range(vD_max+1)
+                    )
+        avg = sum(
+            np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results_bb[:, vi+1] 
+            for vi in range(vD_max+1)
+            )
+        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
+        ax.plot(results_bb[:,0], avg/norm, color=blue, ls="--")
+        
+    for t in T:
+        # add De to energy(vi) to get positive values which increases numerical stability
+        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
+                    for vi in range(vD_max+1)
+                    )
+        avg = sum(
+            np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results[:, vi+1] 
+            for vi in range(vD_max+1)
+            )
+        label = r'$T=$' + str(t) + 'K'
+        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
+        ax.plot(results[:,0], avg/norm, label=label, color=blue)
+
+    ax.legend()
+    plt.tight_layout()
+    fname = DIR + f'plots/{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    plt.tight_layout()
+    fig.savefig(fname)
 
 def plot_xs_R(system, icec: IntraICEC, R, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
