@@ -86,14 +86,15 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     ax = plt.gca() 
     def psi_at_L(E):
         return mpmath.re(morse.psi_diss(E,L))
-    x = np.geomspace(1e-5, 1, 1000) 
+    x = np.geomspace(1e-5, 1, 2000) 
     y = np.array([psi_at_L(E*Units.EV2HARTREE) for E in x])
 
     ax.plot(x,y)
+    ax.grid(True)
     ax.set_xlabel(r'$E$ [$\mathrm{eV}$]')
     ax.set_ylabel(r'$\psi_E(L)$')
     ax.set_ylim(-1,1)
-    fname = DIR + f"plots/{system}.psi_at_L.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR + f"plots/{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight')
     
     
