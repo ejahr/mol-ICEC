@@ -93,7 +93,7 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_fixed:ICEC
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     set_axes(ax)
-    ax.set_ylim(2*1e-4, 20)
+    ax.set_ylim(2*1e-4, 1)
 
     ax.plot(results_bc_FC[:,0], results_bc_FC[:,1], color='tab:red', ls='--', label='FC b-d') # marker='.',
     ax.bar(results_bb_FC[:,3*vi], results_bb_FC[:,3*vi+1], width=0.005, color='tab:red', label='FC b-b')
