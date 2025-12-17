@@ -205,13 +205,13 @@ if HLi:
     
     if plot_bb:
         #plot_xs_vi(system, icec, R, LiH.v_max, icec_fixed)
-        #plot_xs_R(system, icec, R_list, icec_fixed=icec_fixed)
+        plot_xs_FC_bb(system, icec_FC, R, icec_fixed)
         #plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
         plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
     
         T = [15, 300, 1500] 
         plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
-        plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
+        #plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
         
     if plot_bc:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
