@@ -186,7 +186,7 @@ if HLi:
     #plot_H_PI_PR(icec_fixed)
     #test_FC_factors(icec_fixed, icec, icec_FC)
     energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
-    #plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
+    plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
     #plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
     
     system = 'Hp-LiH'

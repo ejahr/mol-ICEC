@@ -55,10 +55,10 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     # Dp
     energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
     plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
-    energy, norm = icec.Morse_Dp.diss_energies[0], icec.Morse_Dp.diss_norms[0]
-    plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    #energy, norm = icec.Morse_Dp.diss_energies[0], icec.Morse_Dp.diss_norms[0]
+    #plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
     
-    plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
+    #plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
     plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
     
     V = icec.Morse_Dp.V(r)
