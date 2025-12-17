@@ -1,10 +1,10 @@
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
-if __name__ == "__main__":
-    from constants import Units, Constants
-else:
-    from icec.constants import Units, Constants
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from icec.constants import Units, Constants
 
 DIR = '/home/elena/intraICEC/dimers/'
 
@@ -83,14 +83,20 @@ class B:
 # ====================== LiH ==========================
 
 class LiH(metaclass=ReadOnly):
-    m       = 7*Constants.m_p + 3
-    # https://doi.org/10.1063/1.479970
-    IP = 7.7 * Units.EV2HARTREE
-    #IP = 7.9 * Units.EV2HARTREE
+    # Huber
+    IP = 7.7 * Units.EV2HARTREE # adiabatic?
+       
+    IP_vert_approx = np.abs(-8.066308039 + 7.770884366)*Units.HARTREE2EV
+    IP_min_approx = np.abs(-8.066308039 + 7.78173407)*Units.HARTREE2EV
 
+    m_Li    = 7*Constants.m_p + 3
+    mu      = H.m * m_Li / (H.m + m_Li)
+    # Huber p. 382
+    mu = 0.88123833*Constants.m_p
     # https://doi.org/10.1063/1.479970
+    IP      = 7.743 * Units.EV2HARTREE
+    # IP + Ep_0 - E_0 = 7.68 eV
     # Table IV
-    mu      = H.m * m / (H.m + m)
     E_min   = -8.021321 
     De      = 2.4924 * Units.EV2HARTREE
     Req     = 3.0148
@@ -100,7 +106,7 @@ class LiH(metaclass=ReadOnly):
     v_max   = 2
     morse_parameters = (mu, we, Req, De)
 
-    r_mu    = (H.m*Req + m*0) / (H.m + m)
+    r_mu    = (H.m*Req + m_Li*0) / (H.m + m_Li)
 
     #print('alpha =', alpha)
     #print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
@@ -125,9 +131,10 @@ class LiH(metaclass=ReadOnly):
     max_kinE_unresolved = energies[-1]*Units.EV2HARTREE - H.IP
 
 class LiHp(metaclass=ReadOnly):
+    m_Lip   = 7*Constants.m_p + 2
+    mu      = H.m * m_Lip / (H.m + m_Lip)
+    mu      = LiH.mu
     # https://doi.org/10.1063/1.479970
-    m       = 7*Constants.m_p + 2
-    mu      = H.m * m/ (H.m + m)
     Req     = 4.136
     we      = 442.9 * Units.WAVENUMBER2HARTREE
     alpha   = 0.507 
@@ -150,7 +157,7 @@ class Hp_LiH():
     R_min = (r_vdw_Li + H.r_vdw + LiH.Req)/2 + H.r_vdw
     #print("R_min", R_min, R_min*Units.BOHR2ANGSTROM)
 
-    input_fixed = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
+    input_electronic = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
 
     input = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_resolved]
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]
@@ -158,3 +165,17 @@ class Hp_LiH():
 # ===================== B+ = LiH =================
 class Bp_LiH:
     input = [B.deg_factor, B.IP, LiH.IP, B.PI_xs, LiH.file_PI_xs_resolved]
+    
+    
+#print('Vertical Ionization potential:', LiH.IP_vert)
+print('Approx E_p(Re)  -E(Re):', LiH.IP_vert_approx)
+print('Approx E_p(Re_p)-E(Re):', LiH.IP_min_approx)
+
+# Huber p. 382
+print("De Lundsgaard", LiH.De*Units.HARTREE2EV)
+print("m calculated ", H.m * LiH.m_Li / (H.m + LiH.m_Li))
+print("m Huber      ", 0.88123833*Constants.m_p)
+print("w Lundsgaard ", LiH.we*Units.HARTREE2EV)
+print("w Huber      ", 1405.65*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV)
+print("Re Lundsgaard", LiH.Req)
+print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR)

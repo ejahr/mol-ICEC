@@ -1,0 +1,205 @@
+import mpmath
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib import rcParams
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from icec.intraIcec import IntraICEC
+from icec.morse import Morse
+from icec.constants import Units
+from plotting.base import DIR, set_rcParams
+
+set_rcParams()
+
+def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
+    psi = [morse.psi(vi,r_i) * scale
+               + morse.energy(vi)*Units.HARTREE2EV + yshift 
+               for r_i in morse.r]
+    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi, color='tab:blue', lw=1)
+    
+def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color='lightskyblue'):
+    if norm is None:
+        norm = morse.get_norm_diss(energy)
+    psi_diss = [mpmath.re(norm * morse.psi_diss(energy,r_i)) * scale
+                + energy*Units.HARTREE2EV + yshift 
+                for r_i in morse.r]
+    ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color=color, lw=1)
+
+def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
+    # TODO I defined bound states to have negative energies, recheck the y values
+    # TODO annotations as inputs
+    print("num of vib states for D :", icec.Morse_D.vmax + 1)
+    print("num of vib states for B+:", icec.Morse_Dp.vmax + 1)
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
+    fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
+    ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
+    
+    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV-0.1, 0.1)
+    height = 0.3/0.7*(0.1 - (-icec.Morse_D.De*Units.HARTREE2EV-0.1))
+    ax1.set_ylim(yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1, yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1 + height)
+    
+    r = icec.Morse_D.make_rgrid(rmax=L)
+    icec.Morse_Dp.r = r
+    scale = 1./15
+    # D
+    for vi in range(3):
+        plot_vib_state(ax2, icec.Morse_D, vi, scale)
+        
+    V = icec.Morse_D.V(r)
+    ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
+    ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
+    
+    # Dp
+    energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
+    plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    #energy, norm = icec.Morse_Dp.diss_energies[0], icec.Morse_Dp.diss_norms[0]
+    #plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    
+    #plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
+    plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
+    
+    V = icec.Morse_Dp.V(r)
+    ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
+    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
+    
+    ax1.spines.bottom.set_visible(False)
+    ax2.spines.top.set_visible(False)
+    ax1.tick_params(bottom=False)
+    
+    # cut out slanted lines
+    d = .5  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
+    ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
+    
+    fig.text(0, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
+    fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
+
+
+def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
+    fig = plt.figure(figsize=(6,4))
+    ax = plt.gca() 
+    def psi_at_L(E):
+        return mpmath.re(morse.psi_diss(E,L))
+    x = np.geomspace(1e-5, 1, 2000) 
+    y = np.array([psi_at_L(E*Units.EV2HARTREE) for E in x])
+
+    ax.plot(x,y)
+    ax.grid(True)
+    ax.set_xlabel(r'$E$ [$\mathrm{eV}$]')
+    ax.set_ylabel(r'$\psi_E(L)$')
+    ax.set_ylim(-1,1)
+    fname = DIR + f"plots/{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fig.savefig(fname, bbox_inches='tight')
+    
+    
+    
+def plot_energy_sketch():
+    x_D = 1
+    shift_D = 2
+    x_A = -1
+    shift_A = 2
+    
+    a = 5
+    
+    def potD(x):
+        return a*(x-x_D)**2
+    
+    def potD_inv(y):
+        root = np.sqrt(y/a)
+        return x_D - root, x_D + root
+    
+    def potDp(x):
+        return shift_D + a*(x-x_D)**2
+    
+    def potA(x):
+        return a*(x-x_A)**2
+    
+    def potAp(x):
+        return shift_A + a*(x-x_A)**2
+    
+    def potA_inv(y):
+        root = np.sqrt(y/a)
+        return x_A - root, x_A + root
+    
+    
+    E_D = 0.3
+    E_Dp = E_D + shift_D
+    
+    E_A = 0.3
+    E_Ap = E_A + shift_A
+
+    fig, ax = plt.subplots(figsize=(6,3))
+    
+    # Arrow
+    arrowstyle = patches.ArrowStyle("-|>", head_width=0.12, head_length=0.35)
+    arrowprops=dict(arrowstyle=arrowstyle, lw=1.5, color='tab:red', capstyle='butt', joinstyle="miter", zorder=0)
+    ax.annotate(
+        "",
+        xytext=(x_A, shift_A+E_A+0.025),
+        xy=(x_A, 0+E_A-0.01),
+        arrowprops=arrowprops
+    )
+
+    
+    # Level lines
+    x1,x2 = potA_inv(E_A)
+    ax.plot([x1+0.01,x2-0.01], [E_A, E_A], color = 'tab:blue')
+    ax.plot([x1+0.01,x2-0.01], [E_Ap, E_Ap], color = 'tab:blue')
+    
+    # Harmonic oscillators
+    x = np.linspace(x_A-0.44, x_A+0.44, 400)
+    ax.plot(x, potA(x), color = 'black')
+    ax.plot(x, potAp(x), color = 'black')
+    
+    # Labels
+    ax.text(potA_inv(E_A)[0]-0.65, E_A-0.05, r"$\mathrm{A}^-$")
+    ax.text(potA_inv(E_A)[1]+0.1, E_A-0.05, r"$\nu_{\mathrm{A}^-}$")
+    
+    ax.text(potA_inv(E_A)[0]-0.65, E_Ap-0.05, r"$\mathrm{A} + e_k^-$")
+    ax.text(potA_inv(E_A)[1]+0.1, E_Ap-0.05, r"$\nu_\mathrm{A}$")
+    
+    # Level lines
+    x1,x2= potD_inv(E_D)
+    ax.plot([x1+0.01,x2-0.01], [E_D, E_D], color = 'tab:blue')
+    ax.plot([x1+0.01,x2-0.01], [E_Dp, E_Dp], color = 'tab:blue')
+    
+    # Harmonic oscillators
+    x = np.linspace(x_D-0.44, x_D+0.44, 400)
+    ax.plot(x, potD(x), color = 'black')
+    ax.plot(x, potDp(x), color = 'black')
+
+    # Arrow
+    ax.annotate(
+        "",
+        xy=(x_D, shift_D+E_D+0.01),
+        xytext=(x_D, E_D-0.025),
+        arrowprops=arrowprops
+    )
+
+    # Labels
+    ax.text(potD_inv(E_D)[1]+0.2, E_D-0.05, r"$\mathrm{D}$")
+    ax.text(potD_inv(E_D)[0]-0.3, E_D-0.05, r"$\nu_{\mathrm{D}}$")
+    
+    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e_{k'}^-$")
+    ax.text(potD_inv(E_D)[0]-0.3, E_Dp-0.05, r"$\nu_{\mathrm{D}^+}$")
+    
+    # omega
+    # https://stackoverflow.com/questions/33707162/zigzag-or-wavy-lines-in-matplotlib
+    ax.text((x_A+x_D)/2 - 0.075, E_A+shift_A/2 + 0.15, r"$\omega$", color='tab:red')
+    rcParams['path.sketch'] = (4, 15, 1)
+    ax.plot([x_A+0.005, x_D-0.005], [E_A+shift_A/2, E_D+shift_D/2], lw=1.5, color='tab:red')
+    set_rcParams()
+
+    #ax.set_xlim(-2.5, 2.5)
+    #ax.set_ylim(-0.2, 3)
+    ax.axis("off")
+    fname = DIR + "/plots/icec_energy_sketch.pdf"
+    fig.savefig(fname, bbox_inches='tight')
+    
+plot_energy_sketch()
