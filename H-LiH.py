@@ -7,7 +7,7 @@ from icec.morse import Morse
 from icec.constants import Units
 from plotting.pes import plot_PES, plot_diss_at_L
 from plotting.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
-from plotting.cross_sections import plot_xs_vi, plot_xs_FC, plot_xs_boltzmann, plot_xs_R, plot_xs_vB_vBp, plot_xs_boltzmann_FC
+from plotting.cross_sections import plot_xs_vi, plot_xs_FC_bb, plot_xs_FC, plot_xs_boltzmann, plot_xs_vB_vBp, plot_xs_boltzmann_FC
 
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
@@ -209,7 +209,7 @@ if HLi:
         #plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
         plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
     
-        T = [15, 298, 2000] 
+        T = [15, 300, 1500] 
         plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
         plot_xs_vB_vBp(system, icec, R, LiH.v_max, LiHp.v_max)
         
@@ -217,8 +217,8 @@ if HLi:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
         plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_fixed=icec_fixed)
         
-        T = [15, 298, 2000] 
-        plot_xs_boltzmann_FC(system, icec_FC, R, T, LiH.v_max)
+        T = [15, 300, 1500] 
+        plot_xs_boltzmann_FC(system, icec_FC, R, T, LiH.v_max, icec_fixed=icec_fixed)
         
 
 if BLi:

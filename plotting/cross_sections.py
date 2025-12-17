@@ -124,6 +124,19 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_fixed:ICEC=None):
     plt.tight_layout()
     fig.savefig(fname)
     
+    
+def boltzmann(icec: IntraICEC, results, vD_max, t):
+    # add De to energy(vi) to get positive values which increases numerical stability
+    norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
+                for vi in range(vD_max+1)
+                )
+    avg = sum(
+        np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results[:, vi+1] 
+        for vi in range(vD_max+1)
+        )
+    return avg/norm
+    
+    
 def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
@@ -134,14 +147,7 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
     blues = plt.get_cmap("Blues_r")    
     for t in T:
         if vib_energies is None:
-            # add De to energy(vi) to get positive values which increases numerical stability
-            norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
-                       for vi in range(vD_max+1)
-                       )
-            avg = sum(
-                np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results[:, vi+1] 
-                for vi in range(vD_max+1)
-                )
+            xs = boltzmann(icec, results, vD_max, t)
         else:
             norm = sum(
                 np.exp(-vib_energies[vi]/Constants.KB/t) 
@@ -151,9 +157,10 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
                 np.exp(-vib_energies[vi]/Constants.KB/t) * results[:, vi+1]
                 for vi in range(vD_max+1)
                 )
+            xs = avg/norm
         label = r'$T=$' + str(t) + 'K'
-        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
-        ax.plot(results[:,0], avg/norm, label=label, color=blue)
+        blue = blues(T.index(t) / (len(T) + 2 / len(T)))
+        ax.plot(results[:,0], xs, label=label, color=blue)
         
     #for vi in range(v_max + 1):
     #    plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')  
@@ -164,12 +171,11 @@ def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-    
-def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max):
+def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_fixed:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
-    ax.set_xlim(-0.2, 8.5)
+    ax.set_xlim(-0.1, 4.2)
     
     modifier = "-FC"
     results_bb = read_results_file(system, R, modifier)
@@ -179,33 +185,26 @@ def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max):
     results = results_bc
     for col in range(1,results.shape[1]):
         results[:, col] += results_bb[:, col]
+        
+    if icec_fixed is not None:
+        energy = icec_fixed.energyGrid*Units.HARTREE2EV
+        xs = icec_fixed.xs_energy(R)
+        ax.plot(energy, xs, color='black', label="electronic")
             
     blues = plt.get_cmap("Blues_r")    
     for t in T:
-        # add De to energy(vi) to get positive values which increases numerical stability
-        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
-                    for vi in range(vD_max+1)
-                    )
-        avg = sum(
-            np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results_bb[:, vi+1] 
-            for vi in range(vD_max+1)
-            )
         blue = blues(T.index(t) / (len(T) + 1 / len(T)))
-        ax.plot(results_bb[:,0], avg/norm, color=blue, ls="--")
+        label = r'$T=$' + str(t) + r'$\,$K'
         
-    for t in T:
-        # add De to energy(vi) to get positive values which increases numerical stability
-        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
-                    for vi in range(vD_max+1)
-                    )
-        avg = sum(
-            np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) * results[:, vi+1] 
-            for vi in range(vD_max+1)
-            )
-        label = r'$T=$' + str(t) + 'K'
-        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
-        ax.plot(results[:,0], avg/norm, label=label, color=blue)
-
+        xs = boltzmann(icec, results_bb, vD_max, t)
+        ax.plot(results_bb[:,0], xs, color=blue, label=label)
+        
+        xs = boltzmann(icec, results_bc, vD_max, t)
+        ax.plot(results_bc[:,0], xs, color=blue, ls='--')
+        
+        #xs = boltzmann(icec, results, vD_max, t)
+        #ax.plot(results[:,0], xs, color=blue, ls=':')
+    
     ax.legend()
     plt.tight_layout()
     fname = DIR + f'plots/{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
