@@ -101,6 +101,7 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     
 def plot_energy_sketch():
     x_D = 1
+    y_D = 0.3
     shift_D = 2
     x_A = -1
     shift_A = 2
@@ -108,14 +109,14 @@ def plot_energy_sketch():
     a = 5
     
     def potD(x):
-        return a*(x-x_D)**2
+        return y_D + a*(x-x_D)**2
     
     def potD_inv(y):
-        root = np.sqrt(y/a)
+        root = np.sqrt((y-y_D)/a)
         return x_D - root, x_D + root
     
     def potDp(x):
-        return shift_D + a*(x-x_D)**2
+        return y_D + shift_D + a*(x-x_D)**2
     
     def potA(x):
         return a*(x-x_A)**2
@@ -128,7 +129,7 @@ def plot_energy_sketch():
         return x_A - root, x_A + root
     
     
-    E_D = 0.3
+    E_D = y_D + 0.3
     E_Dp = E_D + shift_D
     
     E_A = 0.3
@@ -186,12 +187,12 @@ def plot_energy_sketch():
     ax.text(potD_inv(E_D)[1]+0.2, E_D-0.05, r"$\mathrm{D}$")
     ax.text(potD_inv(E_D)[0]-0.3, E_D-0.05, r"$\nu_{\mathrm{D}}$")
     
-    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e_{k'}^-$")
+    ax.text(potD_inv(E_D)[1]+0.2, E_Dp-0.05, r"$\mathrm{D}^+ + e_{k\prime}^-$")
     ax.text(potD_inv(E_D)[0]-0.3, E_Dp-0.05, r"$\nu_{\mathrm{D}^+}$")
     
     # omega
     # https://stackoverflow.com/questions/33707162/zigzag-or-wavy-lines-in-matplotlib
-    ax.text((x_A+x_D)/2 - 0.075, E_A+shift_A/2 + 0.15, r"$\omega$", color='tab:red')
+    ax.text((x_A+x_D)/2 - 0.075, E_A+shift_A/2 + 0.3, r"$\omega$", color='tab:red')
     rcParams['path.sketch'] = (4, 15, 1)
     ax.plot([x_A+0.005, x_D-0.005], [E_A+shift_A/2, E_D+shift_D/2], lw=1.5, color='tab:red')
     set_rcParams()
