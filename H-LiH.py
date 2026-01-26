@@ -4,7 +4,7 @@ from input.HLiH import LiH, LiHp, Hp_LiH, Bp_LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
-from icec.constants import Units
+from icec.constants import Units, Constants
 from plotting.pes import plot_PES, plot_diss_at_L
 from plotting.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
 from plotting.cross_sections import plot_xs_vi, plot_xs_FC_bb, plot_xs_FC, plot_xs_boltzmann, plot_xs_boltzmann_FC
@@ -85,14 +85,40 @@ def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifie
     np.savetxt(fname, spectrum, fmt='%1.3e', header=header)  
  
 
-def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC):
-    omega = 10*Units.EV2HARTREE
-    print('xs         ', icec.PI_xs_D(0,0,omega))
-    print('xs FC      ', icec_FC.PI_xs_D(0,0,omega))
-    print('xs FC paper', icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)*Units.MB2AU*0.0153)             
+def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
+    electronE = 1*Units.EV2HARTREE
+    omega = electronE + icec_fixed.IP_A
     
-    for vp in range(0, LiH.v_max+1):
-        icec_FC.FC_factor(0,vp)
+    print('\n== Test FC approx ==')
+    for vf in range(5):
+        print(f'0->{vf}/elec')
+        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
+        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec_fixed.xs(electronE,R))
+        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_fixed.xs(electronE,R))     
+        print(' FC     ', icec_FC.FC_factor(0,vf))
+        
+    print('\n== Test v-ratios ==')
+    for vf in range(1,5):
+        print(f'0->{vf}/0->{vf-1}')
+        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
+        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec.xs(electronE,R,0,vf-1))
+        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_FC.xs(electronE,R,0,vf-1))
+        print(' FC     ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
+    
+def print_boltzmann_probabilities(icec:IntraICEC, T):
+    print('\n== Calculate boltzmann probabilities ==')
+    vmax = icec.Morse_D.vmax
+    vmax = 5
+    for t in T:
+        print(f'T = {t} K')
+        # add De to energy(vi) to get positive values which increases numerical stability
+        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
+                        for vi in range(vmax+1)
+                        )
+        for vi in range(vmax):
+            value = np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) / norm
+            print(f'vi = {vi}: {value}')  
+        
         
 def plot_H_PI_PR(icec:ICEC):
     fig = plt.figure()
@@ -145,6 +171,7 @@ R = 6*Units.ANGSTROM2BOHR
 L = 8*Units.ANGSTROM2BOHR
 #L = 16*Units.ANGSTROM2BOHR
 R_list = np.array([6,8,10]) * Units.ANGSTROM2BOHR
+T = [15, 300, 1500] 
 
 min_kinE = 0.01 * Units.EV2HARTREE
 max_kinE = 9 * Units.EV2HARTREE
@@ -184,10 +211,9 @@ if HLi:
     icec_FC.Morse_Dp.load_diss_states(fname)
     
     #plot_H_PI_PR(icec_fixed)
-    #test_FC_factors(icec_fixed, icec, icec_FC)
+    test_FC_factors(icec_fixed, icec, icec_FC, R)
+    print_boltzmann_probabilities(icec_FC, T)
     energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
-    plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
-    #plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
     
     system = 'Hp-LiH'
     header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
@@ -204,18 +230,19 @@ if HLi:
         calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
     
     if plot_bb:
-        plot_xs_FC_bb(system, icec_FC, R, icec_fixed)
-        #plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
+        #plot_xs_FC_bb(system, icec_FC, R, icec_fixed)
+        plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
         plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_fixed=icec_fixed)
-    
-        T = [15, 300, 1500] 
+        
         plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
+        
+        #plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
+        #plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
         
     if plot_bc:
         plot_xs_FC(system, icec_FC, R, icec_fixed)
         plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_fixed=icec_fixed)
-        
-        T = [15, 300, 1500] 
+
         plot_xs_boltzmann_FC(system, icec_FC, R, T, LiH.v_max, icec_fixed=icec_fixed)
         
 
