@@ -56,7 +56,7 @@ def calculate_xs_bc_R(system, icec, R, header):
         headerR = header + f'R_AD = {round(r*Units.BOHR2ANGSTROM)} Angstrom\n'
         calculate_xs_bc(system, headerR, icec, r, LiH.v_max)
 
-def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=None, vDp_max=None, modifier=''): 
+def calculate_spectrum(system, header, icec_elec:ICEC, icec: IntraICEC, R, electronE, vD_max=None, vDp_max=None, modifier=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
@@ -64,7 +64,8 @@ def calculate_spectrum(system, header, icec: IntraICEC, R, electronE, vD_max=Non
     header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
     header += f'Number of final vibrational states: {vDp_max+1}\n'
     header += "E_in = " + str(round(electronE*Units.HARTREE2EV)) + " eV\n"
-    header += "| E_out [eV] : xs [Mb] |"  
+    header += f"Electronic result: E_out = {icec_elec.electronE_f(electronE)*Units.HARTREE2EV} eV, xs = {icec_elec.xs(electronE)*Units.AU2MB} Mb"
+    header += "| E_out [eV], xs [Mb], v_f|"  
     spectrum_all_vi = np.array([]) 
     for vi in range(vD_max+1):
         spectrum = icec.spectrum(electronE, R, vi, vDp_max)
@@ -222,8 +223,8 @@ if HLi:
         calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
         calculate_xs_bb(system, header, icec_FC, R, modifier='-FC')
         calculate_xs_R(system, header, icec, R_list, LiH.v_max, LiHp.v_max)        
-        calculate_spectrum(system, header, icec, R, electronE, LiH.v_max, LiHp.v_max)
-        calculate_spectrum(system, header, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
+        calculate_spectrum(system, header, icec_fixed, icec, R, electronE, LiH.v_max, LiHp.v_max)
+        calculate_spectrum(system, header, icec_fixed, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
         
     if calculation_bc:
         #calculate_xs_bc(system, header, icec_FC, R, vD_max=5, modifier='-FC')
@@ -271,7 +272,7 @@ if BLi:
     plot_xs_vi(system, icec, R, title=r"\mathrm{B}^+ + \mathrm{LiH}")
 
     #for electronE in electron_energies:
-    #    calculate_spectrum(system, header, icec, R, electronE)
+    #    calculate_spectrum(system, header, icec_fixed, icec, R, electronE)
 
     #plot_spectrum(system, R, 1*Units.EV2HARTREE, title=title)
     #plot_spectrum(system, R, 5*Units.EV2HARTREE, title=title)
