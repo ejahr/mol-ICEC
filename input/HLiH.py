@@ -34,16 +34,6 @@ class H(metaclass=ReadOnly):
     coefficients = np.polyfit(E_photon, xs, 15)
     PI_xs_eVMb = np.poly1d(coefficients)
 
-# =================== B+ ==========================
-class B:
-    deg_2P = 6
-    deg_1S = 1
-    deg_factor = 6
-    IP = 8.298019 * Units.EV2HARTREE
-
-    fname = DIR + 'data/B/B.txt'
-    PI_xs = generate_linfit(fname)
-
 # ====================== LiH ==========================
 
 class LiH(metaclass=ReadOnly):
@@ -126,10 +116,7 @@ class Hp_LiH():
     input = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_resolved]
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]
 
-# ===================== B+ = LiH =================
-class Bp_LiH:
-    input = [B.deg_factor, B.IP, LiH.IP, B.PI_xs, LiH.file_PI_xs_resolved]
-    
+# ==================== Test =====================
     
 #print('Vertical Ionization potential:', LiH.IP_vert)
 print('Approx E_p(Re)  -E(Re):', LiH.IP_vert_approx)

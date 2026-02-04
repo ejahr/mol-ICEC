@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from input.HLiH import LiH, LiHp, Hp_LiH, Bp_LiH
+from input.HLiH import LiH, LiHp, Hp_LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
@@ -167,8 +167,6 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
 
 
 # ===== Define which parts are active =====
-HLi             = 1
-BLi             = 0
 calc_roots      = 0
 calc_bb         = 0
 calc_bc         = 0
@@ -193,115 +191,83 @@ max_kinE    = 9 * Units.EV2HARTREE
 max_dissE   = 1.3 * Units.EV2HARTREE
 resolution  = 1000
 
-if HLi:
-    system = 'Hp-LiH'
-    title = r'$\text{H}^+ \text{LiH}$'
-    
-    # --------- Define ICEC classes for calculating ICEC cross sections ---------
-    # --- ICEC with vibrationally resolved photoionization cross section of D ---
-    icec = IntraICEC(*Hp_LiH.input)
-    icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
-    icec.make_energy_grid(min_kinE, max_kinE, resolution)
-    icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
-    icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
-    IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
-    icec.IP_D = IP_adiabatic
-    icec.define_PI_xs_D(method="resolved")
-    
-    # --- ICEC within Franck-Condon approximation for photoionization of D ---
-    icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
-    icec_FC.IP_D = IP_adiabatic
-    icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
-    icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
-    icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
-    icec_FC.define_PI_xs_D(method="FC")
-    
-    icec_FC.Morse_Dp.define_box(L)
-    fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
-    if calc_roots:
-        calculate_roots(icec_FC.Morse_Dp, fname, max_energy=max_dissE, num=1000)
-    icec_FC.Morse_Dp.load_diss_states(fname)
-    
-    # --- electronic ICEC without any nuclear dynamics ---
-    icec_el = ICEC(*Hp_LiH.input_electronic)
-    IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
-    icec_el.IP_B = IP_vertical
-    icec_el.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
-    
-    
-    if print_info:
-        print('\n===== Info =====')
-        print(f"vertical ionization energy {IP_vertical*Units.HARTREE2EV} eV")
-        print(f"adiabatic ionizaton energy {IP_adiabatic*Units.HARTREE2EV} eV")
-        energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
-        print(f"energy diff at R=inf       {energy_diff_at_inf} eV")
-        test_FC_factors(icec_el, icec, icec_FC, R)
-        print_boltzmann_probabilities(icec_FC, T)
-        print_PI_crosssection(icec_FC)
-        
-    
-    system = 'Hp-LiH'
-    header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
+system = 'Hp-LiH'
+title = r'$\text{H}^+ \text{LiH}$'
 
-    if calc_bb:
-        calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
-        calculate_xs_bb(system, header, icec_FC, R, modifier='-FC')
-        calculate_xs_R(system, header, icec, R_list, LiH.v_max, LiHp.v_max)        
-        calculate_spectrum(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
-        calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
-        
-    if calc_bc:
-        calculate_xs_bc(system, header, icec_FC, R, vD_max_bc, modifier='-FC')
-        calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
-    
-    if plot_bb:
-        if plot_xs:
-            plot_xs_FC_bb(system, icec_FC, R, icec_el)
-        if plot_spectra:
-            plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
-            plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
-        #plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
-        
-    if plot_bc:
-        if plot_xs:
-            plot_xs_FC(system, icec_FC, R, icec_el)
-        if plot_spectra:   
-            plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
-        if plot_T:
-            plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+# --------- Define ICEC classes for calculating ICEC cross sections ---------
+# --- ICEC with vibrationally resolved photoionization cross section of D ---
+icec = IntraICEC(*Hp_LiH.input)
+icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
+icec.make_energy_grid(min_kinE, max_kinE, resolution)
+icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
+icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
+IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
+icec.IP_D = IP_adiabatic
+icec.define_PI_xs_D(method="resolved")
 
-    if plot_info:
-        plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
-        plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
-        #plot_H_PI_PR(icec_el)
-        
+# --- ICEC within Franck-Condon approximation for photoionization of D ---
+icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
+icec_FC.IP_D = IP_adiabatic
+icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
+icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
+icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
+icec_FC.define_PI_xs_D(method="FC")
 
-if BLi:
-    system = 'Bp-LiH'
-    title = r'$\text{B}^+ \text{LiH}$'
-    
-    icec = IntraICEC(*Bp_LiH.input)  
-    #icec.input_vib_spacing_D(vib_spacing_LiH, vib_spacing_LiHp)
-    icec.define_Morse_D(*LiH.morse_parameters)
-    icec.define_Morse_Dp(*LiHp.morse_parameters)
-    icec.make_energy_grid(min_kinE, max_kinE, resolution) 
-    
-    R = 10 * Units.ANGSTROM2BOHR
-    
-    header = 'e- + B+ + LiH -> B + LiH+ + e-\n'
-    header += f'Number of initial vibrational states: {LiH.v_max+1}\n' 
-    header += f'Number of final vibrational states: {LiHp.v_max+1}\n' 
-    header += f'R = {round(R*Units.BOHR2ANGSTROM)} Angstrom'
-    header += 'E_in [eV] | xs [Mb]'
-        
-    #xs_bb(system, header, icec, R, v_max, vp_max)
-    
-    T = [15, 298, 2000] 
-    plot_xs_boltzmann(system, icec, R, T, LiH.vib_energies)
-    plot_xs_vi(system, icec, R, title=r"\mathrm{B}^+ + \mathrm{LiH}")
+icec_FC.Morse_Dp.define_box(L)
+fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
+if calc_roots:
+    calculate_roots(icec_FC.Morse_Dp, fname, max_energy=max_dissE, num=1000)
+icec_FC.Morse_Dp.load_diss_states(fname)
 
-    #for electronE in electron_energies:
-    #    calculate_spectrum(system, header, icec_el, icec, R, electronE)
+# --- electronic ICEC without any nuclear dynamics ---
+icec_el = ICEC(*Hp_LiH.input_electronic)
+IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
+icec_el.IP_B = IP_vertical
+icec_el.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
 
-    #plot_spectrum(system, R, 1*Units.EV2HARTREE, title=title)
-    #plot_spectrum(system, R, 5*Units.EV2HARTREE, title=title)
+
+if print_info:
+    print('\n===== Info =====')
+    print(f"vertical ionization energy {IP_vertical*Units.HARTREE2EV} eV")
+    print(f"adiabatic ionizaton energy {IP_adiabatic*Units.HARTREE2EV} eV")
+    energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
+    print(f"energy diff at R=inf       {energy_diff_at_inf} eV")
+    test_FC_factors(icec_el, icec, icec_FC, R)
+    print_boltzmann_probabilities(icec_FC, T)
+    print_PI_crosssection(icec_FC)
+    
+
+system = 'Hp-LiH'
+header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
+
+if calc_bb:
+    calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
+    calculate_xs_bb(system, header, icec_FC, R, modifier='-FC')
+    calculate_xs_R(system, header, icec, R_list, LiH.v_max, LiHp.v_max)        
+    calculate_spectrum(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
+    calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
+    
+if calc_bc:
+    calculate_xs_bc(system, header, icec_FC, R, vD_max_bc, modifier='-FC')
+    calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
+
+if plot_bb:
+    if plot_xs:
+        plot_xs_FC_bb(system, icec_FC, R, icec_el)
+    if plot_spectra:
+        plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
+        plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
+    #plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
+    
+if plot_bc:
+    if plot_xs:
+        plot_xs_FC(system, icec_FC, R, icec_el)
+    if plot_spectra:   
+        plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
+    if plot_T:
+        plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+
+if plot_info:
+    plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
+    plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
+    #plot_H_PI_PR(icec_el)
