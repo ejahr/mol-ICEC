@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
-from plotting.base import DIR, set_rcParams
+from config import DIR
+from plotting.base import set_rcParams
 
 set_rcParams()
 

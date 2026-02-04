@@ -9,7 +9,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
-from plotting.base import DIR, set_rcParams
+from config import DIR
+from plotting.base import set_rcParams
 
 set_rcParams()
 

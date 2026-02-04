@@ -3,10 +3,9 @@ import scipy as sp
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from config import DIR
 from icec.constants import Units, Constants
 from input.fit import generate_polyfit
-
-DIR = '/home/elena/intraICEC/dimers/'
 
 class ReadOnly(type):
     def __setattr__(self, name, value):

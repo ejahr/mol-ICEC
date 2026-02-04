@@ -3,9 +3,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from input.fit import generate_linfit
 from input.HLiH import LiH
+from config import DIR
 from icec.constants import Units
-
-DIR = '/home/elena/intraICEC/dimers/'
 
 # =================== B+ ==========================
 class B:

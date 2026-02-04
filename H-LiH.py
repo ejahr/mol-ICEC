@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from config import DIR
 from input.HLiH import LiH, LiHp, Hp_LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
@@ -14,7 +15,9 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 plt.rcParams.update({'font.size': 16})
 width, height = 6, 4
 
-DIR = '/home/elena/intraICEC/dimers/'
+def extend_header(header, vD_max, vDp_max):
+    header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
+    header += f'Number of final vibrational states: {vDp_max+1}\n'  
 
 def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifier=''):
     if vD_max is None:

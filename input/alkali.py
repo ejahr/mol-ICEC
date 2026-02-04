@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from ..icec.constants import Units, Constants
+from ..config import DIR
 from .fit import generate_polyfit, generate_linfit
-
-DIR = '/home/elena/intraICEC/dimers/'
 
 # K, Na 2S1/2
 degeneracy_2S = 2

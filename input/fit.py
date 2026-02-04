@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from config import DIR
 from icec.constants import Units
-
-DIR = '/home/elena/intraICEC/dimers/'
 
 def generate_polyfit(fname, degree):
     xs_data = np.loadtxt(fname, comments='#')
