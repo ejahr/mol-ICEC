@@ -1,9 +1,12 @@
 import numpy as np
 import scipy as sp
+import matplotlib.pyplot as plt
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import plot.config
 from config import DIR
+from icec.icec import ICEC
 from icec.constants import Units, Constants
 from input.fit import generate_polyfit
 
@@ -13,7 +16,7 @@ class ReadOnly(type):
 
 # =================== H+ ==========================
 class H(metaclass=ReadOnly):
-    # H 2S1/2
+    # H 2S_1/2
     deg_2S = 2
     deg_factor = deg_2S / 1
 
@@ -32,11 +35,33 @@ class H(metaclass=ReadOnly):
     xs = xs_data[:,1]
     coefficients = np.polyfit(E_photon, xs, 15)
     PI_xs_eVMb = np.poly1d(coefficients)
-
+    
+    def plot_H_PI_PR(icec:ICEC):
+        plot.config.set_rcParams()
+        fig = plt.figure()
+        ax = plt.gca() 
+        ax.set_title('Hydrogen')
+        ax.set_yscale('log')
+        ax.set_xlabel(r'$\epsilon$ [eV]')
+        ax.set_ylabel(r'$\sigma$ [Mb]')
+        
+        PI_xs = np.array([])
+        hbaromega = np.array([])
+        for electronE in icec.energyGrid:
+            omega = electronE + icec.IP_A
+            hbaromega = np.append(hbaromega, [omega*Units.HARTREE2EV])
+            xs = icec.PI_xs_A(omega*Units.HARTREE2EV)
+            PI_xs = np.append(PI_xs, [xs])
+        ax.plot(icec.energyGrid*Units.HARTREE2EV, PI_xs, label = r'$H\to H^+$')
+        icec.plot_PR_xs(ax, label = r'$H^+\to H$')
+        ax.legend()
+        fname = DIR + 'plots/H.PI.PR.pdf'
+        fig.savefig(fname)
+    
 # ====================== LiH ==========================
 
 class LiH(metaclass=ReadOnly):
-    # Huber
+    # --- Huber ---
     IP = 7.7 * Units.EV2HARTREE # adiabatic?
        
     IP_vert_approx = np.abs(-8.066308039 + 7.770884366)*Units.HARTREE2EV
@@ -46,9 +71,11 @@ class LiH(metaclass=ReadOnly):
     mu      = H.m * m_Li / (H.m + m_Li)
     # Huber p. 382
     mu = 0.88123833*Constants.m_p
-    # https://doi.org/10.1063/1.479970
+    
+    # --- LiH data from https://doi.org/10.1063/1.479970 ---
     IP      = 7.743 * Units.EV2HARTREE
     # IP + Ep_0 - E_0 = 7.68 eV
+    
     # Table IV
     E_min   = -8.021321 
     De      = 2.4924 * Units.EV2HARTREE
@@ -72,7 +99,7 @@ class LiH(metaclass=ReadOnly):
     vib_diff_to_v0 = np.cumsum(vib_spacing)
     vib_energies = vib_diff_to_v0 + energy_v0
     
-    # Photoionization cross section
+    # --- Photoionization cross section ---
     file_PI_xs_resolved = DIR + 'data/LiH/LiH_vi_vf_'
     file_PI_xs_unresolved = DIR + 'data/LiH/LiH'
 
@@ -105,7 +132,7 @@ class LiHp(metaclass=ReadOnly):
     vib_diff_to_v0 = np.cumsum(vib_spacing)
 
 # ===================== H+ = LiH =================
-class Hp_LiH():
+class Hp_LiH(metaclass=ReadOnly):
     r_vdw_Li = 5.2896
     R_min = (r_vdw_Li + H.r_vdw + LiH.Req)/2 + H.r_vdw
     #print("R_min", R_min, R_min*Units.BOHR2ANGSTROM)

@@ -6,14 +6,8 @@ from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units, Constants
-from plot.pes import plot_PES, plot_diss_at_L
-from plot.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
-from plot.cross_sections import plot_xs_vi, plot_xs_FC_bb, plot_xs_FC, plot_xs_boltzmann, plot_xs_boltzmann_FC
-
-plt.rcParams['mathtext.fontset'] = 'stix'
-plt.rcParams['font.family'] = 'STIXGeneral'
-plt.rcParams.update({'font.size': 16})
-width, height = 6, 4
+from plot import cross_sections, pes, spectrum
+import plot.config
 
 def extend_header(header, icec:IntraICEC, R=None, vD_max=None, vDp_max=None, electronE=None, result_type=None):
     if result_type == 'spectrum':
@@ -138,31 +132,11 @@ def print_PI_crosssection(icec:IntraICEC):
     print(f' LiH  : {icec.PI_xs_D_electronic(omega)*Units.AU2MB} Mb')
         
         
-def plot_H_PI_PR(icec:ICEC):
-    fig = plt.figure()
-    ax = plt.gca() 
-    ax.set_title('Hydrogen')
-    ax.set_yscale('log')
-    ax.set_xlabel(r'$\epsilon$ [eV]')
-    ax.set_ylabel(r'$\sigma$ [Mb]')
-    
-    PI_xs = np.array([])
-    hbaromega = np.array([])
-    for electronE in icec.energyGrid:
-        omega = electronE + icec.IP_A
-        hbaromega = np.append(hbaromega, [omega*Units.HARTREE2EV])
-        xs = icec.PI_xs_A(omega*Units.HARTREE2EV)
-        PI_xs = np.append(PI_xs, [xs])
-    ax.plot(icec.energyGrid*Units.HARTREE2EV, PI_xs, label = r'$H\to H^+$')
-    icec.plot_PR_xs(ax, label = r'$H^+\to H$')
-    ax.legend()
-    fname = DIR + 'plots/H.PI.PR.pdf'
-    fig.savefig(fname)
-    
 # ========= Pre calculate roots of box for dissociative states =============
     
 def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num:int=500):
     roots, root_estimates = Morse.save_diss_states(fname, max_energy, num)
+    plot.config.set_rcParams()
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('Dissociative states')
@@ -181,13 +155,13 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
 
 # ===== Define which parts are active =====
 calc_roots      = 0
-bb              = 1
+bb              = 0
 bc              = 0
 FC              = 0
 plot            = 0
-calculate       = 1
+calculate       = 0
 spectra         = 0
-cross_section   = 1
+cross_section   = 0
 temp_dependence = 0
 plot_info       = 0
 print_info      = 0
@@ -275,22 +249,22 @@ if calculate:
 if plot:
     if bb:
         if cross_section:
-            plot_xs_FC_bb(system, icec_FC, R, icec_el)
+            cross_sections.plot_xs_FC_bb(system, icec_FC, R, icec_el)
         if spectra:
-            plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
+            spectrum.plot_spectrum(system, icec, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
             if FC:
-                plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
+                spectrum.plot_spectrum_FC(system, R, 1*Units.EV2HARTREE, LiH.v_max, icec_el=icec_el)
         #plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
     
     if bc:
         if cross_section:
-            plot_xs_FC(system, icec_FC, R, icec_el)
+            cross_sections.plot_xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
-            plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
+            spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
         if temp_dependence:
-            plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+            cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
 
 if plot_info:
-    plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
-    plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
+    pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
+    pes.plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
     #plot_H_PI_PR(icec_el)
