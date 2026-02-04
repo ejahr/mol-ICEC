@@ -6,9 +6,9 @@ from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units, Constants
-from plotting.pes import plot_PES, plot_diss_at_L
-from plotting.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
-from plotting.cross_sections import plot_xs_vi, plot_xs_FC_bb, plot_xs_FC, plot_xs_boltzmann, plot_xs_boltzmann_FC
+from plot.pes import plot_PES, plot_diss_at_L
+from plot.spectrum import plot_spectrum, plot_spectrum_bc, plot_spectrum_FC
+from plot.cross_sections import plot_xs_vi, plot_xs_FC_bb, plot_xs_FC, plot_xs_boltzmann, plot_xs_boltzmann_FC
 
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
