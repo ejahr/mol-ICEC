@@ -23,7 +23,7 @@ def read_results_file(system, electronE, R, modifier='', L=None):
     results = np.loadtxt(file_path, comments='#')
     return results    
     
-def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_fixed:ICEC=None, modifier=''):
+def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_el:ICEC=None, modifier=''):
     results = read_results_file(system, electronE, R)
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -38,9 +38,9 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
         bars[vi] = ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label, color=color[vi])
     labels = [r'$v_i=$' + str(vi) for vi in range(vD_max+1)] 
         
-    if icec_fixed is not None:
-        energy_out = icec_fixed.electronE_f(electronE)
-        xs = icec_fixed.xs(electronE, R)
+    if icec_el is not None:
+        energy_out = icec_el.electronE_f(electronE)
+        xs = icec_el.xs(electronE, R)
         bars.append(ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.002, color='black', label='electronic'))
     labels.append('electronic')
         
@@ -62,7 +62,7 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_fixed:ICEC=None,):
+def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
     results_FC = read_results_file(system, electronE, R, modifier='-FC')
     results_resolved = read_results_file(system, electronE, R)
     
@@ -73,9 +73,9 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_fixed:ICEC
     ax.set_ylim(1e-5, 3)
     ax.set_xlim(6.545, 7.265)
     
-    if icec_fixed is not None:
-        energy_out = icec_fixed.electronE_f(electronE)
-        xs = icec_fixed.xs(electronE, R)
+    if icec_el is not None:
+        energy_out = icec_el.electronE_f(electronE)
+        xs = icec_el.xs(electronE, R)
         ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.003, color='black', label='elec.')
         # dummy line to get correct alignment in legend
         ax.bar(6.6, 1, width=0.005, color='white', alpha=0, label=' ')
@@ -85,15 +85,15 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_fixed:ICEC
     color_resolved = ['lightskyblue', 'mediumpurple', 'lightcoral']
     for vi in range(vD_max+1):
         label = str(vi) #r'$v_i=$' + 
-        ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.008, color=color_resolved[vi], label=label)
-        ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.0026, color=color_FC[vi], label='FC')
+        ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.006, color=color_resolved[vi], label=label)
+        ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
     fname = DIR + 'plots/' + system + ".spectrum-FC.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_fixed:ICEC=None):
+def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=None):
     L=icec.Morse_Dp.box_length
     #results_bb = read_results_file(system, electronE, R)
     results_bb_FC = read_results_file(system, electronE, R, modifier='-FC')
@@ -112,9 +112,9 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_fixed:ICEC
     ax.bar(results_bb_FC[:,3*vi], results_bb_FC[:,3*vi+1], width=0.005, color='tab:blue', label='b-b')
     #ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.0075, color='tab:blue', label='b-b')
     
-    if icec_fixed is not None:
-        energy_out = icec_fixed.electronE_f(electronE)
-        xs = icec_fixed.xs(electronE, R)
+    if icec_el is not None:
+        energy_out = icec_el.electronE_f(electronE)
+        xs = icec_el.xs(electronE, R)
         ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.005, color='black', label='electronic')
     
     x_min = min(results_bc_FC[:,0]) + 0.17
