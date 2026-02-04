@@ -88,17 +88,17 @@ def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifie
 
 def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     electronE = 1*Units.EV2HARTREE
-    omega = electronE + icec_fixed.IP_A
+    omega = electronE + icec_el.IP_A
     
-    print('\n== Test FC approx ==')
+    print('\n--- Test FC approx ---')
     for vf in range(5):
         print(f'0->{vf}/elec')
-        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec_fixed.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
-        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec_fixed.xs(electronE,R))
-        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_fixed.xs(electronE,R))     
+        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec_el.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
+        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec_el.xs(electronE,R))
+        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_el.xs(electronE,R))     
         print(' FC     ', icec_FC.FC_factor(0,vf))
         
-    print('\n== Test v-ratios ==')
+    print('\n--- v-ratios ---')
     for vf in range(1,5):
         print(f'0->{vf}/0->{vf-1}')
         print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
@@ -107,7 +107,7 @@ def test_FC_factors(icec_fixed: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float
         print(' FC     ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
     
 def print_boltzmann_probabilities(icec:IntraICEC, T):
-    print('\n== Calculate boltzmann probabilities ==')
+    print('\n--- Boltzmann probabilities ---')
     vmax = icec.Morse_D.vmax
     vmax = 5
     for t in T:
@@ -119,6 +119,14 @@ def print_boltzmann_probabilities(icec:IntraICEC, T):
         for vi in range(vmax):
             value = np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) / norm
             print(f'vi = {vi}: {value}')  
+            
+            
+def print_PI_crosssection(icec:IntraICEC):
+    omega = 14.6*Units.EV2HARTREE
+    print("\n--- PI cross section at omega = 14.6 eV ---")
+    print(f' H    : {icec.PI_xs_A(omega)*Units.AU2MB} Mb')
+    print(f' omega: {omega*Units.HARTREE2EV} eV')
+    print(f' LiH  : {icec.PI_xs_D_electronic(omega)*Units.AU2MB} Mb')
         
         
 def plot_H_PI_PR(icec:ICEC):
