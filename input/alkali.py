@@ -1,9 +1,7 @@
-import sys
 import numpy as np
-import scipy as sp
 import matplotlib.pyplot as plt
-from ..icec.constants import *
-from ..fitting import generate_polyfit, generate_linfit
+from ..icec.constants import Units, Constants
+from .fit import generate_polyfit, generate_linfit
 
 DIR = '/home/elena/intraICEC/dimers/'
 
