@@ -21,7 +21,7 @@ def extend_header(header, icec:IntraICEC, R=None, vD_max=None, vDp_max=None, ele
         header += f'Number of final vibrational states: {vDp_max+1}\n'
     else:
         header += f'Dissociative states of D^+:\
-        Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV)} eV,\
+        Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV),1} eV,\
         Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
     if result_type == 'xs':
         header += 'E_in [eV] | xs [Mb]' 
@@ -79,13 +79,17 @@ def calculate_spectrum(system, header, icec_el:ICEC, icec: IntraICEC, R, electro
     fname = DIR + f"results/{system}.spectrum{modifier}.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
-def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, modifier=''): 
-    header = extend_header(icec, R, electronE=electronE, result_type='spectrum')
-    header += "E_out [eV] | xs [Mb] | diss_energy [eV]"  
-    vD = 0
-    spectrum = icec.spectrum_bc(electronE, R, vD)   
-    fname = DIR + f'results/{system}.spectrum{modifier}.bc.v0.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt'
-    np.savetxt(fname, spectrum, fmt='%1.3e', header=header)  
+def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, vD_max=None, modifier=''): 
+    if vD_max is None:
+        vD_max = icec.Morse_D.vmax
+    header = extend_header(header, icec, R=R, vD_max=vD_max, electronE=electronE, result_type='spectrum')
+    header += "| vD : E_out [eV] : xs [Mb] : diss_energy [eV] |"  
+    spectrum_all_vD = icec.spectrum_bc(electronE, R, vD=0)  
+    for vD in range(1, vD_max+1):
+        spectrum = icec.spectrum_bc(electronE, R, vD) 
+        spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))  
+    fname = DIR + f'results/{system}.spectrum{modifier}.bc.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt'
+    np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
  
 # ============= Information ===============
 

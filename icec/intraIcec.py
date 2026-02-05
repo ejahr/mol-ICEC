@@ -354,7 +354,7 @@ class IntraICEC:
         else:
             # transform to energy normalization by multiplying with the density of states at E
             xs = self.xs_bc(electronE, R, vD, E) * Units.AU2MB * density_of_states_at_E / Units.HARTREE2EV
-            return electronE_f*Units.HARTREE2EV, xs, E*Units.HARTREE2EV
+            return vD, electronE_f*Units.HARTREE2EV, xs, E*Units.HARTREE2EV
 
     def spectrum_bc(self, electronE, R, vD, diss_energies=None):
         '''Cross sections for vi -> continuum given a single electron energy.
