@@ -14,11 +14,10 @@ def set_axes(ax):
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     
-# TODO remove icec in filename
-def read_results_file(system, electronE, R, modifier='', L=None):
-    file_path = DIR + f"results/{system}.spectrum{modifier}.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}"
+def read_results(system, electronE, R, modifier='', L=None):
+    file_path = DIR + f"results/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
-        file_path += f'.L{str(round(L*Units.BOHR2ANGSTROM))}.txt'
+        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
     else:
         file_path += '.icec.txt'
     results = np.loadtxt(file_path, comments='#')
@@ -32,7 +31,7 @@ def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False)
     ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.') 
     
 def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_el:ICEC=None, modifier=''):
-    results = read_results_file(system, electronE, R)
+    results = read_results(system, electronE, R)
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     set_axes(ax)
@@ -65,13 +64,13 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
             xytext=(-26,-1),
             textcoords='offset points', color='dimgray') 
     
-    fname = DIR + 'plots/' + system + ".spectrum" + modifier + ".E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
+    fname = DIR + f"plots/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout()
     fig.savefig(fname)
     
 def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
-    results_FC = read_results_file(system, electronE, R, modifier='-FC')
-    results_resolved = read_results_file(system, electronE, R)
+    results_FC = read_results(system, electronE, R, modifier='-FC')
+    results_resolved = read_results(system, electronE, R)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -93,15 +92,15 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
         ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
-    fname = DIR + 'plots/' + system + ".spectrum-FC.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
+    fname = DIR + f"plots/{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout()
     fig.savefig(fname)
     
 def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=None):
     L=icec.Morse_Dp.box_length
     #results_bb = read_results_file(system, electronE, R)
-    results_bb_FC = read_results_file(system, electronE, R, modifier='-FC')
-    results_bc_FC = read_results_file(system, electronE, R, modifier='-FC.bc.v0', L=L)
+    results_bb_FC = read_results(system, electronE, R, modifier='-FC')
+    results_bc_FC = read_results(system, electronE, R, modifier='-FC.bc.v0', L=L)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
