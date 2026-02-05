@@ -3,7 +3,7 @@ import scipy as sp
 import mpmath
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from .constants import Units
+from .constants import Units, Constants
 
 class Morse:
     """Morse potential model for diatomic molecules.
@@ -150,7 +150,7 @@ class Morse:
         min_index = np.nanargmin(psi_samples)
         return R_samples[min_index]
 
-    def estimate_oscillation(self, E:float, d:int=5) -> int:
+    def __estimate_oscillation(self, E:float, d:int=5) -> int:
         '''Estimate oscillation based on a particle in a box: E_n = n^2*pi^2/(2*m*L^2)
         - E : energy (Hartree, a.u.)
         - d : divide n by d to not have just one period per interval
@@ -286,6 +286,23 @@ class Morse:
         self.diss_energies = data[:,1]
         self.diss_norms = data[:,2]
         self.DoS = data[:,3]
+         
+    def boltzmann_norm(self, t, v_max=None):
+        if v_max is None:
+            v_max = int(self.vmax)
+        norm = sum(
+            # add De to energy(vi) to get positive values which increases numerical stability
+            np.exp(- (self.energy(v) + self.De) / Constants.KB / t) 
+            for v in range(v_max+1)
+        )
+        return norm
+    
+    def boltzmann_occupation(self, t, v, v_max=None, norm=None):
+        if v_max is None:
+            v_max = self.vmax
+        if norm is None:
+            norm = self.boltzmann_norm(t, v_max)
+        return np.exp( -(self.energy(v) + self.De) / Constants.KB / t ) / norm
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
         """Generates a grid of interatomic distances r (Bohr, a.u.)
