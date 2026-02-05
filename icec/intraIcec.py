@@ -3,7 +3,7 @@ import scipy as sp
 import mpmath
 import time
 from itertools import repeat
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
 from typing import Callable
 from .constants import Constants, Units
 from .morse import Morse
@@ -336,10 +336,12 @@ class IntraICEC:
                 self.Morse_Dp.find_solutions_in_box()
             diss_energies = self.Morse_Dp.diss_energies
         t0 = time.perf_counter()
-        with Pool() as pool:
-            result = pool.starmap(
-                self.xs_vD_E, 
-                zip(repeat(R), repeat(vD), diss_energies)
+        with ProcessPoolExecutor() as executor:
+            result = list(
+                executor.map(
+                    self.xs_vD_E, 
+                    repeat(R), repeat(vD), diss_energies
+                )
             )
         t1 = time.perf_counter()
         print(f'time for xs vD={vD} : {t1-t0}')
@@ -366,10 +368,12 @@ class IntraICEC:
         if not hasattr(self.Morse_Dp, 'density_of_states'):
             self.Morse_Dp.get_DoS(diss_energies)
         t0 = time.perf_counter()
-        with Pool() as pool:
-            result = pool.starmap(
-                self.function_for_spectrum, 
-                zip(repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.DoS)
+        with ProcessPoolExecutor() as executor:
+            result = list(
+                executor.map(
+                    self.function_for_spectrum, 
+                    repeat(electronE), repeat(R), repeat(vD), diss_energies, self.Morse_Dp.DoS
+                )
             )
         t1 = time.perf_counter()
         print('time for spectrum:', t1-t0)
