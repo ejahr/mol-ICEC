@@ -22,7 +22,14 @@ def read_results_file(system, electronE, R, modifier='', L=None):
     else:
         file_path += '.icec.txt'
     results = np.loadtxt(file_path, comments='#')
-    return results    
+    return results   
+
+def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False):
+    energy_out = icec_el.electronE_f(electronE)
+    xs = icec_el.xs(electronE, R)
+    if return_bar:
+        return ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.')
+    ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.') 
     
 def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_el:ICEC=None, modifier=''):
     results = read_results_file(system, electronE, R)
@@ -40,9 +47,8 @@ def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, ic
     labels = [r'$v_i=$' + str(vi) for vi in range(vD_max+1)] 
         
     if icec_el is not None:
-        energy_out = icec_el.electronE_f(electronE)
-        xs = icec_el.xs(electronE, R)
-        bars.append(ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.002, color='black', label='electronic'))
+        bar_el = plot_icec_el(ax, icec_el, electronE, R, width=0.002, return_bar=True)
+        bars.append(bar_el)
     labels.append('electronic')
         
     ax.legend(handles=[bar[0] for bar in bars], labels=labels, ncols=2, fontsize='small', loc='upper right')
@@ -75,12 +81,9 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
     ax.set_xlim(6.545, 7.265)
     
     if icec_el is not None:
-        energy_out = icec_el.electronE_f(electronE)
-        xs = icec_el.xs(electronE, R)
-        ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.003, color='black', label='elec.')
+        plot_icec_el(ax, icec_el, electronE, R, width=0.003)
         # dummy line to get correct alignment in legend
         ax.bar(6.6, 1, width=0.005, color='white', alpha=0, label=' ')
-        
     
     color_FC = ['tab:blue', 'rebeccapurple', 'tab:red']
     color_resolved = ['lightskyblue', 'mediumpurple', 'lightcoral']
@@ -114,9 +117,7 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=No
     #ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.0075, color='tab:blue', label='b-b')
     
     if icec_el is not None:
-        energy_out = icec_el.electronE_f(electronE)
-        xs = icec_el.xs(electronE, R)
-        ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=0.005, color='black', label='electronic')
+        plot_icec_el(ax, icec_el, electronE, R, width=0.005)
     
     x_min = min(results_bc_FC[:,0]) + 0.17
     x_max = max(results_bb_FC[:,3*vi]) + 0.04
