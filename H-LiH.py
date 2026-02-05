@@ -151,22 +151,22 @@ def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
     plt.tight_layout()
-    fname = DIR + 'plots/LiHp.roots.' + str(round(Morse.box_length*Units.BOHR2ANGSTROM)) + 'A.pdf'
+    fname = DIR + f'plots/LiHp.roots.E{round(max_energy*Units.HARTREE2EV,1)}eV.{round(Morse.box_length*Units.BOHR2ANGSTROM)}A.pdf'
     fig.savefig(fname)
 
 
 # ================ Main ===================
 
 # ===== Define which parts are active =====
-calc_roots      = 0
+calc_roots      = 1
 bb              = 0
-bc              = 0
-FC              = 0
-plot            = 0
-calculate       = 0
-spectra         = 0
+bc              = 1
+FC              = 1
+plotting        = 1
+calculate       = 1
+spectra         = 1
 cross_section   = 0
-temp_dependence = 0
+temp_dependence = 1
 plot_info       = 0
 print_info      = 0
 
@@ -180,7 +180,7 @@ T           = [15, 300, 1500]
 vD_max_bc   = 5
 min_kinE    = 0.01 * Units.EV2HARTREE
 max_kinE    = 9 * Units.EV2HARTREE
-max_dissE   = 1.3 * Units.EV2HARTREE
+max_dissE   = 1.8 * Units.EV2HARTREE
 resolution  = 1000
 
 system = 'Hp-LiH'
@@ -206,7 +206,7 @@ icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
 icec_FC.define_PI_xs_D(method="FC")
 
 icec_FC.Morse_Dp.define_box(L)
-fname = DIR + 'data/LiH/LiHp.diss_energies.L' + str(round(L*Units.BOHR2ANGSTROM)) + 'A.txt'
+fname = DIR + f'data/LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
 if calc_roots:
     calculate_roots(icec_FC.Morse_Dp, fname, max_energy=max_dissE, num=1000)
 icec_FC.Morse_Dp.load_diss_states(fname)
@@ -248,7 +248,7 @@ if calculate:
         if cross_section:
             calculate_xs_bc(system, header, icec_FC, R, vD_max_bc, modifier='-FC')
         if spectra:
-            calculate_spectrum_bc(system, header, icec_FC, R, electronE, modifier='-FC')
+            calculate_spectrum_bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
 
 if plotting:
     if bb:
@@ -265,8 +265,10 @@ if plotting:
             cross_sections.plot_xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
             spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
-        if temp_dependence:
+        if cross_section and temp_dependence:
             cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+        if spectra and temp_dependence:
+            spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, 3)
 
 if plot_info:
     pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)

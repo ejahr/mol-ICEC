@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
@@ -128,6 +129,95 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=No
                 textcoords='offset points', color='dimgray') 
 
     ax.legend(fontsize='small', loc='upper left')
-    fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout()
     fig.savefig(fname)
+    
+def lorentzian(x, x0, gamma):
+    # Cauchy, Lorentz, Breit-Wigner
+    # gamma: HWHM, FWHM = 2 * gamma
+    return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
+    
+def boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False):
+    norm = icec.Morse_D.boltzmann_norm(t)
+    
+    if fold_lorentz:
+        lorentzian_energies = np.linspace(results[-1,0]-0.25, results[0,-3]+0.5, 5000)
+        lorentzian_spectrum = np.zeros_like(lorentzian_energies)
+    
+    for vD in range(vD_max):
+        min_energy = icec.electronE_f_bc(electronE, vD, 0)*Units.HARTREE2EV
+        occupation = icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
+        print(occupation)
+        energies = results[:,3*vD]
+        spectrum = results[:,3*vD+1]
+        if fold_lorentz:
+            gamma = 0.08
+            for energy, xs in zip(energies, spectrum):
+                broadened_peak = xs * occupation * lorentzian(lorentzian_energies, energy, gamma)
+                broadened_peak[lorentzian_energies < min_energy] = 0
+                lorentzian_spectrum += broadened_peak 
+                #ax.plot(lorentzian_energies, lorentzian_spectrum)
+        else:
+            ax.bar(energies, spectrum*occupation, width=0.005, color=color)
+     
+    if fold_lorentz:
+        lorentzian_spectrum[lorentzian_spectrum<1e-5] = np.nan
+        ax.plot(lorentzian_energies, lorentzian_spectrum, color=color, label = r'$T=$'+str(t)+r'$\,\mathrm{K}$')   
+        
+
+def interpolate(energy1, energy2, xs2):
+        interp_xs2 = sp.interpolate.interp1d(
+            energy2, xs2, kind="linear", bounds_error=False, fill_value=0
+        )
+        return interp_xs2(energy1)
+      
+def boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
+    norm = icec.Morse_D.boltzmann_norm(t)
+    
+    energy = np.sort(
+        np.concatenate(
+            ([results[:,4*vD+1] for vD in range(vD_max)]), 
+            axis=None
+        )
+    )
+    
+    energy_v0 = results[:,1]
+    xs_v0 = results[:,2]
+    xs_interpolated = interpolate(energy, energy_v0, xs_v0)
+    avg = xs_interpolated * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm)
+    
+    for vD in range(1, vD_max):
+        energy_vD = results[:,4*vD+1]
+        xs_vD = results[:,4*vD+2]
+        #ax.plot(energy_vD, xs_vD * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm), ls=":")
+        xs_interpolated = interpolate(energy, energy_vD, xs_vD)
+        avg += xs_interpolated * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
+    
+    avg[avg<1e-5]=np.nan
+    ax.plot(energy, avg, color=color, ls="--")
+    
+def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
+    fig = plt.figure(figsize=(6, 4))
+    ax = plt.gca() 
+    set_axes(ax)
+    ax.set_ylim(5*1e-4, 1)
+    ax.set_xlim(5.5, 7.5)
+    
+    L=icec.Morse_Dp.box_length
+    results_bb_FC = read_results(system, electronE, R, modifier='-FC')
+    results_bc_FC = read_results(system, electronE, R, modifier='-FC.bc', L=L)
+
+    blues = plt.get_cmap("Blues_r")    
+    for t in T:
+        blue = blues(T.index(t) / (len(T) + 2 / len(T)))
+        boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True)
+        boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue)
+        
+    ax.legend(loc="upper left")
+    plt.tight_layout()
+    fname = DIR + f'plots/{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    plt.tight_layout()
+    fig.savefig(fname)
+
+
