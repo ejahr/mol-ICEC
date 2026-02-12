@@ -155,7 +155,6 @@ class Morse:
         - E : energy (Hartree, a.u.)
         - d : divide n by d to not have just one period per interval
         '''
-        # 
         n = self.box_length * np.sqrt(2 * self.mu * E) / np.pi
         return round(n / d)
 
@@ -164,12 +163,12 @@ class Morse:
         - E : energy (Hartree, a.u.)
         - lower_bound : lower bound for the integration
         '''
-
         def integrand(r):
             return mpmath.conj(self.psi_diss(E, r)) * self.psi_diss(E, r)
         lower_bound = self.get_lower_bound(E)
         if dps==15 and hasattr(self, 'diss_energies'):
-            if np.where(self.diss_energies==E)[0][0] == 0:
+            idx = np.where(self.diss_energies == E)[0]
+            if len(idx) > 0 and idx[0] == 0:
                 dps = 50
         with mpmath.workdps(dps):
             norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
