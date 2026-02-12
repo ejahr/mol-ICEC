@@ -9,7 +9,7 @@ from icec.constants import Units, Constants
 from plot import cross_sections, pes, spectrum
 import plot.config
 
-def extend_header(header, icec:IntraICEC, R=None, vD_max=None, vDp_max=None, electronE=None, result_type=None):
+def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, electronE:float=None, result_type:str=None):
     if result_type == 'spectrum':
         header += f"ICEC electron spectrum at E_in = {round(electronE*Units.HARTREE2EV)} eV\n"
     if result_type == 'xs':
@@ -20,9 +20,9 @@ def extend_header(header, icec:IntraICEC, R=None, vD_max=None, vDp_max=None, ele
     if vDp_max is not None:
         header += f'Number of final vibrational states: {vDp_max+1}\n'
     else:
-        header += f'Dissociative states of D^+:\
-        Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV),1} eV,\
-        Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n' 
+        header += "Dissociative states of D+: " + \
+        f"Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV,1)} eV, " + \
+        f"Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n" 
     if result_type == 'xs':
         header += 'E_in [eV] | xs [Mb]' 
     return header
@@ -34,7 +34,7 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
-    header = extend_header(header, icec, R=R, vD_max=vD_max, vDp_max=vDp_max, result_type='xs')
+    header = extend_header(header, icec, R, vD_max, vDp_max, result_type='xs')
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max)
@@ -49,7 +49,7 @@ def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
 def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
-    header = extend_header(header, icec, R=R, vD_max=vD_max)
+    header = extend_header(header, icec, R, vD_max)
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD)*Units.AU2MB
@@ -61,14 +61,14 @@ def calculate_xs_bc_R(system, icec, R, header):
     for r in R:
         calculate_xs_bc(system, header, icec, r, LiH.v_max)
 
-def calculate_spectrum(system, header, icec_el:ICEC, icec: IntraICEC, R, electronE, vD_max=None, vDp_max=None, modifier=''): 
+def calculate_spectrum(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electronE:float, vD_max:int=None, vDp_max:int=None, modifier:str=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
-    header = extend_header(header, icec, vD_max=vD_max, vDp_max=vDp_max, result_type='spectrum')
-    header += f"Electronic result: E_out = {icec_el.electronE_f(electronE)*Units.HARTREE2EV} eV, xs = {icec_el.xs(electronE, R)*Units.AU2MB} Mb"
-    header += "| E_out [eV], xs [Mb], v_Dp |"  
+    header = extend_header(header, icec, R, vD_max, vDp_max, electronE, result_type='spectrum')
+    header += f"Electronic result: E_out = {icec_el.electronE_f(electronE)*Units.HARTREE2EV} eV, xs = {icec_el.xs(electronE, R)*Units.AU2MB} Mb\n"
+    header += "| v_D, v_Dp, E_out [eV], xs [Mb] |"  
     spectrum_all_vD = np.array([]) 
     for vD in range(vD_max+1):
         spectrum = icec.spectrum(electronE, R, vD, vDp_max)
@@ -79,11 +79,11 @@ def calculate_spectrum(system, header, icec_el:ICEC, icec: IntraICEC, R, electro
     fname = DIR + f"results/{system}.spectrum{modifier}.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
-def calculate_spectrum_bc(system, header, icec: IntraICEC, R, electronE, vD_max=None, modifier=''): 
+def calculate_spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
-    header = extend_header(header, icec, R=R, vD_max=vD_max, electronE=electronE, result_type='spectrum')
-    header += "| vD : E_out [eV] : xs [Mb] : diss_energy [eV] |"  
+    header = extend_header(header, icec, R, vD_max, electronE=electronE, result_type='spectrum')
+    header += "| vD, E_out [eV], xs [Mb], diss_energy [eV] |"  
     spectrum_all_vD = icec.spectrum_bc(electronE, R, vD=0)  
     for vD in range(1, vD_max+1):
         spectrum = icec.spectrum_bc(electronE, R, vD) 
@@ -177,7 +177,7 @@ L           = 8*Units.ANGSTROM2BOHR
 R_list      = np.array([6,8,10]) * Units.ANGSTROM2BOHR
 T           = [15, 300, 1500] 
 
-vD_max_bc   = 5
+vD_max_bc   = 7
 min_kinE    = 0.01 * Units.EV2HARTREE
 max_kinE    = 9 * Units.EV2HARTREE
 max_dissE   = 1.8 * Units.EV2HARTREE
@@ -242,7 +242,7 @@ if calculate:
         if spectra:      
             calculate_spectrum(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
             if FC:
-                calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, LiH.v_max, modifier='-FC')
+                calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, vD_max=vD_max_bc, modifier='-FC')
 
     if bc:
         if cross_section:
@@ -254,21 +254,19 @@ if plotting:
     if bb:
         if cross_section and FC:
             cross_sections.plot_xs_FC_bb(system, icec_FC, R, icec_el)
-        if spectra:
-            spectrum.plot_spectrum(system, icec, R, electronE, LiH.v_max, icec_el=icec_el)
-            if FC:
-                spectrum.plot_spectrum_FC(system, R, electronE, LiH.v_max, icec_el=icec_el)
+        if spectra and FC:
+            spectrum.plot_spectrum_FC(system, R, electronE, LiH.v_max, icec_el=icec_el)
         #plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
     
     if bc:
         if cross_section:
             cross_sections.plot_xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
-            spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vi=0, icec_el=icec_el)
+            spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el)
         if cross_section and temp_dependence:
             cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
         if spectra and temp_dependence:
-            spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, 3)
+            spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, vD_max_bc)
 
 if plot_info:
     pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)

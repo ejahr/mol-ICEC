@@ -9,10 +9,13 @@ from plot.config import set_rcParams
 
 set_rcParams()
 
-def set_axes(ax):
+def set_axes(ax, differential=False):
     ax.set_yscale('log')
     ax.set_xlabel(r"$\epsilon\prime$ [eV]")
-    ax.set_ylabel(r'$\sigma$ [Mb]')
+    if differential:
+        ax.set_ylabel(r"$\mathrm{d}\sigma/\mathrm{d}E$ [Mb/eV]")
+    else:
+        ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
     
 def read_results(system, electronE, R, modifier='', L=None):
@@ -31,43 +34,11 @@ def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False)
         return ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.')
     ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.') 
     
-def plot_spectrum(system, icec:IntraICEC, R, electronE, vD_max=0, title=None, icec_el:ICEC=None, modifier=''):
-    results = read_results(system, electronE, R)
-    fig = plt.figure(figsize=(6,4))
-    ax = plt.gca() 
-    set_axes(ax)
-    ax.set_title(title)
-    
-    color = ['tab:blue', 'tab:purple', 'tab:red']
+def spectrum_idx_electronEf(vD):
+    return 4*vD+2
 
-    bars = [None] * (vD_max+1)
-    for vi in range(vD_max+1):
-        label = r'$v_i=$' + str(vi)
-        bars[vi] = ax.bar(results[:,3*vi], results[:,3*vi+1], width=0.002, label=label, color=color[vi])
-    labels = [r'$v_i=$' + str(vi) for vi in range(vD_max+1)] 
-        
-    if icec_el is not None:
-        bar_el = plot_icec_el(ax, icec_el, electronE, R, width=0.002, return_bar=True)
-        bars.append(bar_el)
-    labels.append('electronic')
-        
-    ax.legend(handles=[bar[0] for bar in bars], labels=labels, ncols=2, fontsize='small', loc='upper right')
-    
-    x_min = min(rect.get_x() for bar in bars for rect in bar)
-    x_max = max(rect.get_x() for bar in bars for rect in bar)
-    ax.set_xlim(x_min - 0.025, x_max + 0.025)
-    
-    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=0)   
-    #ax.annotate(r'$\sigma_\text{PR}$', (x_max + 0.025, icec.PR_xs_A(electronE)*Units.AU2MB), xytext=(3,-3),    # fraction, fraction
-    #        textcoords='offset points', color='dimgray')
-    ax.annotate(r'$\sigma_\text{PR}$', 
-            (x_min-0.025, icec.PR_xs_A(electronE)*Units.AU2MB), 
-            xytext=(-26,-1),
-            textcoords='offset points', color='dimgray') 
-    
-    fname = DIR + f"plots/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
-    plt.tight_layout()
-    fig.savefig(fname)
+def spectrum_idx_xs(vD):
+    return 4*vD+3
     
 def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
     results_FC = read_results(system, electronE, R, modifier='-FC')
@@ -87,21 +58,20 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
     
     color_FC = ['tab:blue', 'rebeccapurple', 'tab:red']
     color_resolved = ['lightskyblue', 'mediumpurple', 'lightcoral']
-    for vi in range(vD_max+1):
-        label = str(vi) #r'$v_i=$' + 
-        ax.bar(results_resolved[:,3*vi], results_resolved[:,3*vi+1], width=0.006, color=color_resolved[vi], label=label)
-        ax.bar(results_FC[:,3*vi], results_FC[:,3*vi+1], width=0.002, color=color_FC[vi], label='FC')
+    for vD in range(vD_max+1):
+        label = str(vD) #r'$v_i=$' + 
+        ax.bar(results_resolved[:,spectrum_idx_electronEf(vD)], results_resolved[:,spectrum_idx_xs(vD)], width=0.006, color=color_resolved[vD], label=label)
+        ax.bar(results_FC[:,spectrum_idx_electronEf(vD)], results_FC[:,spectrum_idx_xs(vD)], width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
     fname = DIR + f"plots/{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=None):
+def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
     L=icec.Morse_Dp.box_length
-    #results_bb = read_results_file(system, electronE, R)
-    results_bb_FC = read_results(system, electronE, R, modifier='-FC')
-    results_bc_FC = read_results(system, electronE, R, modifier='-FC.bc.v0', L=L)
+    results_bb = read_results(system, electronE, R, modifier='-FC')
+    results_bc = read_results(system, electronE, R, modifier='-FC.bc', L=L)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -112,15 +82,15 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=No
     ax2.set_yticks([])
     ax2.yaxis.set_label_coords(1.06, 0.5)
 
-    ax.plot(results_bc_FC[:,0], results_bc_FC[:,1], color='tab:blue', ls='--', label='b-d') # marker='.',
-    ax.bar(results_bb_FC[:,3*vi], results_bb_FC[:,3*vi+1], width=0.005, color='tab:blue', label='b-b')
-    #ax.bar(results_bb[:,3*vi], results_bb[:,3*vi+1], width=0.0075, color='tab:blue', label='b-b')
+    ax.plot(results_bc[:,spectrum_idx_electronEf(vD)], results_bc[:,spectrum_idx_xs(vD)], color='tab:blue', ls='--', label='b-d')
+    ax.bar(results_bb[:,spectrum_idx_electronEf(vD)], results_bb[:,spectrum_idx_xs(vD)], width=0.005, color='tab:blue', label='b-b')
     
     if icec_el is not None:
         plot_icec_el(ax, icec_el, electronE, R, width=0.005)
     
-    x_min = min(results_bc_FC[:,0]) + 0.17
-    x_max = max(results_bb_FC[:,3*vi]) + 0.04
+    #x_min = min(results_bc[:,spectrum_idx_electronEf(vD)]) + 0.17
+    x_min = 5.69
+    x_max = max(results_bb[:,spectrum_idx_electronEf(vD)]) + 0.04
     ax.set_xlim(x_min, x_max)
     ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=0)  
     ax.annotate(r'$\sigma_\text{PR}$', 
@@ -134,25 +104,26 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vi=0, icec_el:ICEC=No
     fig.savefig(fname)
     
 def lorentzian(x, x0, gamma):
-    # Cauchy, Lorentz, Breit-Wigner
-    # gamma: HWHM, FWHM = 2 * gamma
+    # Cauchy, Lorentz, Breit-Wigner distribution
+    # x0 : position of the peak
+    # gamma : HWHM, FWHM = 2 * gamma, has units of x
     return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
+    #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
     
 def boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     if fold_lorentz:
-        lorentzian_energies = np.linspace(results[-1,0]-0.25, results[0,-3]+0.5, 5000)
+        lorentzian_energies = np.linspace(results[-1,spectrum_idx_electronEf(0)]-0.25, results[0,spectrum_idx_electronEf(vD_max)]+0.5, 5000)
         lorentzian_spectrum = np.zeros_like(lorentzian_energies)
     
-    for vD in range(vD_max):
+    for vD in range(vD_max+1):
         min_energy = icec.electronE_f_bc(electronE, vD, 0)*Units.HARTREE2EV
         occupation = icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
-        print(occupation)
-        energies = results[:,3*vD]
-        spectrum = results[:,3*vD+1]
+        energies = results[:,spectrum_idx_electronEf(vD)]
+        spectrum = results[:,spectrum_idx_xs(vD)]
         if fold_lorentz:
-            gamma = 0.08
+            gamma = 0.08 #eV
             for energy, xs in zip(energies, spectrum):
                 broadened_peak = xs * occupation * lorentzian(lorentzian_energies, energy, gamma)
                 broadened_peak[lorentzian_energies < min_energy] = 0
@@ -164,45 +135,53 @@ def boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Uni
     if fold_lorentz:
         lorentzian_spectrum[lorentzian_spectrum<1e-5] = np.nan
         ax.plot(lorentzian_energies, lorentzian_spectrum, color=color, label = r'$T=$'+str(t)+r'$\,\mathrm{K}$')   
-        
-
-def interpolate(energy1, energy2, xs2):
-        interp_xs2 = sp.interpolate.interp1d(
-            energy2, xs2, kind="linear", bounds_error=False, fill_value=0
-        )
-        return interp_xs2(energy1)
+    
+def interpolate(x0, x, y):
+    interpolate_y = sp.interpolate.interp1d(
+        x, y, kind="linear", bounds_error=False, fill_value=0
+    )
+    return interpolate_y(x0)
       
 def boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     energy = np.sort(
         np.concatenate(
-            ([results[:,4*vD+1] for vD in range(vD_max)]), 
+            ([results[:,spectrum_idx_electronEf(vD)] for vD in range(vD_max+1)]), 
             axis=None
         )
     )
     
-    energy_v0 = results[:,1]
-    xs_v0 = results[:,2]
+    energy_v0 = results[:,spectrum_idx_electronEf(0)]
+    xs_v0 = results[:,spectrum_idx_xs(0)]
     xs_interpolated = interpolate(energy, energy_v0, xs_v0)
     avg = xs_interpolated * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm)
     
-    for vD in range(1, vD_max):
-        energy_vD = results[:,4*vD+1]
-        xs_vD = results[:,4*vD+2]
-        #ax.plot(energy_vD, xs_vD * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm), ls=":")
+    plot_all = False
+    if plot_all:
+        reds = plt.get_cmap("Reds_r")  
+        if t>1000:
+            ax.plot(energy_v0, xs_v0 * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm), color=reds(0 / vD_max))
+        
+    for vD in range(1, vD_max+1):
+        energy_vD = results[:,spectrum_idx_electronEf(vD)]
+        xs_vD = results[:,spectrum_idx_xs(vD)]
         xs_interpolated = interpolate(energy, energy_vD, xs_vD)
         avg += xs_interpolated * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
+        
+        if plot_all:
+            if t>1000:
+                ax.plot(energy_vD, xs_vD * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm), color=reds(vD / vD_max))
     
-    avg[avg<1e-5]=np.nan
-    ax.plot(energy, avg, color=color, ls="--")
+    #avg[avg<1e-30]=np.nan
+    ax.plot(energy, avg, color=color, ls="--", zorder=0)
     
 def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(6, 4))
     ax = plt.gca() 
-    set_axes(ax)
+    set_axes(ax, differential=True)
     ax.set_ylim(5*1e-4, 1)
-    ax.set_xlim(5.5, 7.5)
+    ax.set_xlim(5.5, 8)
     
     L=icec.Morse_Dp.box_length
     results_bb_FC = read_results(system, electronE, R, modifier='-FC')
@@ -214,7 +193,7 @@ def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:I
         boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True)
         boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue)
         
-    ax.legend(loc="upper left")
+    ax.legend(fontsize='small', loc="upper right")
     plt.tight_layout()
     fname = DIR + f'plots/{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout()

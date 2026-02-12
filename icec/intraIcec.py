@@ -221,7 +221,7 @@ class IntraICEC:
             electronE_f = self.electronE_f(electronE, vD, vDp)
             if electronE_f >= 0:
                 xs = self.xs(electronE, R, vD, vDp)
-                spectrum.append([electronE_f * Units.HARTREE2EV, xs * Units.AU2MB, vDp])
+                spectrum.append([vD, vDp, electronE_f * Units.HARTREE2EV, xs * Units.AU2MB])
         t1 = time.perf_counter()
         print(f'time for b-b spectrum vD={vD} : {t1-t0}')
         return np.array(spectrum)
@@ -354,7 +354,7 @@ class IntraICEC:
         else:
             # transform to energy normalization by multiplying with the density of states at E
             xs = self.xs_bc(electronE, R, vD, E) * Units.AU2MB * density_of_states_at_E / Units.HARTREE2EV
-            return vD, electronE_f*Units.HARTREE2EV, xs, E*Units.HARTREE2EV
+            return vD, E*Units.HARTREE2EV, electronE_f*Units.HARTREE2EV, xs
 
     def spectrum_bc(self, electronE, R, vD, diss_energies=None):
         '''Cross sections for vi -> continuum given a single electron energy.
