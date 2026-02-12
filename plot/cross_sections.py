@@ -75,6 +75,7 @@ def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     vi = 0
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue')
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     ax.legend()
     fname = DIR + f'plots/{system}.xs-FC.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout()
