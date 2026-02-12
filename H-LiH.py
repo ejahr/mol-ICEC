@@ -112,21 +112,22 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
         print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec.xs(electronE,R,0,vf-1))
         print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_FC.xs(electronE,R,0,vf-1))
         print(' FC     ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
+        
+def print_FC_factor(icec:IntraICEC, vD, E):
+    fc_factor = icec.FC_factor(0, 0)
+    print(f"FC factor 0 -> 0 : {fc_factor}")
+    fc_factor = icec.FC_bc_D(vD, E, dps=50)
+    print(f"FC factor {vD} -> {round(E*Units.HARTREE2EV,1)} eV : {fc_factor}")
     
 def print_boltzmann_probabilities(icec:IntraICEC, T):
     print('\n--- Boltzmann probabilities ---')
     vmax = icec.Morse_D.vmax
-    vmax = 5
+    vmax = 10
     for t in T:
         print(f'T = {t} K')
-        # add De to energy(vi) to get positive values which increases numerical stability
-        norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
-                        for vi in range(vmax+1)
-                        )
-        for vi in range(vmax):
-            value = np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) / norm
-            print(f'vi = {vi}: {value}')  
-            
+        norm = icec.Morse_D.boltzmann_norm(t)
+        for vD in range(vmax+1):
+            print(f'vi = {vD}: {icec.Morse_D.boltzmann_occupation(t, vD, norm)}')  
             
 def print_PI_crosssection(icec:IntraICEC):
     omega = 14.6*Units.EV2HARTREE
@@ -134,7 +135,7 @@ def print_PI_crosssection(icec:IntraICEC):
     print(f' H    : {icec.PI_xs_A(omega)*Units.AU2MB} Mb')
     print(f' omega: {omega*Units.HARTREE2EV} eV')
     print(f' LiH  : {icec.PI_xs_D_electronic(omega)*Units.AU2MB} Mb')
-        
+       
         
 # ========= Pre calculate roots of box for dissociative states =============
     
@@ -224,6 +225,7 @@ if print_info:
     print(f"adiabatic ionizaton energy {IP_adiabatic*Units.HARTREE2EV} eV")
     energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
     print(f"energy diff at R=inf       {energy_diff_at_inf} eV")
+    #print_FC_factor(icec_FC, 0, 1.3*Units.EV2HARTREE)
     test_FC_factors(icec_el, icec, icec_FC, R)
     print_boltzmann_probabilities(icec_FC, T)
     print_PI_crosssection(icec_FC)
