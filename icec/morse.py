@@ -286,21 +286,17 @@ class Morse:
         self.diss_norms = data[:,2]
         self.DoS = data[:,3]
          
-    def boltzmann_norm(self, t, v_max=None):
-        if v_max is None:
-            v_max = int(self.vmax)
+    def boltzmann_norm(self, t):
         norm = sum(
             # add De to energy(vi) to get positive values which increases numerical stability
             np.exp(- (self.energy(v) + self.De) / Constants.KB / t) 
-            for v in range(v_max+1)
+            for v in range(self.vmax+1)
         )
         return norm
     
-    def boltzmann_occupation(self, t, v, v_max=None, norm=None):
-        if v_max is None:
-            v_max = self.vmax
+    def boltzmann_occupation(self, t, v, norm=None):
         if norm is None:
-            norm = self.boltzmann_norm(t, v_max)
+            norm = self.boltzmann_norm(t)
         return np.exp( -(self.energy(v) + self.De) / Constants.KB / t ) / norm
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
