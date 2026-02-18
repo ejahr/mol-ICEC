@@ -13,8 +13,12 @@ from input.fit import generate_polyfit
 class ReadOnly(type):
     def __setattr__(self, name, value):
         raise AttributeError("Constants are read-only")
+    
+# =================== Li ==========================
+class Li(metaclass=ReadOnly):
+    r_vdw = 5.2896 # a.u.
 
-# =================== H+ ==========================
+# =================== H ==========================
 class H(metaclass=ReadOnly):
     # H 2S_1/2
     deg_2S = 2
@@ -23,7 +27,7 @@ class H(metaclass=ReadOnly):
     # NIST
     IP = 13.598434599702 * Units.EV2HARTREE
     
-    r_vdw = 3.1647
+    r_vdw = 3.1647 # a.u.
     m = Constants.m_p + 1
     
     # Photoionization cross section
@@ -70,7 +74,7 @@ class LiH(metaclass=ReadOnly):
     m_Li    = 7*Constants.m_p + 3
     mu      = H.m * m_Li / (H.m + m_Li)
     # Huber p. 382
-    mu = 0.88123833*Constants.m_p
+    mu      = 0.88123833*Constants.m_p
     
     # --- LiH data from https://doi.org/10.1063/1.479970 ---
     IP      = 7.743 * Units.EV2HARTREE
@@ -122,7 +126,6 @@ class LiHp(metaclass=ReadOnly):
     De      = we**2 / 4 / wexe
 
     morse_parameters = (mu, we, Req, De)
-    #print(De*Units.HARTREE2EV)
     
     v_max = 6
 
@@ -133,9 +136,7 @@ class LiHp(metaclass=ReadOnly):
 
 # ===================== H+ = LiH =================
 class Hp_LiH(metaclass=ReadOnly):
-    r_vdw_Li = 5.2896
-    R_min = (r_vdw_Li + H.r_vdw + LiH.Req)/2 + H.r_vdw
-    #print("R_min", R_min, R_min*Units.BOHR2ANGSTROM)
+    R_min = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
 
     input_electronic = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
 
@@ -143,16 +144,19 @@ class Hp_LiH(metaclass=ReadOnly):
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]
 
 # ==================== Test =====================
-    
-#print('Vertical Ionization potential:', LiH.IP_vert)
-print('Approx E_p(Re)  -E(Re):', LiH.IP_vert_approx)
-print('Approx E_p(Re_p)-E(Re):', LiH.IP_min_approx)
+if __name__ == "__main__":
+    #print('Vertical Ionization potential:', LiH.IP_vert)
+    print(f'E_p(Re)  -E(Re) = {LiH.IP_vert_approx} a.u.')
+    print(f'E_p(Re_p)-E(Re) = {LiH.IP_min_approx} a.u.\n')
 
-# Huber p. 382
-print("De Lundsgaard", LiH.De*Units.HARTREE2EV)
-print("m calculated ", H.m * LiH.m_Li / (H.m + LiH.m_Li))
-print("m Huber      ", 0.88123833*Constants.m_p)
-print("w Lundsgaard ", LiH.we*Units.HARTREE2EV)
-print("w Huber      ", 1405.65*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV)
-print("Re Lundsgaard", LiH.Req)
-print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR)
+    # Huber p. 382
+    print("De Lundsgaard", LiH.De*Units.HARTREE2EV, "eV")
+    print("m  calculated", H.m * LiH.m_Li / (H.m + LiH.m_Li))
+    print("m  Huber     ", LiH.mu)
+    print("w  Lundsgaard", LiH.we*Units.HARTREE2EV, "eV")
+    print("w  Huber     ", 1405.65*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV, "eV")
+    print("Re Lundsgaard", LiH.Req)
+    print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR, "\n")
+
+    # min R between H and LiH
+    print(f"R_min = {Hp_LiH.R_min} a.u. = {Hp_LiH.R_min*Units.BOHR2ANGSTROM} A")
