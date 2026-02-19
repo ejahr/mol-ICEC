@@ -94,24 +94,52 @@ def calculate_spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, e
 # ============= Information ===============
 
 def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
-    electronE = 1*Units.EV2HARTREE
+    electronE = 4*Units.EV2HARTREE
     omega = electronE + icec_el.IP_A
+    vi = 0
     
-    print('\n--- Test FC approx ---')
+    FC_abinitio = [[0.0153, 0.0292, 0.0305, 0.0214, 0.0103, 0.0031, 0.0004],
+                   [0.0610, 0.0823, 0.0643, 0.0366, 0.0157, 0.0045, 0.0006],
+                   [0.1252, 0.1033, 0.0497, 0.0188, 0.0062, 0.0016, 0.0002],
+                   [0.1749, 0.0665, 0.0097, 0.0003, 0.0000, 0.0000, 0.0000],
+                   [0.1866, 0.0146, 0.0036, 0.0105, 0.0068, 0.0022, 0.0003],
+                   [0.1619, 0.0021, 0.0349, 0.0276, 0.0121, 0.0035, 0.0005]]
+    
+    print('\n--- FC factor ---')
     for vf in range(5):
-        print(f'0->{vf}/elec')
-        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec_el.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
-        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec_el.xs(electronE,R))
-        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_el.xs(electronE,R))     
-        print(' FC     ', icec_FC.FC_factor(0,vf))
+        print(f'{vi}->{vf}')
+        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
+        print(' FC Morse    ', icec_FC.FC_factor(vi,vf))
+        print(' FC ab initio', FC_abinitio[vi][vf])
+        
+    print(f'\n--- ICEC Cross section [Mb] at {round(electronE*Units.HARTREE2EV,1)} eV---')
+    xs_tot_FC_abinitio = sum(
+        icec_el.xs(electronE,R)*FC_abinitio[vi][vf] for vf in range(7)
+    )
+    xs_tot_PI_abinitio = sum(
+        icec.xs(electronE,R,vi,vf) for vf in range(7)
+    )
+    xs_tot_FC_Morse = sum(
+        icec_FC.xs(electronE,R,vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1)
+    )
+    
+    print(f'tot from {vi}')
+    print(' ab initio PI', xs_tot_PI_abinitio*Units.AU2MB)
+    print(' FC ab initio', xs_tot_FC_abinitio*Units.AU2MB)
+    print(' FC Morse    ', xs_tot_FC_Morse*Units.AU2MB)
+    
+    for vf in range(5):
+        print(f'{vi}->{vf}')
+        print(' ab initio PI', icec.xs(electronE,R,0,vf)*Units.AU2MB)
+        print(' FC ab initio', icec_el.xs(electronE,R)*FC_abinitio[vi][vf]*Units.AU2MB)
+        print(' FC Morse    ', icec_FC.xs(electronE,R,0,vf)*Units.AU2MB)
         
     print('\n--- v-ratios ---')
     for vf in range(1,5):
-        print(f'0->{vf}/0->{vf-1}')
-        print(' PI     ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
-        print(' ICEC   ', icec.xs(electronE,R,0,vf)/icec.xs(electronE,R,0,vf-1))
-        print(' FC ICEC', icec_FC.xs(electronE,R,0,vf)/icec_FC.xs(electronE,R,0,vf-1))
-        print(' FC     ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
+        print(f'{vi}->{vf}/{vi}->{vf-1}')
+        print(' PI          ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
+        print(' FC ab initio', FC_abinitio[vi][vf]/FC_abinitio[vi][vf-1])
+        print(' FC Morse    ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
         
 def print_FC_factor(icec:IntraICEC, vD, E):
     fc_factor = icec.FC_factor(0, 0)
@@ -122,12 +150,12 @@ def print_FC_factor(icec:IntraICEC, vD, E):
 def print_boltzmann_probabilities(icec:IntraICEC, T):
     print('\n--- Boltzmann probabilities ---')
     vmax = icec.Morse_D.vmax
-    vmax = 10
-    for t in T:
+    vmax_values = [2,2,8]
+    for t,vmax in zip(T,vmax_values):
         print(f'T = {t} K')
         norm = icec.Morse_D.boltzmann_norm(t)
         for vD in range(vmax+1):
-            print(f'vi = {vD}: {icec.Morse_D.boltzmann_occupation(t, vD, norm)}')  
+            print(f' vi = {vD}: {icec.Morse_D.boltzmann_occupation(t, vD, norm)}')  
             
 def print_PI_crosssection(icec:IntraICEC):
     omega = 14.6*Units.EV2HARTREE
