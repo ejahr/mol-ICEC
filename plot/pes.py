@@ -28,7 +28,7 @@ def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color
                 for r_i in morse.r]
     ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color=color, lw=1)
     
-def plot_vertical_arrow(ax, x:float, y1:float, y2:float, text:str="", shift_text_x=0.1, y_text=None, shift_text_y=0):
+def add_vertical_arrow(ax, x:float, y1:float, y2:float, text:str="", shift_text_x=0.1, y_text=None, shift_text_y=0):
     arrowstyle = patches.ArrowStyle("<|-|>", head_width=0.1, head_length=0.3)
     arrowprops = dict(arrowstyle=arrowstyle, lw=1, color='tab:red', capstyle='butt', joinstyle="miter")
     ax.annotate(
@@ -46,7 +46,14 @@ def plot_vertical_arrow(ax, x:float, y1:float, y2:float, text:str="", shift_text
         va='center',
         color='tab:red',
     )
-
+    
+def add_cut_out_lines(ax1, ax2):
+    d = .5  # proportion of vertical to horizontal extent of the slanted line
+    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+    ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
+    ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
+    
 def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     """ Plots the PES of the ground electronic states of D and D+
     - icec: class instance of IntraICEC, defines and calculates all necessary quantities
@@ -54,22 +61,23 @@ def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0
     - L: maximum distance, length of the box
     - yshif: difference between the two PES at R -> infty
     """   
-    # TODO annotations as inputs
     print("num of vib states for D :", icec.Morse_D.vmax + 1)
     print("num of vib states for D+:", icec.Morse_Dp.vmax + 1)
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
-    ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
-    
-    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV-0.1, 0.1)
-    height = 0.3/0.7*(0.1 - (-icec.Morse_D.De*Units.HARTREE2EV-0.1))
-    ax1.set_ylim(yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1, yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1 + height)
+    ax1.spines.bottom.set_visible(False)
+    ax2.spines.top.set_visible(False)
+    ax1.tick_params(bottom=False)
     
     r = icec.Morse_D.make_rgrid(rmax=L)
     icec.Morse_Dp.r = r
     scale = 1./15
-    # D
+    
+    # ----- D -----
+    ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
+    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV-0.1, 0.1)
+    
     for vi in range(3):
         plot_vib_state(ax2, icec.Morse_D, vi, scale)
         
@@ -77,40 +85,33 @@ def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0
     ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
     ax2.annotate(r'$\mathrm{LiH}$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
-    plot_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.02, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
-    plot_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(vi)*Units.HARTREE2EV, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
-    
-    plot_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
-    plot_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV, y2=0.56, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
-    
-    #plot_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_{\mathrm{LiH}^+} - V^\infty_\mathrm{LiH}$", shift_text_x=-2.32, shift_text_y=-0.03)
-    plot_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
+    # dissociation energy
+    add_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.02, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
+    # bound vibrational energy
+    add_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(2)*Units.HARTREE2EV, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
+    # adiabtic IP
+    add_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
+    # vertical IP
+    add_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV, y2=0.56, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
+    # difference in V(R->oo)
+    add_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
 
-    # Dp
+    # ----- D+ -----
+    height = 0.3/0.7*(0.1 - (-icec.Morse_D.De*Units.HARTREE2EV-0.1))
+    ax1.set_ylim(yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1, yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1 + height)
+    
     energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
     plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
-    #energy, norm = icec.Morse_Dp.diss_energies[0], icec.Morse_Dp.diss_norms[0]
-    #plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
-    
-    #plot_vib_state(ax1, icec.Morse_Dp, icec.Morse_Dp.vmax, scale, yshift)
     plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
     
     V = icec.Morse_Dp.V(r)
     ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
     ax1.annotate(r'$\mathrm{LiH}^+$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
     
-    ax1.spines.bottom.set_visible(False)
-    ax2.spines.top.set_visible(False)
-    ax1.tick_params(bottom=False)
+    # dissociative vibrational energy
+    add_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
     
-    plot_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
-    
-    # cut out slanted lines
-    d = .5  # proportion of vertical to horizontal extent of the slanted line
-    kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
-                linestyle="none", color='k', mec='k', mew=1, clip_on=False)
-    ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
-    ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
+    add_cut_out_lines(ax1, ax2)
     
     fig.text(0, 0.5, r'$E-V^\infty_\mathrm{LiH}$ [eV]', va='center', rotation='vertical')
     fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
