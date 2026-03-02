@@ -16,6 +16,9 @@ class ReadOnly(type):
     
 # =================== Li ==========================
 class Li(metaclass=ReadOnly):
+    m = 7*Constants.m_p + 3
+    # NIST
+    m = 7.0160034366 * Constants.m_p
     r_vdw = 5.2896 # a.u.
 
 # =================== H ==========================
@@ -29,6 +32,8 @@ class H(metaclass=ReadOnly):
     
     r_vdw = 3.1647 # a.u.
     m = Constants.m_p + 1
+    # NIST
+    m = 1.00782503223 * Constants.m_p
     
     # Photoionization cross section
     fname = DIR + 'data/H/H.txt'
@@ -71,8 +76,8 @@ class LiH(metaclass=ReadOnly):
     IP_vert_approx = np.abs(-8.066308039 + 7.770884366)*Units.HARTREE2EV
     IP_min_approx = np.abs(-8.066308039 + 7.78173407)*Units.HARTREE2EV
 
-    m_Li    = 7*Constants.m_p + 3
-    mu      = H.m * m_Li / (H.m + m_Li)
+    m       = H.m + Li.m
+    mu      = H.m * Li.m / (H.m + Li.m)
     # Huber p. 382
     mu      = 0.88123833*Constants.m_p
     
@@ -90,7 +95,7 @@ class LiH(metaclass=ReadOnly):
     v_max   = 2
     morse_parameters = (mu, we, Req, De)
 
-    r_mu    = (H.m*Req + m_Li*0) / (H.m + m_Li)
+    r_mu    = (H.m*Req + Li.m*0) / (H.m + Li.m)
 
     #print('alpha =', alpha)
     #print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
@@ -137,6 +142,8 @@ class LiHp(metaclass=ReadOnly):
 # ===================== H+ = LiH =================
 class Hp_LiH(metaclass=ReadOnly):
     R_min = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
+    
+    R_min_COM = (1.6-0.1995) + 2.6
 
     input_electronic = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
 
@@ -151,7 +158,7 @@ if __name__ == "__main__":
 
     # Huber p. 382
     print("De Lundsgaard", LiH.De*Units.HARTREE2EV, "eV")
-    print("m  calculated", H.m * LiH.m_Li / (H.m + LiH.m_Li))
+    print("m  calculated", H.m * Li.m / (H.m + Li.m))
     print("m  Huber     ", LiH.mu)
     print("w  Lundsgaard", LiH.we*Units.HARTREE2EV, "eV")
     print("w  Huber     ", 1405.65*Units.WAVENUMBER2HARTREE*Units.HARTREE2EV, "eV")
@@ -159,4 +166,24 @@ if __name__ == "__main__":
     print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR, "\n")
 
     # min R between H and LiH
-    print(f"R_min = {Hp_LiH.R_min} a.u. = {Hp_LiH.R_min*Units.BOHR2ANGSTROM} A")
+    print(f"Hp_LiH.R_min = {round(Hp_LiH.R_min,5)} a.u. = {round(Hp_LiH.R_min*Units.BOHR2ANGSTROM,5)} A")
+    
+    print(f"LiH.r_mu     = {round(LiH.r_mu,5)} a.u. = {round(LiH.r_mu*Units.BOHR2ANGSTROM,5)} A")
+    
+    r_mu = (H.m * 1.646*Units.ANGSTROM2BOHR + 0) / (H.m + Li.m)
+    print(f"r_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    R_min_COM = 1.646 - r_mu*Units.BOHR2ANGSTROM + 2.513
+    print(f"R_min LiH-H+ = {round(R_min_COM,5)} A")
+    
+    r_mu = (H.m * 1.6*Units.ANGSTROM2BOHR + 0) / (H.m + Li.m)
+    print(f"r_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    R_min_COM = 1.6 - r_mu*Units.BOHR2ANGSTROM + 2.6
+    print(f"R_min LiH-H+ = {round(R_min_COM,5)} A")
+    
+    R_min_COM   = LiH.r_mu*Units.BOHR2ANGSTROM + 5
+    print(f"R_min HLi-H+ = {round(R_min_COM,5)} A")
+    
+    r_mu        = (Constants.m_p * 2.1*Units.ANGSTROM2BOHR + 0) / (Constants.m_p + Li.m)
+    print(f"r_COM LiH+   = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    R_min_COM   = 2.1 - r_mu*Units.BOHR2ANGSTROM + 3
+    print(f"R_min LiH+-H = {round(R_min_COM,5)} A")
