@@ -106,6 +106,13 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
                    [0.1619, 0.0021, 0.0349, 0.0276, 0.0121, 0.0035, 0.0005]]
     
     print('\n--- FC factor ---')
+    print('tot b-b from 0')
+    FC_abinitio_sum = sum(FC_abinitio[vi][vf] for vf in range(7))
+    FC_Morse_sum = sum(icec_FC.FC_factor(vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1))
+    print(' FC ab initio', FC_abinitio_sum)
+    print(' FC Morse    ', FC_Morse_sum)
+    print(' ratio       ', FC_Morse_sum/FC_abinitio_sum)
+    
     for vf in range(5):
         print(f'{vi}->{vf}')
         print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
@@ -124,9 +131,12 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     )
     
     print(f'tot from {vi}')
-    print(' ab initio PI', xs_tot_PI_abinitio*Units.AU2MB)
-    print(' FC ab initio', xs_tot_FC_abinitio*Units.AU2MB)
-    print(' FC Morse    ', xs_tot_FC_Morse*Units.AU2MB)
+    print(' 1. ab initio PI', xs_tot_PI_abinitio*Units.AU2MB)
+    print(' 2. FC ab initio', xs_tot_FC_abinitio*Units.AU2MB)
+    print(' ratio 2/1      ', xs_tot_FC_abinitio/xs_tot_PI_abinitio)
+    print(' 3. FC Morse    ', xs_tot_FC_Morse*Units.AU2MB)
+    print(' ratio 3/1      ', xs_tot_FC_Morse/xs_tot_PI_abinitio)
+    print(' ratio 3/2      ', xs_tot_FC_Morse/xs_tot_FC_abinitio)
     
     for vf in range(5):
         print(f'{vi}->{vf}')
@@ -247,11 +257,11 @@ icec_el.IP_B = IP_vertical
 icec_el.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
 
 
+energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
 if print_info:
     print('\n===== Info =====')
     print(f"vertical ionization energy {IP_vertical*Units.HARTREE2EV} eV")
     print(f"adiabatic ionizaton energy {IP_adiabatic*Units.HARTREE2EV} eV")
-    energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
     print(f"energy diff at R=inf       {energy_diff_at_inf} eV")
     #print_FC_factor(icec_FC, 0, 1.3*Units.EV2HARTREE)
     test_FC_factors(icec_el, icec, icec_FC, R)
