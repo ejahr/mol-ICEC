@@ -27,12 +27,36 @@ def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color
                 + energy*Units.HARTREE2EV + yshift 
                 for r_i in morse.r]
     ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color=color, lw=1)
+    
+def plot_vertical_arrow(ax, x:float, y1:float, y2:float, text:str="", shift_text_x=0.1, y_text=None, shift_text_y=0):
+    arrowstyle = patches.ArrowStyle("<|-|>", head_width=0.1, head_length=0.3)
+    arrowprops = dict(arrowstyle=arrowstyle, lw=1, color='tab:red', capstyle='butt', joinstyle="miter")
+    ax.annotate(
+        "",
+        xy=(x, y1),        
+        xytext=(x, y2),
+        arrowprops=arrowprops
+    )
+    if y_text is None:
+        y_text = (y1 + y2) / 2 + shift_text_y
+    ax.text(
+        x + shift_text_x,
+        y_text,
+        text,
+        va='center',
+        color='tab:red',
+    )
 
-def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
-    # TODO I defined bound states to have negative energies, recheck the y values
+def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
+    """ Plots the PES of the ground electronic states of D and D+
+    - icec: class instance of IntraICEC, defines and calculates all necessary quantities
+    - system: str defining the system 
+    - L: maximum distance, length of the box
+    - yshif: difference between the two PES at R -> infty
+    """   
     # TODO annotations as inputs
     print("num of vib states for D :", icec.Morse_D.vmax + 1)
-    print("num of vib states for B+:", icec.Morse_Dp.vmax + 1)
+    print("num of vib states for D+:", icec.Morse_Dp.vmax + 1)
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
@@ -51,8 +75,17 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
         
     V = icec.Morse_D.V(r)
     ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
-    ax2.annotate(r'$\mathrm{LiH}$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
+    ax2.annotate(r'$\mathrm{LiH}$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
+    plot_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.02, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
+    plot_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(vi)*Units.HARTREE2EV, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
+    
+    plot_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
+    plot_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV, y2=0.56, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
+    
+    #plot_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_{\mathrm{LiH}^+} - V^\infty_\mathrm{LiH}$", shift_text_x=-2.32, shift_text_y=-0.03)
+    plot_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
+
     # Dp
     energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
     plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
@@ -64,11 +97,13 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     
     V = icec.Morse_Dp.V(r)
     ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
-    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-100]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
+    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
     
     ax1.spines.bottom.set_visible(False)
     ax2.spines.top.set_visible(False)
     ax1.tick_params(bottom=False)
+    
+    plot_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
     
     # cut out slanted lines
     d = .5  # proportion of vertical to horizontal extent of the slanted line
@@ -77,7 +112,7 @@ def plot_PES(icec:IntraICEC, system, L=5*Units.ANGSTROM2BOHR, yshift=0):
     ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
     ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
     
-    fig.text(0, 0.5, r'$E$ [eV]', va='center', rotation='vertical')
+    fig.text(0, 0.5, r'$E-V^\infty_\mathrm{LiH}$ [eV]', va='center', rotation='vertical')
     fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
