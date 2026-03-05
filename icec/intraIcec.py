@@ -257,16 +257,23 @@ class IntraICEC:
         '''Franck-Condon (FC) factor for a bound to continuum (bc) transition |<psi_E|psi_v>|^2
         norm: normalization constant for the vibrational continuum state
         '''
-        if norm is None:
-            norm = self.Morse_Dp.get_norm_diss(E)
-        def integrand(r):
-            return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
-        if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
-            if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
-                dps = 50
-        with mpmath.workdps(dps):
-            result = self.integrate_r(integrand, E)    
-        return (mpmath.fabs(norm * result)) ** 2
+        key = (vD, round(E,8))
+        if not hasattr(self, 'FC_factors'):
+            FC_factors = {}
+        FC_factor = FC_factors.get(key)
+        if FC_factor is None:
+            if norm is None:
+                norm = self.Morse_Dp.get_norm_diss(E)
+            def integrand(r):
+                return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
+            if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
+                if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
+                    dps = 50
+            with mpmath.workdps(dps):
+                result = self.integrate_r(integrand, E)    
+            FC_factor = (mpmath.fabs(norm * result)) ** 2
+            FC_factors[key] = FC_factor
+        return FC_factor
     
     def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
         """Kinetic energy of the outgoing electron
