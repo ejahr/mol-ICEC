@@ -14,9 +14,9 @@ def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp
         header += f"ICEC electron spectrum at E_in = {round(electronE*Units.HARTREE2EV)} eV\n"
     if result_type == 'xs':
         header += "ICEC cross section\n"
-    header += f'R = {round(R*Units.BOHR2ANGSTROM)} Angstrom\n' 
+    header += f'R = {round(R*Units.BOHR2ANGSTROM,3)} Angstrom\n' 
     if vD_max is not None:
-        header += f'Number of initial vibrational states: {vD_max+1}/{icec.Morse_D.vmax+1}\n'
+        header += f'Number of initial vibrational states: {vD_max+1}\n'
     if vDp_max is not None:
         header += f'Number of final vibrational states: {vDp_max+1}\n'
     else:
@@ -39,7 +39,7 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max)
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + f"results/{system}.xs{modifier}.R"+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
@@ -54,7 +54,7 @@ def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD)*Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + f"results/{system}.xs{modifier}.bc.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt"
+    file_path = DIR + f"results/{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
 def calculate_xs_bc_R(system, icec, R, header):
@@ -76,19 +76,19 @@ def calculate_spectrum(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R
             spectrum_all_vD = spectrum
         else:
             spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))          
-    fname = DIR + f"results/{system}.spectrum{modifier}.E"+ str(round(electronE*Units.HARTREE2EV)) + '.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.txt"
+    fname = DIR + f"results/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
 def calculate_spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     header = extend_header(header, icec, R, vD_max, electronE=electronE, result_type='spectrum')
-    header += "| vD, E_out [eV], xs [Mb], diss_energy [eV] |"  
+    header += "| vD, diss_energy [eV], E_out [eV], xs [Mb] |"  
     spectrum_all_vD = icec.spectrum_bc(electronE, R, vD=0)  
     for vD in range(1, vD_max+1):
         spectrum = icec.spectrum_bc(electronE, R, vD) 
         spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))  
-    fname = DIR + f'results/{system}.spectrum{modifier}.bc.E{str(round(electronE*Units.HARTREE2EV))}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM))}.txt'
+    fname = DIR + f'results/{system}.spectrum{modifier}.bc.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt'
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
  
 # ============= Information ===============
@@ -98,6 +98,7 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     omega = electronE + icec_el.IP_A
     vi = 0
     
+    # https://doi.org/10.1063/1.479970
     FC_abinitio = [[0.0153, 0.0292, 0.0305, 0.0214, 0.0103, 0.0031, 0.0004],
                    [0.0610, 0.0823, 0.0643, 0.0366, 0.0157, 0.0045, 0.0006],
                    [0.1252, 0.1033, 0.0497, 0.0188, 0.0062, 0.0016, 0.0002],
@@ -244,6 +245,7 @@ icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
 icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
 icec_FC.define_PI_xs_D(method="FC")
 
+# --- calculate or load dissociative energies ---
 icec_FC.Morse_Dp.define_box(L)
 fname = DIR + f'data/LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
 if calc_roots:
@@ -277,12 +279,11 @@ if calculate:
         if cross_section:
             calculate_xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
             if FC:
-                calculate_xs_bb(system, header, icec_FC, R, modifier='-FC')
-            #calculate_xs_R(system, header, icec, R_list, LiH.v_max, LiHp.v_max)  
+                calculate_xs_bb(system, header, icec_FC, R, modifier='-FC') 
         if spectra:      
             calculate_spectrum(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
             if FC:
-                calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, vD_max=vD_max_bc, modifier='-FC')
+                calculate_spectrum(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
 
     if bc:
         if cross_section:
@@ -303,10 +304,10 @@ if plotting:
             cross_sections.plot_xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
             spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el)
-        if cross_section and temp_dependence:
-            cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
-        if spectra and temp_dependence:
-            spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, vD_max_bc)
+    if cross_section and temp_dependence:
+        cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+    if spectra and temp_dependence:
+        spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, vD_max_bc)
 
 if plot_info:
     pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)

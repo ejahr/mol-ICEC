@@ -1,6 +1,7 @@
 # e- + H+ + LiH -> H + LiH+ + e-
-# R_AD = 6 Angstrom
-# Number of initial vibrational states: 3/29
+# ICEC cross section
+# R = 6 Angstrom
+# Number of initial vibrational states: 3
 # Number of final vibrational states: 7
 # E_in [eV] | xs [Mb]
 1.000e-02 3.166e+00 6.952e+00 7.194e+00
