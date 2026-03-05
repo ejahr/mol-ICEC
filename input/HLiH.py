@@ -141,14 +141,20 @@ class LiHp(metaclass=ReadOnly):
 
 # ===================== H+ = LiH =================
 class Hp_LiH(metaclass=ReadOnly):
-    R_min = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
-    
-    R_min_COM = (1.6-0.1995) + 2.6
+    R_min_vdw = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
 
     input_electronic = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
 
     input = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_resolved]
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]
+    
+    def R_min():
+        # https://doi.org/10.1039/D3CP02959J Tab.3
+        r_LiH = 1.646 * Units.ANGSTROM2BOHR
+        r_HH = 2.513 * Units.ANGSTROM2BOHR
+        r_COM_LiH = (H.m * r_LiH + 0) / (H.m + Li.m)
+        R_min = r_LiH - r_COM_LiH + r_HH
+        return R_min
 
 # ==================== Test =====================
 if __name__ == "__main__":
@@ -166,24 +172,27 @@ if __name__ == "__main__":
     print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR, "\n")
 
     # min R between H and LiH
-    print(f"Hp_LiH.R_min = {round(Hp_LiH.R_min,5)} a.u. = {round(Hp_LiH.R_min*Units.BOHR2ANGSTROM,5)} A")
-    
+    print(f"Hp_LiH.R_min = {round(Hp_LiH.R_min_vdw,5)} a.u. = {round(Hp_LiH.R_min_vdw*Units.BOHR2ANGSTROM,5)} A")
     print(f"LiH.r_mu     = {round(LiH.r_mu,5)} a.u. = {round(LiH.r_mu*Units.BOHR2ANGSTROM,5)} A")
+    R_min_COM = (H.r_vdw + Li.r_vdw + LiH.r_mu)*Units.BOHR2ANGSTROM 
+    print(f"R_COM H-LiH  = {round(R_min_COM,5)} A")
+    R_min_COM = (H.r_vdw + H.r_vdw + (LiH.Req - LiH.r_mu))*Units.BOHR2ANGSTROM 
+    print(f"R_COM H-HLi  = {round(R_min_COM,5)} A")
     
     r_mu = (H.m * 1.646*Units.ANGSTROM2BOHR + 0) / (H.m + Li.m)
-    print(f"r_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
-    R_min_COM = 1.646 - r_mu*Units.BOHR2ANGSTROM + 2.513
-    print(f"R_min LiH-H+ = {round(R_min_COM,5)} A")
+    print(f"\nr_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    print(f"R_COM LiH-H+ = {round(Hp_LiH.R_min(),5)} a.u. = {round(Hp_LiH.R_min()*Units.BOHR2ANGSTROM,5)} A")
     
-    r_mu = (H.m * 1.6*Units.ANGSTROM2BOHR + 0) / (H.m + Li.m)
-    print(f"r_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
-    R_min_COM = 1.6 - r_mu*Units.BOHR2ANGSTROM + 2.6
-    print(f"R_min LiH-H+ = {round(R_min_COM,5)} A")
+    #r_mu = (H.m * 1.6*Units.ANGSTROM2BOHR + 0) / (H.m + Li.m)
+    #print(f"r_COM LiH    = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    #R_min_COM = 1.6 - r_mu*Units.BOHR2ANGSTROM + 2.6
+    #print(f"R_min LiH-H+ = {round(R_min_COM,5)} A")
     
-    R_min_COM   = LiH.r_mu*Units.BOHR2ANGSTROM + 5
-    print(f"R_min HLi-H+ = {round(R_min_COM,5)} A")
+    #R_min_COM   = LiH.r_mu*Units.BOHR2ANGSTROM + 5
+    #print(f"R_min HLi-H+ = {round(R_min_COM,5)} A")
     
-    r_mu        = (Constants.m_p * 2.1*Units.ANGSTROM2BOHR + 0) / (Constants.m_p + Li.m)
-    print(f"r_COM LiH+   = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
-    R_min_COM   = 2.1 - r_mu*Units.BOHR2ANGSTROM + 3
-    print(f"R_min LiH+-H = {round(R_min_COM,5)} A")
+    #r_mu        = (Constants.m_p * 2.1*Units.ANGSTROM2BOHR + 0) / (Constants.m_p + Li.m)
+    #print(f"r_COM LiH+   = {round(r_mu,5)} a.u. = {round(r_mu*Units.BOHR2ANGSTROM,5)} A")
+    #R_min_COM   = 2.1 - r_mu*Units.BOHR2ANGSTROM + 3
+    #print(f"R_min LiH+-H = {round(R_min_COM,5)} A")
+    
