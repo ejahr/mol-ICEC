@@ -106,7 +106,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':')   
     
     ax.legend(ncols=2)
-    fname = DIR + f'plots/{system}.xs-FC.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    fname = DIR + f'plots/{system}.xs-FC.bc.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout()
     fig.savefig(fname)
     
