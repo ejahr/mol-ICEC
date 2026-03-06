@@ -109,13 +109,11 @@ class IntraICEC:
         else:
             def integrand(r):
                 return mpmath.conj(self.Morse_D.psi(vD, r)) * self.Morse_Dp.psi(vDp, r)
-        #result, error = sp.integrate.quad(integrand, 0, np.inf)
             r_left = min(self.Morse_D.reflection_point_left(self.Morse_D.energy(vD)), 
                          self.Morse_Dp.reflection_point_left(self.Morse_Dp.energy(vDp)))
             r_right = max(self.Morse_D.rmax, self.Morse_Dp.rmax)
             intervals = [0, r_left, r_right, 10*Units.ANGSTROM2BOHR]
             result = mpmath.quadsubdiv(integrand, intervals, maxdegree=10)
-            #result = mpmath.quad(integrand, [0, 10*Units.ANGSTROM2BOHR], maxdegree=10)
             self.FC_factor_saved[vD][vDp] = np.abs(result)**2
             return np.abs(result)**2
         
@@ -192,7 +190,7 @@ class IntraICEC:
             for vDp in range(vDp_max + 1)
         )
         t1 = time.perf_counter()
-        print(f'time for b-b xs vD={vD} : {t1-t0}')
+        print(f'b-b xs vD={vD} : {round(t1-t0,2)} s')
         return xs
     
     def xs_boltzmann(self, R:float, t:float, vD_max:int, vDp_max:int=None):
@@ -223,7 +221,7 @@ class IntraICEC:
                 xs = self.xs(electronE, R, vD, vDp)
                 spectrum.append([vD, vDp, electronE_f * Units.HARTREE2EV, xs * Units.AU2MB])
         t1 = time.perf_counter()
-        print(f'time for b-b spectrum vD={vD} : {t1-t0}')
+        print(f'b-b spectrum vD={vD} : {round(t1-t0,2)} s')
         return np.array(spectrum)
 
     def xs_R(self, electronE:float, vD:int=0, vDp:int=None):
@@ -248,31 +246,31 @@ class IntraICEC:
         - vi: initial vibrational quantum number
         - E : energy of the dissociative Morse state [Hartree]
         '''
+        t0 = time.perf_counter()
         lower_bound = self.Morse_Dp.get_lower_bound(E)
         upper_bound = self.Morse_Dp.box_length
         result = mpmath.quadsubdiv(integrand, [lower_bound, upper_bound], maxdegree=30)
+        t1 = time.perf_counter()
+        print(f'integrate_r  E={round(E,4)} : {round(t1-t0,2)} s')
         return result
  
     def FC_bc_D(self, vD:int, E:float, norm:float=None, dps=15):
         '''Franck-Condon (FC) factor for a bound to continuum (bc) transition |<psi_E|psi_v>|^2
         norm: normalization constant for the vibrational continuum state
         '''
-        key = (vD, round(E,8))
-        if not hasattr(self, 'FC_factors'):
-            FC_factors = {}
-        FC_factor = FC_factors.get(key)
-        if FC_factor is None:
-            if norm is None:
-                norm = self.Morse_Dp.get_norm_diss(E)
-            def integrand(r):
-                return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
-            if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
-                if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
-                    dps = 50
-            with mpmath.workdps(dps):
-                result = self.integrate_r(integrand, E)    
-            FC_factor = (mpmath.fabs(norm * result)) ** 2
-            FC_factors[key] = FC_factor
+        t0 = time.perf_counter()
+        if norm is None:
+            norm = self.Morse_Dp.get_norm_diss(E)
+        def integrand(r):
+            return mpmath.conj(self.Morse_Dp.psi_diss(E, r)) * self.Morse_D.psi(vD, r)
+        if dps==15 and hasattr(self.Morse_Dp, 'diss_energies'):
+            if np.where(self.Morse_Dp.diss_energies==E)[0][0] == 0:
+                dps = 50
+        with mpmath.workdps(dps):
+            result = self.integrate_r(integrand, E)    
+        FC_factor = (mpmath.fabs(norm * result)) ** 2
+        t1 = time.perf_counter()
+        print(f'FC_bc_D with E={round(E,4)} : {round(t1-t0,2)} s')
         return FC_factor
     
     def electronE_f_bc(self, electronE:float, vD:int, E:float) -> float:
@@ -318,30 +316,29 @@ class IntraICEC:
 
     def xs_vD_E(self, R:float, vD:int, E:float):
         '''Cross section for vD -> E over range of electron energies.'''
-        if not hasattr(self, "energyGrid"):
-            self.make_energy_grid()
-        if not hasattr(self.Morse_Dp, "box_length"):
-            self.Morse_Dp.define_box()
-        lower_bound = self.Morse_Dp.get_lower_bound(E)
-        if hasattr(self.Morse_Dp, 'diss_norms'):
-            i = np.where(self.Morse_Dp.diss_energies==E)[0][0]
-            norm = self.Morse_Dp.diss_norms[i]
-        else:
-            norm = self.Morse_Dp.get_norm_diss(E, lower_bound)
-        FC_bc = self.FC_bc_D(vD, E, lower_bound, norm)
+        t0 = time.perf_counter()
+        #if not hasattr(self, "energyGrid"):
+        #    self.make_energy_grid()
+        #if not hasattr(self.Morse_Dp, "box_length"):
+        #    self.Morse_Dp.define_box()
+        FC_bc = self.FC_bc_D(vD, E)
         xs_array = np.array(
             [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]
         )
+        t1 = time.perf_counter()
+        print(f'xs_vD_E with E={round(E,4)} : {round(t1-t0,2)} s')
         return xs_array
 
-    def xs_vD_continuum(self, R:float, vD:int, diss_energies=None):
+    def xs_vD_continuum(self, R:float, vD:int, diss_energies=None, max_dissE=None):
         '''Cross section for vi -> continuum over range of electron energies.
         - diss_energies [Hartree] : energies of allowed dissociative states (in a box)
         '''   
-        if diss_energies is None:
-            if not hasattr(self.Morse_Dp, 'diss_energies'):
-                self.Morse_Dp.find_solutions_in_box()
-            diss_energies = self.Morse_Dp.diss_energies
+        #if diss_energies is None:
+        #    if not hasattr(self.Morse_Dp, 'diss_energies'):
+        #        self.Morse_Dp.find_solutions_in_box()
+        #    diss_energies = self.Morse_Dp.diss_energies
+        if max_dissE is not None:
+            diss_energies = self.Morse_Dp.diss_energies[self.Morse_Dp.diss_energies <= max_dissE]
         t0 = time.perf_counter()
         with ProcessPoolExecutor() as executor:
             result = list(
@@ -351,7 +348,7 @@ class IntraICEC:
                 )
             )
         t1 = time.perf_counter()
-        print(f'time for xs vD={vD} : {t1-t0}')
+        print(f'xs_vD_continuum : {round(t1-t0,2)} s')
         return sum(list(result))
     
     def function_for_spectrum(self, electronE, R, vD, E, density_of_states_at_E):
@@ -383,7 +380,7 @@ class IntraICEC:
                 )
             )
         t1 = time.perf_counter()
-        print('time for spectrum:', t1-t0)
+        print(f'spectrum : {round(t1-t0,2)} s')
         return np.array(result)
             
     # ====== OTHER ======
