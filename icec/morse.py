@@ -163,16 +163,21 @@ class Morse:
         - E : energy (Hartree, a.u.)
         - lower_bound : lower bound for the integration
         '''
-        def integrand(r):
-            return mpmath.conj(self.psi_diss(E, r)) * self.psi_diss(E, r)
-        lower_bound = self.get_lower_bound(E)
-        if dps==15 and hasattr(self, 'diss_energies'):
-            idx = np.where(self.diss_energies == E)[0]
-            if len(idx) > 0 and idx[0] == 0:
-                dps = 50
-        with mpmath.workdps(dps):
-            norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
-        return 1 / mpmath.sqrt(mpmath.re(norm))
+        if hasattr(self, 'diss_norms'):
+            i = np.where(self.diss_energies==E)[0][0]
+            norm = self.diss_norms[i]
+        else:
+            def integrand(r):
+                return mpmath.conj(self.psi_diss(E, r)) * self.psi_diss(E, r)
+            lower_bound = self.get_lower_bound(E)
+            if dps==15 and hasattr(self, 'diss_energies'):
+                idx = np.where(self.diss_energies == E)[0]
+                if len(idx) > 0 and idx[0] == 0:
+                    dps = 50
+            with mpmath.workdps(dps):
+                norm = mpmath.quadsubdiv(integrand, [lower_bound, self.box_length], maxdegree=30)
+            norm = 1 / mpmath.sqrt(mpmath.re(norm))
+        return norm 
 
     def psi_diss(self, E:float, r:float):
         '''Dissociative (continuum) states of the Morse potential
