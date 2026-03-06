@@ -47,13 +47,13 @@ def calculate_xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
     for r in R:
         calculate_xs_bb(system, header, icec, r, vD_max, vDp_max)
     
-def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, modifier=''):
+def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
-    header = extend_header(header, icec, R, vD_max)
+    header = extend_header(header, icec, R, vD_max, max_dissE=max_dissE, result_type="xs")
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
-        xs = icec.xs_vD_continuum(R, vD)*Units.AU2MB
+        xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE)*Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR + f"results/{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
