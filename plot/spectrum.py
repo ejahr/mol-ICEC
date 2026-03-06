@@ -48,7 +48,8 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
     ax = plt.gca() 
     ax.set_title(title)
     set_axes(ax)
-    ax.set_ylim(1e-5, 3)
+    #ax.set_ylim(1e-5, 3)
+    ax.set_ylim(1e-3, 50)
     ax.set_xlim(6.545, 7.265)
     
     if icec_el is not None:
@@ -76,7 +77,8 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=No
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     set_axes(ax)
-    ax.set_ylim(5*1e-4, 1)
+    #ax.set_ylim(5*1e-4, 1)
+    ax.set_ylim(1e-3, 10)
     ax2 = ax.twinx()
     ax2.set_ylabel(r"$\mathrm{d}\sigma/\mathrm{d}E$ [Mb/eV]", rotation=-90)
     ax2.set_yticks([])
@@ -89,10 +91,11 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=No
         plot_icec_el(ax, icec_el, electronE, R, width=0.005)
     
     #x_min = min(results_bc[:,spectrum_idx_electronEf(vD)]) + 0.17
-    x_min = 5.69
+    #x_min = 5.69
+    x_min = 5.5
     x_max = max(results_bb[:,spectrum_idx_electronEf(vD)]) + 0.04
     ax.set_xlim(x_min, x_max)
-    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=0)  
+    ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=1)  
     ax.annotate(r'$\sigma_\text{PR}$', 
                 (x_min, icec.PR_xs_A(electronE)*Units.AU2MB), 
                 xytext=(-26,-1),
@@ -114,7 +117,7 @@ def boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Uni
     norm = icec.Morse_D.boltzmann_norm(t)
     
     if fold_lorentz:
-        lorentzian_energies = np.linspace(results[-1,spectrum_idx_electronEf(0)]-0.25, results[0,spectrum_idx_electronEf(vD_max)]+0.5, 5000)
+        lorentzian_energies = np.linspace(results[-1,spectrum_idx_electronEf(0)]-1.5, results[0,spectrum_idx_electronEf(vD_max)]+1, 10000)
         lorentzian_spectrum = np.zeros_like(lorentzian_energies)
     
     for vD in range(vD_max+1):
@@ -174,13 +177,14 @@ def boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
                 ax.plot(energy_vD, xs_vD * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm), color=reds(vD / vD_max))
     
     #avg[avg<1e-30]=np.nan
-    ax.plot(energy, avg, color=color, ls="--", zorder=0)
+    ax.plot(energy, avg, color=color, ls="--", zorder=1)
     
 def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(6, 4))
     ax = plt.gca() 
     set_axes(ax, differential=True)
-    ax.set_ylim(5*1e-4, 1)
+    #ax.set_ylim(5*1e-4, 1)
+    ax.set_ylim(1e-3, 10)
     ax.set_xlim(5.5, 8)
     
     L=icec.Morse_Dp.box_length

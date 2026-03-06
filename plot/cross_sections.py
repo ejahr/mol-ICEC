@@ -21,12 +21,12 @@ def read_results_file(system, R, modifier='', L=None):
     if L is not None:
         file_path += f'.L{str(round(L*Units.BOHR2ANGSTROM))}.txt'
     else:
-        file_path += '.icec.txt'
+        file_path += '.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
 
 def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
-    fname = DIR + "plots/" + system + '.all_vib.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".icec.pdf"
+    fname = DIR + "plots/" + system + '.all_vib.R'+ str(round(R*Units.BOHR2ANGSTROM)) + ".pdf"
     with PdfPages(fname) as pdf:
         energies = icec.energyGrid*Units.HARTREE2EV
         for vi in range(vD_max+1): 
@@ -40,7 +40,7 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
                 label = r'$v_{LiH^+}=$' + str(vf)
                 xs = icec.xs_vD_vDp(R, vi, vf)
                 ax.plot(energies, xs, label=label)
-            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
+            icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
             plt.close(fig) 
@@ -68,6 +68,8 @@ def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
+    if R < 5*Units.ANGSTROM2BOHR:
+        ax.set_ylim(1e-4,1e3)
     if icec_el is not None:
         energy = icec_el.energyGrid*Units.HARTREE2EV
         xs = icec_el.xs_energy(R)
@@ -86,7 +88,10 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     ax = plt.gca() 
     set_axes(ax)
     ax.set_xlim(-0.1, 4.2)
-    ax.set_ylim(3*1e-4,60)
+    if R < 5*Units.ANGSTROM2BOHR:
+        ax.set_ylim(1e-2,1e3)
+    else:
+        ax.set_ylim(3*1e-4,60)
     vi = 0
     L = icec.Morse_Dp.box_length
     plot_xs_tot(ax, system, R, vi, L, label=r'tot', modifier='-FC', color='tab:blue', ls=':')
@@ -97,7 +102,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     if icec_el is not None:
         energy = icec_el.energyGrid*Units.HARTREE2EV
         xs = icec_el.xs_energy(R)
-        ax.plot(energy, xs, color='black', label="elec.", zorder=0)
+        ax.plot(energy, xs, color='black', label="elec.", zorder=1)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':')   
     
     ax.legend(ncols=2)
@@ -119,7 +124,7 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
         
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
     
     ax.legend()
     fname = DIR + 'plots/' + system + '.vB.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
@@ -142,7 +147,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)    
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
     fname = DIR + 'plots/' + system + '.xs-FC.vB.R'+ str(round(R*Units.BOHR2ANGSTROM)) + '.icec.pdf'
     plt.tight_layout()
@@ -253,7 +258,7 @@ def plot_xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
                 
         plot_xs(ax, system, r, 0, label, color=blue)
     
-    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=0)
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
     plt.legend()
     fname = DIR + 'plots/' + system + '.R.icec.pdf'
     plt.tight_layout()

@@ -9,7 +9,7 @@ from icec.constants import Units, Constants
 from plot import cross_sections, pes, spectrum
 import plot.config
 
-def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, electronE:float=None, result_type:str=None):
+def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, electronE:float=None, max_dissE=None, result_type:str=None):
     if result_type == 'spectrum':
         header += f"ICEC electron spectrum at E_in = {round(electronE*Units.HARTREE2EV)} eV\n"
     if result_type == 'xs':
@@ -20,8 +20,9 @@ def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp
     if vDp_max is not None:
         header += f'Number of final vibrational states: {vDp_max+1}\n'
     else:
+        max_dissE = max_dissE if max_dissE is not None else icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV
         header += "Dissociative states of D+: " + \
-        f"Max energy = {round(icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV,1)} eV, " + \
+        f"Max energy = {round(max_dissE*Units.HARTREE2EV,1)} eV, " + \
         f"Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n" 
     if result_type == 'xs':
         header += 'E_in [eV] | xs [Mb]' 
@@ -211,16 +212,16 @@ plot_info       = 0
 print_info      = 0
 
 electronE   = 1*Units.EV2HARTREE
-R           = 6*Units.ANGSTROM2BOHR
+#R           = 6*Units.ANGSTROM2BOHR
+R           = Hp_LiH.R_min()
 L           = 8*Units.ANGSTROM2BOHR
-#L = 16*Units.ANGSTROM2BOHR
-R_list      = np.array([6,8,10]) * Units.ANGSTROM2BOHR
 T           = [15, 300, 1500] 
 
 vD_max_bc   = 7
 min_kinE    = 0.01 * Units.EV2HARTREE
 max_kinE    = 9 * Units.EV2HARTREE
 max_dissE   = 1.8 * Units.EV2HARTREE
+max_dissE_1 = 1 * Units.EV2HARTREE
 resolution  = 1000
 
 system = 'Hp-LiH'
@@ -242,7 +243,7 @@ icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
 icec_FC.IP_D = IP_adiabatic
 icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
-icec_FC.make_energy_grid(min_kinE, max_kinE, resolution)
+icec_FC.make_energy_grid(min_kinE, maxEnergy=4.5*Units.EV2HARTREE, resolution=resolution)
 icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
@@ -287,29 +288,28 @@ if calculate:
 
     if bc:
         if cross_section:
-            calculate_xs_bc(system, header, icec_FC, R, vD_max_bc, modifier='-FC')
+            calculate_xs_bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE_1, modifier='-FC')
         if spectra:
             calculate_spectrum_bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
 
 if plotting:
     if bb:
         if cross_section and FC:
-            cross_sections.plot_xs_FC_bb(system, icec_FC, R, icec_el)
+            cross_sections.plot_xs_FC_bb(system, icec, R, icec_el)
         if spectra and FC:
             spectrum.plot_spectrum_FC(system, R, electronE, LiH.v_max, icec_el=icec_el)
-        #plot_xs_boltzmann(system, icec, R, T, LiH.v_max, LiH.vib_energies)
     
     if bc:
         if cross_section:
             cross_sections.plot_xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
             spectrum.plot_spectrum_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el)
-    if cross_section and temp_dependence:
-        cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
+    #if cross_section and temp_dependence:
+    #    cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
     if spectra and temp_dependence:
         spectrum.plot_boltzmann_FC(system, icec_FC, R, electronE, T, vD_max_bc)
 
 if plot_info:
-    pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
+    #pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
     pes.plot_PES(icec_FC, 'LiH', L, energy_diff_at_inf)
     #plot_H_PI_PR(icec_el)
