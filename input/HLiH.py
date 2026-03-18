@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -70,6 +69,7 @@ class LiH(metaclass=ReadOnly):
     mu      = 0.88123833*Constants.m_p
     
     # --- LiH data from https://doi.org/10.1063/1.479970 ---
+    energy_diff_at_inf = np.abs(7.974721285 - 7.776735464) # energy difference at R=inf
     IP_vert_approx = np.abs(-8.066308039 + 7.770884366)
     IP_min_approx = np.abs(-8.066308039 + 7.78173407)
     IP      = 7.743 * Units.EV2HARTREE
@@ -161,6 +161,7 @@ if __name__ == "__main__":
     print("Re Huber     ", 1.5957*Units.ANGSTROM2BOHR, "\n")
 
     # min R between H and LiH
+    # TODO remove all unnecessary R_min
     print(f"Hp_LiH.R_min = {round(Hp_LiH.R_min_vdw,5)} a.u. = {round(Hp_LiH.R_min_vdw*Units.BOHR2ANGSTROM,5)} A")
     print(f"LiH.r_mu     = {round(LiH.r_mu,5)} a.u. = {round(LiH.r_mu*Units.BOHR2ANGSTROM,5)} A")
     R_min_COM = (H.r_vdw + Li.r_vdw + LiH.r_mu)*Units.BOHR2ANGSTROM 

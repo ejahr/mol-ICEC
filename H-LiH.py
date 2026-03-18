@@ -159,13 +159,13 @@ IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.D
 icec_el.IP_B = IP_vertical
 icec_el.make_energy_grid(min_kinE, LiH.max_kinE_unresolved, num_grid)
 
-
-energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf
 if print_info:
     print('\n===== Info =====')
-    print(f"vertical ionization energy {IP_vertical*Units.HARTREE2EV} eV")
-    print(f"adiabatic ionizaton energy {IP_adiabatic*Units.HARTREE2EV} eV")
-    print(f"energy diff at R=inf       {energy_diff_at_inf} eV")
+    print(f"vertical ionization energy {round(IP_vertical*Units.HARTREE2EV,3)} eV")
+    print(f"   approx                  {round(LiH.IP_vert_approx*Units.HARTREE2EV,3)} eV")
+    print(f"adiabatic ionizaton energy {round(IP_adiabatic*Units.HARTREE2EV,3)} eV")
+    print(f"   approx min to min       {round(LiH.IP_min_approx*Units.HARTREE2EV,3)} eV")
+    print(f"energy diff at R=inf       {round(LiH.energy_diff_at_inf*Units.HARTREE2EV,3)} eV")
     #print_FC_factor(icec_FC, 0, 1.3*Units.EV2HARTREE)
     test_FC_factors(icec_el, icec, icec_FC, R)
     print_boltzmann_probabilities(icec_FC, T)
