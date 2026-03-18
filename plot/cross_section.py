@@ -10,12 +10,14 @@ set_rcParams()
 width, height = 6, 4
 
 def set_axes(ax):
+    "log yscale, labels: epsilon, sigma"
     ax.set_yscale('log')
     ax.set_xlabel(r'$\varepsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
 
 def read_results_file(system, R, modifier='', L=None):
+    'reads in ICEC results'
     file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
         file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
@@ -23,13 +25,19 @@ def read_results_file(system, R, modifier='', L=None):
         file_path += '.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
+    # TODO
+    # energies = results[:,0]
+    # xs = results[:,1:]
+    # return energies, xs
             
 def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
+    'plots electronic ICEC cross section against incoming electron energies'
     energy = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
     ax.plot(energy, xs, color=color, label=label, **kwargs)
 
 def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
+    'plots ICEC cross section against incoming electron energies for vD -> bound states'
     if modifier == '':
       ax.set_xlim(-0.2, 8.6)  
     # ax.plot(icec.energyGrid * Units.HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*Units.AU2MB, label=r'$\sigma_\text{PI}$')
@@ -37,11 +45,13 @@ def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
+    'plots ICEC cross section against incoming electron energies for vD -> dissociative states'
     modifier += ".bc"
     results = read_results_file(system, R, modifier, L)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
+    'plots ICEC cross section against incoming electron energies for all transitions from vD'
     results_bb = read_results_file(system, R, modifier)
     modifier += ".bc"
     results_bc = read_results_file(system, R, modifier, L)
@@ -49,6 +59,7 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
 def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
+    'generates plot of ICEC cross section for transitions of D from vD = 0 to bound states D+'
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -70,6 +81,7 @@ def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig.savefig(fname)
     
 def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
+    'generates plot of ICEC cross section for transitions of D from vD = 0 to bound and dissociative states D+'
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -95,7 +107,8 @@ def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-def xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
+def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
+    'generates plot of ICEC cross section for bound-bound transitions of D'
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -118,6 +131,7 @@ def xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
 # ===== BOLTZMANN =====   
     
 def boltzmann(icec: IntraICEC, results, vD_max, t):
+    'Boltzmann weighted sum of ICEC cross section'
     # add De to energy(vi) to get positive values which increases numerical stability
     # exponent is unitless
     norm = sum(np.exp(-(icec.Morse_D.energy(vi)+icec.Morse_D.De)/Constants.KB/t) 
@@ -130,6 +144,7 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
     return avg/norm
     
 def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
+    'generates plot of temperature dependent ICEC cross sections against incoming electron energies'
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -168,6 +183,7 @@ def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
     fig.savefig(fname)
 
 def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
+    'generates plot of ICEC cross section for bound-bound transitions of D for different distances between A and D'
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
