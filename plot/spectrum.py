@@ -40,7 +40,7 @@ def spectrum_idx_electronEf(vD):
 def spectrum_idx_xs(vD):
     return 4*vD+3
     
-def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
+def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
     results_FC = read_results(system, electronE, R, modifier='-FC')
     results_resolved = read_results(system, electronE, R)
     
@@ -75,7 +75,7 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
+def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
     L=icec.Morse_Dp.box_length
     results_bb = read_results(system, electronE, R, modifier='-FC')
     results_bc = read_results(system, electronE, R, modifier='-FC.bc', L=L)
@@ -125,7 +125,7 @@ def lorentzian(x, x0, gamma):
     return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
     #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
     
-def boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False):
+def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     if fold_lorentz:
@@ -157,7 +157,7 @@ def interpolate(x0, x, y):
     )
     return interpolate_y(x0)
       
-def boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
+def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     energy = np.sort(
@@ -191,7 +191,7 @@ def boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
     #avg[avg<1e-30]=np.nan
     ax.plot(energy, avg, color=color, ls="--", zorder=1)
     
-def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
+def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(6, 4))
     ax = plt.gca() 
     set_axes(ax, differential=True)
@@ -206,8 +206,8 @@ def plot_boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:I
     blues = plt.get_cmap("Blues_r")    
     for t in T:
         blue = blues(T.index(t) / (len(T) + 2 / len(T)))
-        boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True)
-        boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue)
+        plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True)
+        plot_boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue)
         
     ax.legend(fontsize='small', loc="upper right")
     plt.tight_layout()

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
@@ -28,7 +27,7 @@ def read_results_file(system, R, modifier='', L=None):
 def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
     energy = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
-    ax.plot(energy, xs, color=color, label=label, **kwargs) #r'$R^{\mathrm{LiH}}_e$'
+    ax.plot(energy, xs, color=color, label=label, **kwargs)
 
 def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     if modifier == '':
@@ -49,24 +48,7 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
-def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):
-    results_bb = read_results_file(system, R, modifier)
-    modifier += ".bc"
-    results_bc = read_results_file(system, R, modifier, L)
-    results = results_bb[:, vD+1] + results_bc[:, vD+1]
-    
-    print("\n--- Ratio between total and electronic cross section ---")
-    
-    for i in [0,600,950]:
-        energy = results_bb[i,0]
-        xs_tot = results[i]
-        xs_el = icec_el.xs(energy*Units.EV2HARTREE, R) * Units.AU2MB
-        print(f"electronE    : {round(energy,3)} eV")
-        print(f"xs_tot       : {round(xs_tot,3)} MB")
-        print(f"xs_el        : {round(xs_el,3)} MB")
-        print(f"xs_tot/xs_el : {round(xs_tot/xs_el,5)}")
-    
-def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
+def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -87,7 +69,7 @@ def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
+def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -113,7 +95,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     plt.tight_layout()
     fig.savefig(fname)
     
-def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
+def xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -133,6 +115,7 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     plt.tight_layout()
     fig.savefig(fname)
     
+# ===== BOLTZMANN =====   
     
 def boltzmann(icec: IntraICEC, results, vD_max, t):
     # add De to energy(vi) to get positive values which increases numerical stability
@@ -146,7 +129,7 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
         )
     return avg/norm
     
-def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
+def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -184,7 +167,7 @@ def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=Non
     plt.tight_layout()
     fig.savefig(fname)
 
-def plot_xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
+def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -205,3 +188,22 @@ def plot_xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fname = DIR + f'plots/{system}.R.icec.pdf'
     plt.tight_layout()
     fig.savefig(fname)
+    
+# ===== OTHER =====
+    
+def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):
+    results_bb = read_results_file(system, R, modifier)
+    modifier += ".bc"
+    results_bc = read_results_file(system, R, modifier, L)
+    results = results_bb[:, vD+1] + results_bc[:, vD+1]
+    
+    print("\n--- Ratio between total and electronic cross section ---")
+    
+    for i in [0,600,950]:
+        energy = results_bb[i,0]
+        xs_tot = results[i]
+        xs_el = icec_el.xs(energy*Units.EV2HARTREE, R) * Units.AU2MB
+        print(f"electronE    : {round(energy,3)} eV")
+        print(f"xs_tot       : {round(xs_tot,3)} MB")
+        print(f"xs_el        : {round(xs_el,3)} MB")
+        print(f"xs_tot/xs_el : {round(xs_tot/xs_el,5)}")
