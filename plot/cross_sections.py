@@ -44,6 +44,11 @@ def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
             ax.legend()
             pdf.savefig(fig)  #, bbox_inches = "tight"
             plt.close(fig) 
+            
+def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
+    energy = icec.energyGrid * Units.HARTREE2EV
+    xs = icec.xs_energy(R) * Units.AU2MB
+    ax.plot(energy, xs, color=color, label=label, **kwargs) #r'$R^{\mathrm{LiH}}_e$'
 
 def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     if modifier == '':
@@ -88,9 +93,7 @@ def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     if R < 5*Units.ANGSTROM2BOHR:
         ax.set_ylim(1e-4,1e3)
     if icec_el is not None:
-        energy = icec_el.energyGrid * Units.HARTREE2EV
-        xs = icec_el.xs_energy(R) * Units.AU2MB
-        ax.plot(energy, xs, color='black', label="electronic") #r'$R^{\mathrm{LiH}}_e$'
+        plot_xs_el(ax, icec_el, R)
     vi = 0
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue')
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
@@ -111,9 +114,7 @@ def plot_xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
         ax.set_ylim(3*1e-4,60)
         
     if icec_el is not None:
-        energy = icec_el.energyGrid * Units.HARTREE2EV
-        xs = icec_el.xs_energy(R) * Units.AU2MB
-        ax.plot(energy, xs, color='black', label="elec.", zorder=1)
+        plot_xs_el(ax, icec_el, R, label="elec.", zorder=1)
     #icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':')      
         
     vi = 0
@@ -132,10 +133,9 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
+    
     if icec_el is not None:
-        energy = icec_el.energyGrid * Units.HARTREE2EV
-        xs = icec_el.xs_energy(R) * Units.AU2MB
-        ax.plot(energy, xs, color='black', label='electronic')
+        plot_xs_el(ax, icec_el, R)
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
@@ -155,9 +155,7 @@ def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     set_axes(ax)
     
     if icec_el is not None:
-        energy = icec_el.energyGrid * Units.HARTREE2EV
-        xs = icec_el.xs_energy(R) * Units.AU2MB
-        ax.plot(energy, xs, color='black', label='electronic')
+        plot_xs_el(ax, icec_el, R)
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
@@ -235,9 +233,7 @@ def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=Non
         results[:, col] += results_bb[:, col]
         
     if icec_el is not None:
-        energy = icec_el.energyGrid * Units.HARTREE2EV
-        xs = icec_el.xs_energy(R) * Units.AU2MB
-        ax.plot(energy, xs, color='black', label="electronic")
+        plot_xs_el(ax, icec_el, R)
             
     blues = plt.get_cmap("Blues_r")    
     for t in T:
@@ -271,9 +267,7 @@ def plot_xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
         label = r'$R=$' + str(round(r*Units.BOHR2ANGSTROM)) + r'$\,\mathrm{\AA}$'
         
         if icec_el is not None:
-            energy = icec_el.energyGrid * Units.HARTREE2EV
-            xs = icec_el.xs_energy(r) * Units.AU2MB
-            ax.plot(energy, xs, color=blue, ls='--')
+            plot_xs_el(ax, icec_el, r, color=blue, ls='--')
                 
         plot_xs(ax, system, r, 0, label, color=blue)
     
