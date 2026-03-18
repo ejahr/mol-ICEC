@@ -24,26 +24,6 @@ def read_results_file(system, R, modifier='', L=None):
         file_path += '.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
-
-def plot_xs_vB_vBp(system, icec: IntraICEC, R, vD_max, vDp_max):
-    fname = DIR + f"plots/{system}.all_vib.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
-    with PdfPages(fname) as pdf:
-        energies = icec.energyGrid * Units.HARTREE2EV
-        for vi in range(vD_max+1): 
-            fig, ax = plt.subplots()
-            set_axes(ax)
-            ax.set_xlim(-0.2, 8.5)
-            ax.set_ylim(1e-5, 1e2)
-            results = read_results_file(system, R)
-            ax.plot(results[:,0], results[:, vi+1], label='total', color='dimgray')
-            for vf in range(vDp_max+1):
-                label = r'$v_{LiH^+}=$' + str(vf)
-                xs = icec.xs_vD_vDp(R, vi, vf) * Units.AU2MB
-                ax.plot(energies, xs, label=label)
-            icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
-            ax.legend()
-            pdf.savefig(fig)  #, bbox_inches = "tight"
-            plt.close(fig) 
             
 def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
     energy = icec.energyGrid * Units.HARTREE2EV
@@ -92,12 +72,16 @@ def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     set_axes(ax)
     if R < 5*Units.ANGSTROM2BOHR:
         ax.set_ylim(1e-4,1e3)
+        
     if icec_el is not None:
         plot_xs_el(ax, icec_el, R)
+        
     vi = 0
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue')
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
+    
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
+    
     ax.legend()
     fname = DIR + f'plots/{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout()
@@ -141,26 +125,6 @@ def plot_xs_vi(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     for vi in range(0, vD_max+1):
         label = r'$v_i=$' + str(vi)
         plot_xs(ax, system, R, vi, label, color=color[vi])
-        
-    icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
-    
-    ax.legend()
-    fname = DIR + f'plots/{system}.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
-    plt.tight_layout()
-    fig.savefig(fname)
-    
-def plot_xs_vi_FC(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
-    fig = plt.figure(figsize=(width, height))
-    ax = plt.gca() 
-    set_axes(ax)
-    
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R)
-        
-    color = ['tab:red', 'tab:purple', 'tab:blue']
-    for vi in range(0, vD_max+1):
-        label = r'$v_i=$' + str(vi)
-        plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
@@ -181,41 +145,6 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
         for vi in range(vD_max+1)
         )
     return avg/norm
-    
-    
-def plot_xs_boltzmann(system, icec: IntraICEC, R, T, vD_max, vib_energies=None):
-    fig = plt.figure(figsize=(width, height))
-    ax = plt.gca() 
-    set_axes(ax)
-    ax.set_xlim(-0.2, 8.5)
-    results = read_results_file(system, R)
-    
-    blues = plt.get_cmap("Blues_r")    
-    for t in T:
-        if vib_energies is None:
-            xs = boltzmann(icec, results, vD_max, t)
-        else:
-            norm = sum(
-                np.exp(-vib_energies[vi]/Constants.KB/t) 
-                for vi in range(vD_max+1)
-                )
-            avg = sum(
-                np.exp(-vib_energies[vi]/Constants.KB/t) * results[:, vi+1]
-                for vi in range(vD_max+1)
-                )
-            xs = avg/norm
-        label = r'$T=$' + str(t) + 'K'
-        blue = blues(T.index(t) / (len(T) + 2 / len(T)))
-        ax.plot(results[:,0], xs, label=label, color=blue)
-        
-    #for vi in range(v_max + 1):
-    #    plot_xs(ax, system, R, vi, r'$v_{LiH}=$'+str(vi), linestyle=':')  
-        
-    ax.legend()
-    plt.tight_layout()
-    fname = DIR + f'plots/{system}.boltzmann.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
-    plt.tight_layout()
-    fig.savefig(fname)
     
 def plot_xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
