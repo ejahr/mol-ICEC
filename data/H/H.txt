@@ -1,4 +1,4 @@
-#photo_energies	cross_sections
+# photo_energies [eV]	cross_sections [Mb]
 13.4696361917641	6.476
 13.605693122994	6.304
 13.9501212444026	5.897
