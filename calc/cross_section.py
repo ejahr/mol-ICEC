@@ -1,6 +1,5 @@
 import numpy as np
 from config import DIR
-from input.HLiH import LiH
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
 
@@ -49,6 +48,6 @@ def xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modif
     file_path = DIR + f"results/{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
-def xs_bc_R(system, icec, R, header):
+def xs_bc_R(system, icec, R, header, vD_max):
     for r in R:
-        xs_bc(system, header, icec, r, LiH.v_max)
+        xs_bc(system, header, icec, r, vD_max)

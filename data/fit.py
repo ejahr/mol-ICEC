@@ -33,6 +33,7 @@ def generate_linfit(fname):
     xs_data = np.loadtxt(fname, comments='#')
     energies = xs_data[:,0] * Units.EV2HARTREE
     xs = xs_data[:,1] * Units.MB2AU
+    # TODO remove extrapolate, default is NaN
     interp_func = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
     #test_linfit(interp_func, energies, xs)
     return interp_func
