@@ -3,7 +3,7 @@
 # R = 3.952 Angstrom
 # Number of initial vibrational states: 3
 # Number of final vibrational states: 7
-# Electronic result: E_out = 6.563905645589435 eV, xs = 3.2511571582030467 Mb
+# Electronic result: E_out = 6.56391 eV, xs = 3.25116 Mb
 # | v_D, v_Dp, E_out [eV], xs [Mb] |
 0.000e+00 0.000e+00 6.916e+00 3.140e-02 1.000e+00 0.000e+00 7.084e+00 1.133e-01 2.000e+00 0.000e+00 7.247e+00 2.064e-01
 0.000e+00 1.000e+00 6.872e+00 6.289e-02 1.000e+00 1.000e+00 7.041e+00 1.575e-01 2.000e+00 1.000e+00 7.204e+00 1.771e-01

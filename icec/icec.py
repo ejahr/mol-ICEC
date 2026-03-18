@@ -11,12 +11,12 @@ class ICEC:
     Uses atomic units (hbar=1, me=1, hartree energy=1).
 
     Args:
-        degeneracyFactor(float): degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
-        IP (float): Ionization potential (Hartree)
+        degeneracyFactor (float): degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        IP (float): Ionization potential (a.u., Hartree)
         PI_xs (float -> float): Fit for Photoionization cross section (a.u. -> a.u.)
 
     Attributes:
-        degeneracyFactor(float): degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        degeneracyFactor (float): degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
         IP (float): Ionization potential (Hartree)
         PI_xs (float -> float): Fit for Photoionization cross section (a.u. -> a.u.)
         thresholdEnergy (float): Minimum kinetic energy of the incoming electron for ICEC to happen
@@ -26,31 +26,28 @@ class ICEC:
     """  
     def __init__(self, degeneracyFactor:float, IP_A:float, IP_B:float, PI_xs_A, PI_xs_B) :
         self.degeneracyFactor = degeneracyFactor
-        self.IP_A = IP_A * Units.EV2HARTREE
-        self.IP_B = IP_B * Units.EV2HARTREE
+        self.IP_A = IP_A
+        self.IP_B = IP_B
         self.PI_xs_A = PI_xs_A
         self.PI_xs_B = PI_xs_B
         
         self.thresholdEnergy = max(0, self.IP_B - self.IP_A)
         self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
 
-    def make_energy_grid(self, minEnergy=None, maxEnergy=10, num:int=100, geometric=True): 
+    def make_energy_grid(self, minEnergy=None, maxEnergy=10*Units.EV2HARTREE, num:int=100, geometric=True): 
         """ Generates a suitable grid of incoming electron energies.
-        - Energy (eV)
+        - Energy (a.u./Hartree)
         - num (int): number of grid points
         TODO add function where you can define the energy grid directly
         """
-        maxEnergy = maxEnergy * Units.EV2HARTREE
         if minEnergy is None:
-            minEnergy = self.thresholdEnergy
-        else:
-            minEnergy = minEnergy * Units.EV2HARTREE        
+            minEnergy = max(0.01*Units.EV2HARTREE, self.thresholdEnergy) 
         if geometric:
             self.energyGrid = np.geomspace(minEnergy, maxEnergy, num)
         else:
             self.energyGrid = np.linspace(minEnergy, maxEnergy, num)
 
-    def make_R_grid(self, Rmin=2, Rmax=10, num:int=100): 
+    def make_R_grid(self, Rmin=2*Units.ANGSTROM2BOHR, Rmax=10*Units.ANGSTROM2BOHR, num:int=100): 
         """ Generates a grid of interatomic distances.
         - R (float): Interatomic distance (Bohr)
         - num (int): number of grid points
@@ -58,12 +55,15 @@ class ICEC:
         self.rGrid = np.linspace(Rmin, Rmax, num)
         
     def hbarOmega(self, electronE:float) -> float:
+        "omega = electronE + IP_A  [Hartree]"
         return electronE + self.IP_A 
     
     def electronE_f(self, electronE:float) -> float:
+        "electronE_f = omega - IP_B  [Hartree]"
         return self.hbarOmega(electronE) - self.IP_B 
 
-    # ----- CROSS SECTION -----    
+    # ----- CROSS SECTION ----- 
+       
     def xs(self, electronE:float, R:float) -> float:
         """ Calculates cross section (a.u.) of ICEC for some kinetic energy and R.
         - electronE (float): kinetic energy of incoming electron (Hartree, a.u.)
@@ -73,8 +73,8 @@ class ICEC:
             return 0
         else: 
             hbarOmega = self.hbarOmega(electronE)
-            PI_xs_A = self.PI_xs_A(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
-            PI_xs_B = self.PI_xs_B(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
+            PI_xs_A = self.PI_xs_A(hbarOmega)
+            PI_xs_B = self.PI_xs_B(hbarOmega)
             return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * hbarOmega**2 * R**6)
 
     def xs_energy(self, R:float):
@@ -87,7 +87,7 @@ class ICEC:
             self.xs(energy, R)
             for energy in self.energyGrid
         ]) 
-        return xs * Units.AU2MB
+        return xs
 
     def xs_R(self, electronE:float):
         """ Calculates cross section (Mb) of ICEC for given range of interatomic distances R.
@@ -99,11 +99,18 @@ class ICEC:
             self.xs(electronE, R)
             for R in self.rGrid
         ])
-        return xs * Units.AU2MB
+        return xs
+    
+    # ----- OTHER -----
+    
+    def PR_xs_A(self, electronE):
+        hbarOmega = self.hbarOmega(electronE)
+        PI_xs = self.PI_xs_A(hbarOmega)
+        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", **kwargs):
         """Plots the Cross section xs [Mb]"""
-        ax.plot(self.energyGrid*Units.HARTREE2EV, xs, label=label, **kwargs)
+        ax.plot(self.energyGrid*Units.HARTREE2EV, xs*Units.AU2MB, label=label, **kwargs)
         ax.set_xlabel(r'$E_\text{el}$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         ax.set_yscale('log')
@@ -111,7 +118,7 @@ class ICEC:
 
     def plot_xs_R(self, ax, xs, **kwargs):
         """Plots the Cross section xs [Mb]"""
-        ax.plot(self.rGrid, xs, **kwargs)
+        ax.plot(self.rGrid, xs*Units.AU2MB, **kwargs)
         ax.set_xlabel(r'$R$ [a.u.]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         ax.set_yscale('log')
@@ -119,14 +126,11 @@ class ICEC:
 
     def plot_PR_xs(self, ax, **kwargs):
         """Plots the Photorecombination Cross section [Mb]"""
-        PR_xs = np.array([])
-        for electronE in self.energyGrid:
-            hbarOmega = electronE + self.IP_A
-            PI_xs = self.PI_xs_A(hbarOmega*Units.HARTREE2EV)*Units.MB2AU
-            xs = self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
-            PR_xs = np.append(PR_xs, [xs * Units.AU2MB])
+        PR_xs = np.array(
+            [self.PR_xs_A(electronE) for electronE in self.energyGrid]
+        )
         mask = PR_xs>0
-        ax.plot(self.energyGrid[mask]*Units.HARTREE2EV, PR_xs[mask], **kwargs)
+        ax.plot(self.energyGrid[mask]*Units.HARTREE2EV, PR_xs[mask]*Units.AU2MB, **kwargs)
         
         
 # ==========================================================

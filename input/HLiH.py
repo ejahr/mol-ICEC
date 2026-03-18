@@ -8,7 +8,7 @@ import plot.config
 from config import DIR
 from icec.icec import ICEC
 from icec.constants import Units, Constants
-from input.fit import generate_polyfit
+from input.fit import generate_polyfit, generate_linfit
 
 class ReadOnly(type):
     def __setattr__(self, name, value):
@@ -39,12 +39,6 @@ class H(metaclass=ReadOnly):
     fname = DIR + 'data/H/H.txt'
     PI_xs = generate_polyfit(fname, 15)
 
-    xs_data = np.loadtxt(fname, comments='#')
-    E_photon = xs_data[:,0]
-    xs = xs_data[:,1]
-    coefficients = np.polyfit(E_photon, xs, 15)
-    PI_xs_eVMb = np.poly1d(coefficients)
-    
     def plot_H_PI_PR(icec:ICEC):
         plot.config.set_rcParams()
         fig = plt.figure()
@@ -54,14 +48,11 @@ class H(metaclass=ReadOnly):
         ax.set_xlabel(r'$\epsilon$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
         
-        PI_xs = np.array([])
-        hbaromega = np.array([])
-        for electronE in icec.energyGrid:
-            omega = electronE + icec.IP_A
-            hbaromega = np.append(hbaromega, [omega*Units.HARTREE2EV])
-            xs = icec.PI_xs_A(omega*Units.HARTREE2EV)
-            PI_xs = np.append(PI_xs, [xs])
-        ax.plot(icec.energyGrid*Units.HARTREE2EV, PI_xs, label = r'$H\to H^+$')
+        energies = icec.energyGrid
+        hbarOmega = np.array([icec.hbarOmega(electronE) for electronE in energies])
+        PI_xs = np.array([icec.PI_xs_A(omega) for omega in hbarOmega])
+
+        ax.plot(energies*Units.HARTREE2EV, PI_xs*Units.AU2MB, label = r'$H\to H^+$')
         icec.plot_PR_xs(ax, label = r'$H^+\to H$')
         ax.legend()
         fname = DIR + 'plots/H.PI.PR.pdf'
@@ -72,9 +63,6 @@ class H(metaclass=ReadOnly):
 class LiH(metaclass=ReadOnly):
     # --- Huber ---
     IP = 7.7 * Units.EV2HARTREE # adiabatic?
-       
-    IP_vert_approx = np.abs(-8.066308039 + 7.770884366)*Units.HARTREE2EV
-    IP_min_approx = np.abs(-8.066308039 + 7.78173407)*Units.HARTREE2EV
 
     m       = H.m + Li.m
     mu      = H.m * Li.m / (H.m + Li.m)
@@ -82,6 +70,8 @@ class LiH(metaclass=ReadOnly):
     mu      = 0.88123833*Constants.m_p
     
     # --- LiH data from https://doi.org/10.1063/1.479970 ---
+    IP_vert_approx = np.abs(-8.066308039 + 7.770884366)
+    IP_min_approx = np.abs(-8.066308039 + 7.78173407)
     IP      = 7.743 * Units.EV2HARTREE
     # IP + Ep_0 - E_0 = 7.68 eV
     
@@ -110,13 +100,12 @@ class LiH(metaclass=ReadOnly):
     
     # --- Photoionization cross section ---
     file_PI_xs_resolved = DIR + 'data/LiH/LiH_vi_vf_'
-    file_PI_xs_unresolved = DIR + 'data/LiH/LiH'
+    file_PI_xs_unresolved = DIR + 'data/LiH/LiH.txt'
+    
+    PI_xs = generate_linfit(file_PI_xs_unresolved)
 
-    xs_data = np.loadtxt(file_PI_xs_unresolved + '.txt', comments='#')
+    xs_data = np.loadtxt(file_PI_xs_unresolved, comments='#')
     energies = xs_data[:,0]
-    xs = xs_data[:,1]
-    PI_xs_eVMb = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
-
     max_kinE_unresolved = energies[-1]*Units.EV2HARTREE - H.IP
 
 class LiHp(metaclass=ReadOnly):
@@ -143,7 +132,7 @@ class LiHp(metaclass=ReadOnly):
 class Hp_LiH(metaclass=ReadOnly):
     R_min_vdw = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
 
-    input_electronic = (H.deg_factor, H.IP*Units.HARTREE2EV, LiH.IP*Units.HARTREE2EV, H.PI_xs_eVMb, LiH.PI_xs_eVMb)
+    input_electronic = (H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.PI_xs)
 
     input = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_resolved]
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]

@@ -20,7 +20,7 @@ def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp
     if vDp_max is not None:
         header += f'Number of final vibrational states: {vDp_max+1}\n'
     else:
-        max_dissE = max_dissE if max_dissE is not None else icec.Morse_Dp.diss_energies[-1]*Units.HARTREE2EV
+        max_dissE = max_dissE if max_dissE is not None else icec.Morse_Dp.diss_energies[-1]
         header += "Dissociative states of D+: " + \
         f"Max energy = {round(max_dissE*Units.HARTREE2EV,1)} eV, " + \
         f"Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n" 
@@ -36,9 +36,9 @@ def calculate_xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=Non
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
     header = extend_header(header, icec, R, vD_max, vDp_max, result_type='xs')
-    xs_array = icec.energyGrid*Units.HARTREE2EV
+    xs_array = icec.energyGrid * Units.HARTREE2EV
     for v in range(vD_max+1):
-        xs = icec.xs_vD(R, v, vDp_max)
+        xs = icec.xs_vD(R, v, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
@@ -53,7 +53,7 @@ def calculate_xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=N
     header = extend_header(header, icec, R, vD_max, max_dissE=max_dissE, result_type="xs")
     xs_array = icec.energyGrid*Units.HARTREE2EV
     for vD in range(vD_max+1):
-        xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE)*Units.AU2MB
+        xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR + f"results/{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
@@ -68,7 +68,7 @@ def calculate_spectrum(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R
     if vDp_max is None:
         vDp_max = icec.Morse_Dp.vmax
     header = extend_header(header, icec, R, vD_max, vDp_max, electronE, result_type='spectrum')
-    header += f"Electronic result: E_out = {icec_el.electronE_f(electronE)*Units.HARTREE2EV} eV, xs = {icec_el.xs(electronE, R)*Units.AU2MB} Mb\n"
+    header += f"Electronic result: E_out = {round(icec_el.electronE_f(electronE)*Units.HARTREE2EV,5)} eV, xs = {round(icec_el.xs(electronE, R)*Units.AU2MB,5)} Mb\n"
     header += "| v_D, v_Dp, E_out [eV], xs [Mb] |"  
     spectrum_all_vD = np.array([]) 
     for vD in range(vD_max+1):
@@ -117,7 +117,7 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     
     for vf in range(5):
         print(f'{vi}->{vf}')
-        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega*Units.HARTREE2EV)/Units.MB2AU)
+        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega))
         print(' FC Morse    ', icec_FC.FC_factor(vi,vf))
         print(' FC ab initio', FC_abinitio[vi][vf])
         
@@ -175,8 +175,7 @@ def print_PI_crosssection(icec:IntraICEC):
     print(f' H    : {icec.PI_xs_A(omega)*Units.AU2MB} Mb')
     print(f' omega: {omega*Units.HARTREE2EV} eV')
     print(f' LiH  : {icec.PI_xs_D_electronic(omega)*Units.AU2MB} Mb')
-       
-        
+
 # ========= Pre calculate roots of box for dissociative states =============
     
 def calculate_roots(Morse:Morse, fname, max_energy:float=1*Units.EV2HARTREE, num:int=500):
@@ -220,9 +219,9 @@ T           = [15, 300, 1500]
 vD_max_bc   = 7
 min_kinE    = 0.01 * Units.EV2HARTREE
 max_kinE    = 9 * Units.EV2HARTREE
-max_dissE   = 1.8 * Units.EV2HARTREE
+max_dissE   = 2 * Units.EV2HARTREE
 max_dissE_1 = 1 * Units.EV2HARTREE
-resolution  = 1000
+num_grid    = 1000
 
 system = 'Hp-LiH'
 title = r'$\text{H}^+ \text{LiH}$'
@@ -231,7 +230,7 @@ title = r'$\text{H}^+ \text{LiH}$'
 # --- ICEC with vibrationally resolved photoionization cross section of D ---
 icec = IntraICEC(*Hp_LiH.input)
 icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
-icec.make_energy_grid(min_kinE, max_kinE, resolution)
+icec.make_energy_grid(min_kinE, max_kinE, num_grid)
 icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
 IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
@@ -243,7 +242,7 @@ icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
 icec_FC.IP_D = IP_adiabatic
 icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
-icec_FC.make_energy_grid(min_kinE, maxEnergy=4.5*Units.EV2HARTREE, resolution=resolution)
+icec_FC.make_energy_grid(min_kinE, maxEnergy=4.5*Units.EV2HARTREE, num=num_grid)
 icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
@@ -257,7 +256,7 @@ icec_FC.Morse_Dp.load_diss_states(fname)
 icec_el = ICEC(*Hp_LiH.input_electronic)
 IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
 icec_el.IP_B = IP_vertical
-icec_el.make_energy_grid(min_kinE*Units.HARTREE2EV, LiH.max_kinE_unresolved*Units.HARTREE2EV, resolution)
+icec_el.make_energy_grid(min_kinE, LiH.max_kinE_unresolved, num_grid)
 
 
 energy_diff_at_inf = (7.974721285 - 7.776735464) * Units.HARTREE2EV # energy difference at R=inf

@@ -28,11 +28,11 @@ def read_results(system, electronE, R, modifier='', L=None):
     return results   
 
 def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False):
-    energy_out = icec_el.electronE_f(electronE)
-    xs = icec_el.xs(electronE, R)
+    energy_out = icec_el.electronE_f(electronE) * Units.HARTREE2EV
+    xs = icec_el.xs(electronE, R) * Units.AU2MB
     if return_bar:
-        return ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.')
-    ax.bar(energy_out*Units.HARTREE2EV, xs*Units.AU2MB, width=width, color='black', label='elec.') 
+        return ax.bar(energy_out, xs, width=width, color='black', label='elec.')
+    ax.bar(energy_out, xs, width=width, color='black', label='elec.') 
     
 def spectrum_idx_electronEf(vD):
     return 4*vD+2
@@ -61,8 +61,14 @@ def plot_spectrum_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=No
     color_resolved = ['lightskyblue', 'mediumpurple', 'lightcoral']
     for vD in range(vD_max+1):
         label = str(vD) #r'$v_i=$' + 
-        ax.bar(results_resolved[:,spectrum_idx_electronEf(vD)], results_resolved[:,spectrum_idx_xs(vD)], width=0.006, color=color_resolved[vD], label=label)
-        ax.bar(results_FC[:,spectrum_idx_electronEf(vD)], results_FC[:,spectrum_idx_xs(vD)], width=0.002, color=color_FC[vD], label='FC')
+        ax.bar(
+            results_resolved[:,spectrum_idx_electronEf(vD)], 
+            results_resolved[:,spectrum_idx_xs(vD)], 
+            width=0.006, color=color_resolved[vD], label=label)
+        ax.bar(
+            results_FC[:,spectrum_idx_electronEf(vD)], 
+            results_FC[:,spectrum_idx_xs(vD)], 
+            width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
     fname = DIR + f"plots/{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
@@ -84,8 +90,14 @@ def plot_spectrum_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=No
     ax2.set_yticks([])
     ax2.yaxis.set_label_coords(1.06, 0.5)
 
-    ax.plot(results_bc[:,spectrum_idx_electronEf(vD)], results_bc[:,spectrum_idx_xs(vD)], color='tab:blue', ls='--', label='b-d')
-    ax.bar(results_bb[:,spectrum_idx_electronEf(vD)], results_bb[:,spectrum_idx_xs(vD)], width=0.005, color='tab:blue', label='b-b')
+    ax.plot(
+        results_bc[:,spectrum_idx_electronEf(vD)], 
+        results_bc[:,spectrum_idx_xs(vD)], 
+        color='tab:blue', ls='--', label='b-d')
+    ax.bar(
+        results_bb[:,spectrum_idx_electronEf(vD)], 
+        results_bb[:,spectrum_idx_xs(vD)], 
+        width=0.005, color='tab:blue', label='b-b')
     
     if icec_el is not None:
         plot_icec_el(ax, icec_el, electronE, R, width=0.005)

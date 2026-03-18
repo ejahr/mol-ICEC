@@ -8,6 +8,10 @@ from config import DIR
 from icec.constants import Units
 
 def generate_polyfit(fname, degree):
+    """ Generates polynomial fit of given degree
+    data in given file is in EV -> MB
+    returns fit in Hartree -> a.u.
+    """
     xs_data = np.loadtxt(fname, comments='#')
     E_photon = xs_data[:,0] * Units.EV2HARTREE
     xs = xs_data[:,1] * Units.MB2AU
