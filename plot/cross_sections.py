@@ -64,6 +64,23 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
+def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):
+    results_bb = read_results_file(system, R, modifier)
+    modifier += ".bc"
+    results_bc = read_results_file(system, R, modifier, L)
+    results = results_bb[:, vD+1] + results_bc[:, vD+1]
+    
+    print("\n--- Ratio between total and electronic cross section ---")
+    
+    for i in [0,600,950]:
+        energy = results_bb[i,0]
+        xs_tot = results[i]
+        xs_el = icec_el.xs(energy*Units.EV2HARTREE, R) * Units.AU2MB
+        print(f"electronE    : {round(energy,3)} eV")
+        print(f"xs_tot       : {round(xs_tot,3)} MB")
+        print(f"xs_el        : {round(xs_el,3)} MB")
+        print(f"xs_tot/xs_el : {round(xs_tot/xs_el,5)}")
+    
 def plot_xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 

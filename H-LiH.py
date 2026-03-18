@@ -270,6 +270,8 @@ if print_info:
     print_boltzmann_probabilities(icec_FC, T)
     print_PI_crosssection(icec_FC)
     
+    cross_sections.calculate_ratio_tot_vs_electronic(system, icec_el, R) 
+    
 
 system = 'Hp-LiH'
 header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
