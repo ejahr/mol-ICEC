@@ -52,3 +52,12 @@ def compare_linfit(interp_func, fname):
     energies = xs_data[:,0] * Units.EV2HARTREE
     xs = xs_data[:,1] * Units.MB2AU
     test_linfit(interp_func, energies, xs)
+    
+def generate_chebyshev(fname, degree=10):
+    xs_data = np.loadtxt(fname, comments='#')
+    energies = xs_data[:,0] * Units.EV2HARTREE
+    xs = xs_data[:,1] * Units.MB2AU
+    lin_fit = sp.interpolate.interp1d(energies, xs, kind='linear')
+    domain = [min(energies), max(energies)]
+    chebyshev = np.polynomial.chebyshev.Chebyshev.interpolate(lin_fit, deg=degree, domain=domain)
+    return chebyshev
