@@ -2,8 +2,8 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from data.fit import generate_linfit
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+from calc.fit import generate_linfit
 from icec.constants import Units
 
 # =================== B+ ==========================

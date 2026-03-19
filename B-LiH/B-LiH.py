@@ -1,12 +1,11 @@
-from B import B
+from data.B.B import B
+from data.LiH.LiH import LiH, LiHp
 
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from data.LiH.LiH import LiH, LiHp
 
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
@@ -30,7 +29,6 @@ num_grid    = 100
 icec = IntraICEC(*input)
 
 icec.define_PI_xs_D(method="resolved")
-icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
 
 icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
