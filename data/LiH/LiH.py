@@ -4,7 +4,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from config import DIR
 from icec.constants import Units, Constants
-from data.fit import generate_linfit
+from calc.fit import generate_linfit
 from data.H.H import H
 
 class ReadOnly(type):

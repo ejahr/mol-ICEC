@@ -26,15 +26,14 @@ def test_polyfit(polyfit, x, y, degree):
     plt.scatter(x*Units.HARTREE2EV, y*Units.AU2MB, color='red', label='Data points')  # Original data points
     plt.plot(x_fit*Units.HARTREE2EV, y_fit*Units.AU2MB, label=f'Polynomial fit, degree = ' + str(degree))  # Fitted curve
     plt.legend()
-    fname = DIR + 'plot/test_polyfit.pdf'
+    fname = DIR + 'plots/test_polyfit.pdf'
     plt.savefig(fname)
     
 def generate_linfit(fname):
     xs_data = np.loadtxt(fname, comments='#')
     energies = xs_data[:,0] * Units.EV2HARTREE
     xs = xs_data[:,1] * Units.MB2AU
-    # TODO remove extrapolate, default is NaN
-    interp_func = sp.interpolate.interp1d(energies, xs, kind='linear', fill_value="extrapolate")
+    interp_func = sp.interpolate.interp1d(energies, xs, kind='linear')
     #test_linfit(interp_func, energies, xs)
     return interp_func
 
@@ -45,5 +44,11 @@ def test_linfit(interp_func, x, y):
     plt.scatter(x*Units.HARTREE2EV, y*Units.AU2MB, color='red', label='Data points') 
     plt.plot(x_fit*Units.HARTREE2EV, y_fit*Units.AU2MB, label=f'Linear fit')  
     plt.legend()
-    fname = DIR + 'plot/test_linfit.pdf'
+    fname = DIR + 'plots/test_linfit.pdf'
     plt.savefig(fname)
+    
+def compare_linfit(interp_func, fname):
+    xs_data = np.loadtxt(fname, comments='#')
+    energies = xs_data[:,0] * Units.EV2HARTREE
+    xs = xs_data[:,1] * Units.MB2AU
+    test_linfit(interp_func, energies, xs)

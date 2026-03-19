@@ -7,7 +7,7 @@ import plot.config
 from config import DIR
 from icec.icec import ICEC
 from icec.constants import Units, Constants
-from data.fit import generate_polyfit
+from calc.fit import generate_polyfit
 
 class ReadOnly(type):
     def __setattr__(self, name, value):
