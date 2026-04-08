@@ -125,7 +125,7 @@ def lorentzian(x, x0, gamma):
     return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
     #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
     
-def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False):
+def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False, **kwargs):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     if fold_lorentz:
@@ -145,11 +145,11 @@ def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=
                 lorentzian_spectrum += broadened_peak 
                 #ax.plot(lorentzian_energies, lorentzian_spectrum)
         else:
-            ax.bar(energies, spectrum*occupation, width=0.005, color=color)
+            ax.bar(energies, spectrum*occupation, width=0.005, color=color, **kwargs)
      
     if fold_lorentz:
         lorentzian_spectrum[lorentzian_spectrum<1e-5] = np.nan
-        ax.plot(lorentzian_energies, lorentzian_spectrum, color=color, label = r'$T=$'+str(t)+r'$\,\mathrm{K}$')   
+        ax.plot(lorentzian_energies, lorentzian_spectrum, color=color, label = r'$T=$'+str(t)+r'$\,\mathrm{K}$', **kwargs)   
     
 def interpolate(x0, x, y):
     interpolate_y = sp.interpolate.interp1d(
@@ -157,7 +157,7 @@ def interpolate(x0, x, y):
     )
     return interpolate_y(x0)
       
-def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
+def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
     norm = icec.Morse_D.boltzmann_norm(t)
     
     energy = np.sort(
@@ -171,25 +171,15 @@ def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color):
     xs_v0 = results[:,spectrum_idx_xs(0)]
     xs_interpolated = interpolate(energy, energy_v0, xs_v0)
     avg = xs_interpolated * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm)
-    
-    plot_all = False
-    if plot_all:
-        reds = plt.get_cmap("Reds_r")  
-        if t>1000:
-            ax.plot(energy_v0, xs_v0 * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm), color=reds(0 / vD_max))
         
     for vD in range(1, vD_max+1):
         energy_vD = results[:,spectrum_idx_electronEf(vD)]
         xs_vD = results[:,spectrum_idx_xs(vD)]
         xs_interpolated = interpolate(energy, energy_vD, xs_vD)
         avg += xs_interpolated * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
-        
-        if plot_all:
-            if t>1000:
-                ax.plot(energy_vD, xs_vD * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm), color=reds(vD / vD_max))
     
     #avg[avg<1e-30]=np.nan
-    ax.plot(energy, avg, color=color, ls="--", zorder=1)
+    ax.plot(energy, avg, color=color, ls="--", **kwargs)
     
 def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
     fig = plt.figure(figsize=(6, 4))
@@ -203,11 +193,16 @@ def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=N
     results_bb_FC = read_results(system, electronE, R, modifier='-FC')
     results_bc_FC = read_results(system, electronE, R, modifier='-FC.bc', L=L)
 
-    blues = plt.get_cmap("Blues_r")    
-    for t in T:
-        blue = blues(T.index(t) / (len(T) + 2 / len(T)))
-        plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True)
-        plot_boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue)
+    blues = plt.get_cmap("Blues_r")  
+    if len(T) == 3:
+        blues = [blues(0.01), blues(0.3), blues(0.55)]
+    else:
+        blues = [blues(idx / (len(T) + 2 / len(T))) for idx in range(len(T))]
+    zorders = [len(T)-i for i in range(len(T))]
+    for t, zorder, blue in zip(T, zorders, blues):
+        #blue = blues(T.index(t) / (len(T) + 2 / len(T)))
+        plot_boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue, zorder=zorder)
+        plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
     plt.tight_layout()
