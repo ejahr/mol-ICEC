@@ -85,12 +85,17 @@ def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0
     ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
     ax2.annotate(r'$\mathrm{LiH}$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
+    # vertical line at minimum of PES
+    x = np.array([icec.Morse_D.re, r[-1]-0.25]) * Units.BOHR2ANGSTROM
+    y = np.array([icec.Morse_D.V(icec.Morse_D.re), icec.Morse_D.V(icec.Morse_D.re)]) * Units.HARTREE2EV - 0.002
+    ax2.plot(x, y, ls='--', color='grey', lw=1, zorder=0)
+    
     # dissociation energy
-    add_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.02, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
+    add_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.01, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
     # bound vibrational energy
-    add_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(2)*Units.HARTREE2EV, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
+    add_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(2)*Units.HARTREE2EV-0.01, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
     # adiabtic IP
-    add_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
+    add_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV-0.01, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
     # vertical IP
     add_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV, y2=0.56, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
     # difference in V(R->oo)
