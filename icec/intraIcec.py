@@ -89,16 +89,17 @@ class IntraICEC:
             )
             
     # TODO keep interp_function in memory
-    def PI_xs_D_resolved(self, vD:int, vDp:int, hbarOmega:float):
+    def PI_xs_D_resolved(self, vD:int, vDp:int, omega:float):
         filename = self.file_PI_xs_D + f"{vD}_{vDp}.txt"
         data = np.loadtxt(filename)
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
-        if hbarOmega >= energies[-1]:
+        if omega < energies[0]:
+            return 0
+        elif omega > energies[-1]:
             return np.nan
-        interp_func = sp.interpolate.interp1d(
-            energies, xs, kind='linear'
-            )
-        return interp_func(hbarOmega)
+        else:
+            interp_func = sp.interpolate.interp1d(energies, xs, kind='linear')
+            return interp_func(omega)
 
     def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
         PI_xs_electronic = self.PI_xs_D_electronic(hbarOmega)
@@ -110,7 +111,9 @@ class IntraICEC:
     def PI_xs_D_electronic(self, omega:float) -> float:
         data = np.loadtxt(self.file_PI_xs_D)
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
-        if omega >= energies[-1]:
+        if omega < energies[0]:
+            return 0
+        elif omega > energies[-1]:
             return np.nan
         else:
             interp_func = sp.interpolate.interp1d(energies, xs, kind='linear')
