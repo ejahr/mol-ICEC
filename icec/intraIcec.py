@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import mpmath
 import time
+import copy
 from itertools import repeat
 from concurrent.futures import ProcessPoolExecutor
 from typing import Callable
@@ -414,3 +415,71 @@ class IntraICEC:
             [self.PR_xs_A(electronE) for electronE in self.energyGrid]
         )
         ax.plot(self.energyGrid*Units.HARTREE2EV, PR_xs*Units.AU2MB, **kwargs)
+        
+        
+class RydbergIntraICEC(IntraICEC):
+    """ICEC cross section with diatomic molecules.
+
+    Uses atomic units (hbar=1, me=1, hartree energy=1).
+
+    Args:
+        degeneracyFactor(float) : degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        IP (float): Ionization potential (Hartree)
+        PI_xs_A (float -> float): Fit for Photoionization cross section of A (a.u. -> a.u.)
+        file_PI_xs_D (str) : file name of the photionization cross section of D
+
+    Attributes:
+        degeneracyFactor(float) : degeneracy of A- divided by degeneracy of A. g_{A^-} / g_A
+        IP (float): Ionization potential (Hartree)
+        PI_xs_A (float -> float): Fit for Photoionization cross section of A (a.u. -> a.u.)
+        file_PI_xs_D (str) : file name of the photionization cross section of D
+        prefactor (float): collects terms that are neither energy nor R dependent 
+    """    
+    @classmethod
+    def from_IntraICEC(cls, InstanceICEC: IntraICEC, n:int):
+        '''generate an instance of RydbergIntraICEC from an instance of IntraICEC 
+        '''
+        new_inst = copy.deepcopy(InstanceICEC) 
+        new_inst.__class__ = cls
+        new_inst.n = n
+        return new_inst
+    
+    def __init__(self, IP_A: float, IP_D: float, n:int, file_PI_xs_D: str) :
+        self.IP_A = IP_A 
+        self.IP_D = IP_D # assumption: adiabatic ionization energy
+        self.file_PI_xs_D = file_PI_xs_D
+        self.n = n
+        self.prefactor = 3 * Constants.c**4 / ( 4 * np.pi )
+    
+    def hbarOmega(self, electronE:float):
+        IP_n = self.IP_A / self.n**2
+        return electronE + IP_n
+    
+    def PR_xs_A(self, electronE):
+        IP_n = self.IP_A / self.n**2
+        xs = 1.96 * np.pi**2 / Constants.c**3 \
+            * self.IP_A**2 / ( electronE * ( electronE + IP_n ) ) \
+            * 1 / self.n**3
+        return xs
+    
+    def xs(self, electronE:float, R:float, vD:int=0, vDp:int=0) -> float:
+        """ ICEC cross section (a.u.) for given kinetic energy and R.
+        - electronE : kinetic energy of incoming electron (Hartree, a.u.)
+        - R: internuclear distance: (Bohr, a.u.)
+        - vAp -> vA (vA -> vAp Photoionization)
+        - vD -> vDp
+        """   
+        if self.electronE_f(electronE, vD, vDp) <= 0: 
+            return 0
+        else: 
+            omega = self.hbarOmega(electronE)
+            PR_xs_A = self.PR_xs_A(electronE)
+            PI_xs_D = self.PI_xs_D(vD, vDp, omega)
+            return self.prefactor * PR_xs_A * PI_xs_D / ( omega**4 * R**6 )
+        
+    def xs_vD_rydberg(self, R, vD, vDp_max:int=None):
+        self.n = 2
+        xs = self.xs_vD(self, R, vD, vDp_max)
+        for n in range(2, 10):
+            self.n = n
+            xs += self.xs_vD(self, R, vD, vDp_max)

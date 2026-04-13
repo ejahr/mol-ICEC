@@ -1,6 +1,6 @@
 import numpy as np
 from config import DIR
-from icec.intraIcec import IntraICEC
+from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
 
 def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, max_dissE=None):
@@ -31,6 +31,17 @@ def xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifie
         xs = icec.xs_vD(R, v, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
+    np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
+    
+def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_max=None):
+    header += f"Rydberg states up to n={n_max} "
+    header = extend_header(header, icec, R, vDp_max=vDp_max)
+    xs_array = icec.energyGrid * Units.HARTREE2EV
+    for n in range(2, n_max+1):
+        icec.n = n
+        xs = icec.xs_vD(R, vD, vDp_max) * Units.AU2MB
+        xs_array = np.vstack((xs_array, xs))  # --- -> ===
+    file_path = DIR + f"results/{system}.xs-rydberg.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def xs_R(system, header, icec, R, vD_max=None, vDp_max=None):

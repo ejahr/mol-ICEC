@@ -3,7 +3,7 @@ from data.H.H import H
 from data.LiH.LiH import LiH, Li, LiHp
 
 from icec.icec import ICEC
-from icec.intraIcec import IntraICEC
+from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.morse import Morse
 from icec.constants import Units
 
@@ -136,6 +136,7 @@ max_kinE    = 9 * Units.EV2HARTREE
 max_dissE   = 2 * Units.EV2HARTREE
 max_dissE_1 = 1 * Units.EV2HARTREE
 num_grid    = 1000
+n_max       = 50     # rydberg states
 
 system = 'Hp-LiH'
 title = r'$\text{H}^+ \text{LiH}$'
@@ -151,6 +152,9 @@ icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
 IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
 icec.IP_D = IP_adiabatic
 icec.define_PI_xs_D(method="resolved")
+
+icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec, n=2)
+icec_rydberg.make_energy_grid(4.4*Units.EV2HARTREE, max_kinE, int(num_grid/4))
 
 # --- ICEC within Franck-Condon approximation for photoionization of D ---
 icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
@@ -196,6 +200,7 @@ if calculate:
     if bb:
         if cross_section:
             calc.cross_section.xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
+            calc.cross_section.xs_rydberg_bb(system, header, icec_rydberg, R, n_max, 0, LiHp.v_max)
             if FC:
                 calc.cross_section.xs_bb(system, header, icec_FC, R, modifier='-FC')
         if spectra:      

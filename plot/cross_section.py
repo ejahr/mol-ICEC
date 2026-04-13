@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from icec.icec import ICEC
-from icec.intraIcec import IntraICEC
+from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units, Constants
 from config import DIR
 from plot.config import set_rcParams
@@ -44,6 +44,15 @@ def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     results = read_results_file(system, R, modifier)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
+def plot_xs_rydberg(ax, system, R, **kwargs):
+    results = read_results_file(system, R, modifier='-rydberg')
+    energies = results[:,0]
+    n_max = len(results[0,:]) - 1
+    tot_results = results[:,1]
+    for n in range(3, n_max+1):
+        tot_results += results[:,n]
+    ax.plot(energies, tot_results, label=r"b-b Rydberg", **kwargs)
+    
 def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> dissociative states'
     modifier += ".bc"
@@ -72,6 +81,7 @@ def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     vi = 0
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue')
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
+    plot_xs_rydberg(ax, system, R, color = 'tab:purple')
     
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
