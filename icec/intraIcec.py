@@ -32,8 +32,8 @@ class IntraICEC:
         self.IP_D = IP_D # assumption: adiabatic ionization energy
         self.PI_xs_A = PI_xs_A
         self.file_PI_xs_D = file_PI_xs_D
-        self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
-            
+        self.prefactor = 3 * Constants.c**4 / ( 4 * np.pi )
+       
     def define_Morse_D(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         """Morse potential for the PES of D.
         - mu: reduced mass (proton mass)
@@ -69,6 +69,13 @@ class IntraICEC:
         """
         self.rGrid = np.linspace(Rmin, Rmax, num)
         
+    # ====== PHOTORECOMBINATON ======
+    
+    def PR_xs_A(self, electronE):
+        omega = self.hbarOmega(electronE)
+        PI_xs = self.PI_xs_A(omega)
+        return self.degeneracyFactor * omega**2 / ( 2 * electronE * Constants.c**2 ) * PI_xs
+        
     # ====== PHOTOIONIZATION CROSS SECTION ======
         
     def define_PI_xs_D(self, method="FC"):
@@ -100,14 +107,14 @@ class IntraICEC:
         else:
             return PI_xs_electronic * self.FC_factor(vD, vDp)
     
-    def PI_xs_D_electronic(self, hbarOmega:float) -> float:
+    def PI_xs_D_electronic(self, omega:float) -> float:
         data = np.loadtxt(self.file_PI_xs_D)
         energies, xs = data[:, 0]*Units.EV2HARTREE, data[:, 1]*Units.MB2AU
-        if hbarOmega >= energies[-1]:
+        if omega >= energies[-1]:
             return np.nan
         else:
             interp_func = sp.interpolate.interp1d(energies, xs, kind='linear')
-            return interp_func(hbarOmega) 
+            return interp_func(omega) 
     
     def FC_factor(self, vD:int, vDp:int) -> float:
         """Returns the Franck-Condon factor <psi_vi|psi_vf> corresponding to the photoionization.
@@ -166,10 +173,10 @@ class IntraICEC:
         if self.electronE_f(electronE, vD, vDp) <= 0: 
             return 0
         else: 
-            hbarOmega = self.hbarOmega(electronE)
-            PI_xs_A = self.PI_xs_A(hbarOmega)
-            PI_xs_D = self.PI_xs_D(vD, vDp, hbarOmega)
-            return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_D / (electronE * hbarOmega**2 * R**6)
+            omega = self.hbarOmega(electronE)
+            PR_xs_A = self.PR_xs_A(electronE)
+            PI_xs_D = self.PI_xs_D(vD, vDp, omega)
+            return self.prefactor * PR_xs_A * PI_xs_D / ( omega**4 * R**6 )
 
     def xs_vD_vDp(self, R:float, vD:int=0, vDp:int=0):
         """ ICEC cross section (a.u.) for given range of kinetic energies.
@@ -298,24 +305,16 @@ class IntraICEC:
         if self.electronE_f_bc(electronE, vD, E) <= 0:
             return 0
         else:
-            hbarOmega = self.hbarOmega(electronE)
-            if hbarOmega == 0:
+            omega = self.hbarOmega(electronE)
+            if omega == 0:
                 raise ZeroDivisionError('hbaromega must not be zero')
-            PI_xs_A = self.PI_xs_A(hbarOmega)
-            PI_xs_D = self.PI_xs_D_electronic(hbarOmega)
+            PR_xs_A = self.PR_xs_A(electronE)
+            PI_xs_D = self.PI_xs_D_electronic(omega)
             if np.isnan(PI_xs_D):
                 return np.nan
             if FC_bc_D is None:
                 FC_bc_D = self.FC_bc_D(vD, E, norm=norm)
-            xs = (
-                self.prefactor
-                * self.degeneracyFactor
-                * PI_xs_A
-                * PI_xs_D
-                * FC_bc_D
-                / (electronE * hbarOmega**2 * R**6)
-            )
-            return xs
+            return self.prefactor * PR_xs_A * PI_xs_D * FC_bc_D / ( omega**4 * R**6 )
 
     def xs_vD_E(self, R:float, vD:int, E:float):
         '''Cross section for vD -> E over range of electron energies.'''
@@ -389,11 +388,6 @@ class IntraICEC:
         return np.array(result)
             
     # ====== OTHER ======
-    
-    def PR_xs_A(self, electronE):
-        hbarOmega = self.hbarOmega(electronE)
-        PI_xs = self.PI_xs_A(hbarOmega)
-        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
         """Plots the Cross section xs [Mb]"""
