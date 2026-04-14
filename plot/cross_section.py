@@ -49,9 +49,9 @@ def plot_xs_rydberg(ax, system, R, **kwargs):
     energies = results[:,0]
     n_max = len(results[0,:]) - 1
     tot_results = results[:,1]
-    for n in range(3, n_max+1):
+    for n in range(2, n_max+1):
         tot_results += results[:,n]
-    ax.plot(energies, tot_results, label=r"b-b Rydberg", **kwargs)
+    ax.plot(energies, tot_results, label=r"b-b Ryd", **kwargs)
     
 def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> dissociative states'

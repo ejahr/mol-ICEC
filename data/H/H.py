@@ -20,6 +20,7 @@ class H(metaclass=ReadOnly):
 
     # NIST
     IP = 13.598434599702 * Units.EV2HARTREE
+    # Rydberg R_H \approx IP
     
     r_vdw = 3.1647 # a.u.
     m = Constants.m_p + 1

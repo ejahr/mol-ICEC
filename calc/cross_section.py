@@ -35,7 +35,7 @@ def xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifie
     
 def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_max=None):
     header += f"Rydberg states up to n={n_max} "
-    header = extend_header(header, icec, R, vDp_max=vDp_max)
+    header = extend_header(header, icec, R, vD_max=0, vDp_max=vDp_max)
     xs_array = icec.energyGrid * Units.HARTREE2EV
     for n in range(2, n_max+1):
         icec.n = n
