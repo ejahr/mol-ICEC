@@ -54,13 +54,13 @@ class ICEC:
         """
         self.rGrid = np.linspace(Rmin, Rmax, num)
         
-    def hbarOmega(self, electronE:float) -> float:
+    def omega(self, electronE:float) -> float:
         "omega = electronE + IP_A  [Hartree]"
         return electronE + self.IP_A 
     
     def electronE_f(self, electronE:float) -> float:
         "electronE_f = omega - IP_B  [Hartree]"
-        return self.hbarOmega(electronE) - self.IP_B 
+        return self.omega(electronE) - self.IP_B 
 
     # ----- CROSS SECTION ----- 
        
@@ -72,10 +72,10 @@ class ICEC:
         if electronE < self.thresholdEnergy: 
             return 0
         else: 
-            hbarOmega = self.hbarOmega(electronE)
-            PI_xs_A = self.PI_xs_A(hbarOmega)
-            PI_xs_B = self.PI_xs_B(hbarOmega)
-            return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * hbarOmega**2 * R**6)
+            omega = self.omega(electronE)
+            PI_xs_A = self.PI_xs_A(omega)
+            PI_xs_B = self.PI_xs_B(omega)
+            return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * omega**2 * R**6)
 
     def xs_energy(self, R:float):
         """ Calculates cross section (Mb) of ICEC for given range of kinetic energies.
@@ -104,9 +104,9 @@ class ICEC:
     # ----- OTHER -----
     
     def PR_xs_A(self, electronE):
-        hbarOmega = self.hbarOmega(electronE)
-        PI_xs = self.PI_xs_A(hbarOmega)
-        return self.degeneracyFactor * hbarOmega**2 / (2*electronE*Constants.c**2) * PI_xs
+        omega = self.omega(electronE)
+        PI_xs = self.PI_xs_A(omega)
+        return self.degeneracyFactor * omega**2 / (2*electronE*Constants.c**2) * PI_xs
 
     def plot_xs(self, ax, xs, label="ICEC", **kwargs):
         """Plots the Cross section xs [Mb]"""

@@ -73,7 +73,7 @@ class IntraICEC:
     # ====== PHOTORECOMBINATON ======
     
     def PR_xs_A(self, electronE):
-        omega = self.hbarOmega(electronE)
+        omega = self.omega(electronE)
         PI_xs = self.PI_xs_A(omega)
         return self.degeneracyFactor * omega**2 / ( 2 * electronE * Constants.c**2 ) * PI_xs
         
@@ -102,8 +102,8 @@ class IntraICEC:
             interp_func = sp.interpolate.interp1d(energies, xs, kind='linear')
             return interp_func(omega)
 
-    def PI_xs_D_FC(self, vD:int, vDp:int, hbarOmega:float) -> float:
-        PI_xs_electronic = self.PI_xs_D_electronic(hbarOmega)
+    def PI_xs_D_FC(self, vD:int, vDp:int, omega:float) -> float:
+        PI_xs_electronic = self.PI_xs_D_electronic(omega)
         if np.isnan(PI_xs_electronic):
             return np.nan
         else:
@@ -153,7 +153,7 @@ class IntraICEC:
         self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
     
-    def hbarOmega(self, electronE:float) -> float:
+    def omega(self, electronE:float) -> float:
         return electronE + self.IP_A 
     
     def electronE_f(self, electronE:float, vD:int, vDp:int) -> float:
@@ -163,7 +163,7 @@ class IntraICEC:
             vib_energy_D = self.vib_diff_to_v0_Dp[vDp] - self.vib_diff_to_v0_D[vD]
         else:
             vib_energy_D = (self.Morse_Dp.energy(vDp) - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
-        return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
+        return self.omega(electronE) - (self.IP_D + vib_energy_D)
 
     # ====== CROSS SECTION ======
        
@@ -177,7 +177,7 @@ class IntraICEC:
         if self.electronE_f(electronE, vD, vDp) <= 0: 
             return 0
         else: 
-            omega = self.hbarOmega(electronE)
+            omega = self.omega(electronE)
             PR_xs_A = self.PR_xs_A(electronE)
             PI_xs_D = self.PI_xs_D(vD, vDp, omega)
             return self.prefactor * PR_xs_A * PI_xs_D / ( omega**4 * R**6 )
@@ -296,7 +296,7 @@ class IntraICEC:
         - E: energy of the dissociative final state, i.e. energy above dissociation limit (Hartree)
         '''
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
-        return self.hbarOmega(electronE) - (self.IP_D + vib_energy_D)
+        return self.omega(electronE) - (self.IP_D + vib_energy_D)
 
     def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc_D:float=None, norm:float=None) -> float:
         '''Cross section [a.u.] for one bound-continuum (bc) vibrational transition vi -> E.
@@ -309,9 +309,9 @@ class IntraICEC:
         if self.electronE_f_bc(electronE, vD, E) <= 0:
             return 0
         else:
-            omega = self.hbarOmega(electronE)
+            omega = self.omega(electronE)
             if omega == 0:
-                raise ZeroDivisionError('hbaromega must not be zero')
+                raise ZeroDivisionError('omega must not be zero')
             PR_xs_A = self.PR_xs_A(electronE)
             PI_xs_D = self.PI_xs_D_electronic(omega)
             if np.isnan(PI_xs_D):
@@ -449,7 +449,7 @@ class RydbergIntraICEC(IntraICEC):
         self.n = n
         self.prefactor = 3 * Constants.c**4 / ( 4 * np.pi )
     
-    def hbarOmega(self, electronE:float):
+    def omega(self, electronE:float):
         return electronE + self.IP_n()
     
     def IP_n(self):
@@ -472,7 +472,7 @@ class RydbergIntraICEC(IntraICEC):
         if self.electronE_f(electronE, vD, vDp) <= 0: 
             return 0
         else: 
-            omega = self.hbarOmega(electronE)
+            omega = self.omega(electronE)
             PR_xs_A = self.PR_xs_A(electronE)
             PI_xs_D = self.PI_xs_D(vD, vDp, omega)
             return self.prefactor * PR_xs_A * PI_xs_D / ( omega**4 * R**6 )

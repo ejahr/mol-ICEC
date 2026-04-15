@@ -41,8 +41,8 @@ class H(metaclass=ReadOnly):
         ax.set_ylabel(r'$\sigma$ [Mb]')
         
         energies = icec.energyGrid
-        hbarOmega = np.array([icec.hbarOmega(electronE) for electronE in energies])
-        PI_xs = np.array([icec.PI_xs_A(omega) for omega in hbarOmega])
+        omegas = np.array([icec.omega(electronE) for electronE in energies])
+        PI_xs = np.array([icec.PI_xs_A(omega) for omega in omegas])
 
         ax.plot(energies*Units.HARTREE2EV, PI_xs*Units.AU2MB, label = r'$H\to H^+$')
         icec.plot_PR_xs(ax, label = r'$H^+\to H$')
