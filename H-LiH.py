@@ -136,7 +136,7 @@ max_kinE    = 9 * Units.EV2HARTREE
 max_dissE   = 2 * Units.EV2HARTREE
 max_dissE_1 = 1 * Units.EV2HARTREE
 num_grid    = 1000
-n_max       = 50     # rydberg states
+n_max       = 10     # rydberg states
 
 system = 'Hp-LiH'
 title = r'$\text{H}^+ \text{LiH}$'
@@ -153,8 +153,9 @@ IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Mor
 icec.IP_D = IP_adiabatic
 icec.define_PI_xs_D(method="resolved")
 
+# --- Rydberg ---
 icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec, n=2)
-icec_rydberg.make_energy_grid(4.4*Units.EV2HARTREE, max_kinE, int(num_grid/4))
+icec_rydberg.make_energy_grid(4.35*Units.EV2HARTREE, max_kinE, int(num_grid/2))
 
 # --- ICEC within Franck-Condon approximation for photoionization of D ---
 icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
