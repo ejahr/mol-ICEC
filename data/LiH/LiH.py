@@ -21,9 +21,6 @@ class Li(metaclass=ReadOnly):
 # ====================== LiH ==========================
 
 class LiH(metaclass=ReadOnly):
-    # Huber p. 382
-    IP = 7.7 * Units.EV2HARTREE # adiabatic?
-
     m       = H.m + Li.m
     mu      = H.m * Li.m / (H.m + Li.m)
     # Huber p. 382
@@ -33,8 +30,12 @@ class LiH(metaclass=ReadOnly):
     energy_diff_at_inf = np.abs(7.974721285 - 7.776735464) # energy difference at R=inf
     IP_vert_approx = np.abs(-8.066308039 + 7.770884366)
     IP_min_approx = np.abs(-8.066308039 + 7.78173407)
-    IP      = 7.743 * Units.EV2HARTREE
+    # IP = 7.743 * Units.EV2HARTREE
     # IP + Ep_0 - E_0 = 7.68 eV
+    
+    # Huber p. 382
+    IP      = 7.7 * Units.EV2HARTREE
+    # IP + Ep_0 - E_0 = 7.64 eV
     
     # Table IV
     E_min   = -8.021321 
