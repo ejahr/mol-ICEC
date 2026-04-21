@@ -75,17 +75,16 @@ def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     if R < 5*Units.ANGSTROM2BOHR:
         ax.set_ylim(1e-4,1e3)
         
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R)
-        
     vi = 0
-    plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue')
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
+    plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue', zorder=1)
     plot_xs_rydberg(ax, system, R, color = 'tab:purple')
     
+    if icec_el is not None:
+        plot_xs_el(ax, icec_el, R)
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
-    ax.legend()
+    ax.legend(ncol=2)
     fname = DIR + f'plots/{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout()
     fig.savefig(fname)
