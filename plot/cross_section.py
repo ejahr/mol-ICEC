@@ -86,7 +86,7 @@ def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     
     ax.legend(ncol=2)
     fname = DIR + f'plots/{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
 def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
@@ -113,7 +113,7 @@ def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     
     ax.legend(ncols=2)
     fname = DIR + f'plots/{system}.xs-FC.bc.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
 def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
@@ -134,7 +134,7 @@ def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
     fname = DIR + f'plots/{system}.xs-FC.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
 # ===== BOLTZMANN =====   
@@ -186,9 +186,8 @@ def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
         #ax.plot(results[:,0], xs, color=blue, ls=':')
     
     ax.legend()
-    plt.tight_layout()
     fname = DIR + f'plots/{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
 
 def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
@@ -211,7 +210,7 @@ def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
     plt.legend()
     fname = DIR + f'plots/{system}.R.icec.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
 # ===== OTHER =====

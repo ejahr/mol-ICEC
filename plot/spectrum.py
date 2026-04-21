@@ -82,7 +82,7 @@ def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
     fname = DIR + f"plots/{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
-    plt.tight_layout()
+    plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
     
@@ -112,7 +112,7 @@ def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
     results_bb = read_results(system, electronE, R, modifier='-FC')
     results_bc = read_results(system, electronE, R, modifier='-FC.bc', L=L)
     
-    fig = plt.figure(figsize=(6,4))
+    fig = plt.figure(figsize=(6,4.1))
     ax = plt.gca() 
     set_axes(ax)
     #ax.set_ylim(5*1e-4, 1)
@@ -151,7 +151,7 @@ def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
 
     ax.legend(fontsize='small', loc='upper left')
     fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
-    plt.tight_layout()
+    plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
     
 def lorentzian(x, x0, gamma):
@@ -241,9 +241,8 @@ def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=N
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
-    plt.tight_layout()
     fname = DIR + f'plots/{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
-    plt.tight_layout()
+    plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
 
 
