@@ -85,6 +85,28 @@ def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None
     plt.tight_layout()
     fig.savefig(fname)
     
+    
+def diss_energy_secax(ax, vD, results_bc):
+    electronEf = results_bc[:, spectrum_idx(vD, 'E_out')]
+    diss_energy = results_bc[:, spectrum_idx(vD, 'diss_energy')]
+    
+    E_max = electronEf[0] + diss_energy[0]
+    
+    def electron_to_vib(electronEf):
+        return E_max - electronEf
+    
+    def vib_to_electron(diss_energy):
+        return E_max - diss_energy
+    
+    secax = ax.secondary_xaxis(
+        'top',
+        functions=(electron_to_vib, vib_to_electron)
+    )
+    
+    secax.set_xlabel(r"$E_{\mathrm{LiH}^+}$ [eV]", labelpad = 8)
+    secax.tick_params(axis='both', which='major', labelsize=14)
+    
+    
 def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
     L=icec.Morse_Dp.box_length
     results_bb = read_results(system, electronE, R, modifier='-FC')
@@ -122,6 +144,10 @@ def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
                 (x_min, icec.PR_xs_A(electronE)*Units.AU2MB), 
                 xytext=(-26,-1),
                 textcoords='offset points', color='dimgray') 
+    
+    print('PR xs =', icec.PR_xs_A(electronE)*Units.AU2MB, 'eV')
+    
+    diss_energy_secax(ax, vD, results_bc)
 
     ax.legend(fontsize='small', loc='upper left')
     fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
