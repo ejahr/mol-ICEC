@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 from config import DIR
 from icec.constants import Units, Constants
 from calc.fit import generate_linfit
@@ -107,8 +107,9 @@ class LiHp(metaclass=ReadOnly):
 
 if __name__ == "__main__":
     #print('Vertical Ionization potential:', LiH.IP_vert)
-    print(f'E_p(Re)  -E(Re) = {LiH.IP_vert_approx} a.u.')
-    print(f'E_p(Re_p)-E(Re) = {LiH.IP_min_approx} a.u.\n')
+    print(f'E_p(Re)  -E(Re) = {LiH.IP_vert_approx*Units.HARTREE2EV} eV')
+    print(f'E_p(Re_p)-E(Re) = {LiH.IP_min_approx*Units.HARTREE2EV} eV')
+    print(f'LiH.IP          = {LiH.IP*Units.HARTREE2EV} eV\n')
 
     # Huber p. 382
     print("De Lundsgaard", LiH.De*Units.HARTREE2EV, "eV")
