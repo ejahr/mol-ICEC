@@ -226,7 +226,7 @@ if plotting:
         if cross_section:
             plot.cross_section.xs_FC(system, icec_FC, R, icec_el)
         if spectra:   
-            plot.spectrum.spectrum_FC(system, icec_FC, R, electronE, vD=0, icec_el=icec_el)
+            plot.spectrum.spectrum_FC(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_{\mathrm{LiH}^+}$ [eV]")
     #if cross_section and temp_dependence:
     #    cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
     if spectra and temp_dependence:
