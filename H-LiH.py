@@ -1,4 +1,3 @@
-from config import DIR_DATA
 from HLiH.data.H.H import H
 from HLiH.data.LiH.LiH import LiH, Li, LiHp
 
@@ -9,92 +8,7 @@ from icec.constants import Units
 
 import calc
 import plot
- 
-# ============= Information ===============
-
-def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
-    electronE = 4*Units.EV2HARTREE
-    omega = electronE + icec_el.IP_A
-    vi = 0
-    
-    print('\n--- FC factor ---')
-    print('tot b-b from 0')
-    FC_abinitio_sum = sum(LiH.FC_abinitio[vi][vf] for vf in range(7))
-    FC_Morse_sum = sum(icec_FC.FC_factor(vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1))
-    print(' FC ab initio', FC_abinitio_sum)
-    print(' FC Morse    ', FC_Morse_sum)
-    print(' ratio       ', FC_Morse_sum/FC_abinitio_sum)
-    
-    for vf in range(5):
-        print(f'{vi}->{vf}')
-        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega))
-        print(' FC Morse    ', icec_FC.FC_factor(vi,vf))
-        print(' FC ab initio', LiH.FC_abinitio[vi][vf])
-        
-    print(f'\n--- ICEC Cross section [Mb] at {round(electronE*Units.HARTREE2EV,1)} eV---')
-    xs_tot_FC_abinitio = sum(
-        icec_el.xs(electronE,R)*LiH.FC_abinitio[vi][vf] for vf in range(7)
-    )
-    xs_tot_PI_abinitio = sum(
-        icec.xs(electronE,R,vi,vf) for vf in range(7)
-    )
-    xs_tot_FC_Morse = sum(
-        icec_FC.xs(electronE,R,vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1)
-    )
-    
-    print(f'tot from {vi}')
-    print(' 1. ab initio PI', xs_tot_PI_abinitio*Units.AU2MB)
-    print(' 2. FC ab initio', xs_tot_FC_abinitio*Units.AU2MB)
-    print(' ratio 2/1      ', xs_tot_FC_abinitio/xs_tot_PI_abinitio)
-    print(' 3. FC Morse    ', xs_tot_FC_Morse*Units.AU2MB)
-    print(' ratio 3/1      ', xs_tot_FC_Morse/xs_tot_PI_abinitio)
-    print(' ratio 3/2      ', xs_tot_FC_Morse/xs_tot_FC_abinitio)
-    
-    for vf in range(5):
-        print(f'{vi}->{vf}')
-        print(' ab initio PI', icec.xs(electronE,R,0,vf)*Units.AU2MB)
-        print(' FC ab initio', icec_el.xs(electronE,R)*LiH.FC_abinitio[vi][vf]*Units.AU2MB)
-        print(' FC Morse    ', icec_FC.xs(electronE,R,0,vf)*Units.AU2MB)
-        
-    print('\n--- v-ratios ---')
-    for vf in range(1,5):
-        print(f'{vi}->{vf}/{vi}->{vf-1}')
-        print(' PI          ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
-        print(' FC ab initio', LiH.FC_abinitio[vi][vf]/LiH.FC_abinitio[vi][vf-1])
-        print(' FC Morse    ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
-        
-def print_FC_factor(icec:IntraICEC, vD, E):
-    fc_factor = icec.FC_factor(0, 0)
-    print(f"FC factor 0 -> 0 : {fc_factor}")
-    fc_factor = icec.FC_bc_D(vD, E, dps=50)
-    print(f"FC factor {vD} -> {round(E*Units.HARTREE2EV,1)} eV : {fc_factor}")
-    
-def print_boltzmann_probabilities(icec:IntraICEC, T):
-    print('\n--- Boltzmann probabilities ---')
-    vmax = icec.Morse_D.vmax
-    vmax_values = [2,2,8]
-    for t,vmax in zip(T,vmax_values):
-        print(f'T = {t} K')
-        norm = icec.Morse_D.boltzmann_norm(t)
-        for vD in range(vmax+1):
-            print(f' vi = {vD}: {icec.Morse_D.boltzmann_occupation(t, vD, norm)}')  
-            
-def print_PI_crosssection(icec:IntraICEC):
-    omega = 14.6*Units.EV2HARTREE
-    print("\n--- PI cross section at omega = 14.6 eV ---")
-    print(f' H    : {icec.PI_xs_A(omega)*Units.AU2MB} Mb')
-    print(f' omega: {omega*Units.HARTREE2EV} eV')
-    print(f' LiH  : {icec.PI_xs_D_electronic(omega)*Units.AU2MB} Mb')
-    
-def print_R_min():
-    # min R between H and LiH
-    print(f"Hp_LiH.R_min    = {round(Hp_LiH.R_min_vdw,5)} a.u. = {round(Hp_LiH.R_min_vdw*Units.BOHR2ANGSTROM,5)} A")
-    R_min_COM = (H.r_vdw + Li.r_vdw + LiH.r_mu)*Units.BOHR2ANGSTROM 
-    print(f"R_COM vdW H-LiH = {round(R_min_COM,5)} A")
-    R_min_COM = (H.r_vdw + H.r_vdw + (LiH.Req - LiH.r_mu))*Units.BOHR2ANGSTROM 
-    print(f"R_COM vdW H-HLi = {round(R_min_COM,5)} A")
-
-# ================ Main ===================
+import config
 
 # ============== H+ = LiH =============
 class Hp_LiH():
@@ -231,8 +145,3 @@ if plotting:
     #    cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, T, vD_max_bc, icec_el=icec_el)
     if spectra and temp_dependence:
         plot.spectrum.boltzmann_FC(system, icec_FC, R, electronE, T, vD_max_bc)
-
-if plot_info:
-    #pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
-    plot.pes.plot_PES(icec_FC, 'LiH', L, LiH.energy_diff_at_inf*Units.HARTREE2EV)
-    #plot_H_PI_PR(icec_el)
