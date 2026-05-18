@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
-from config import DIR
+from config import DIR_PLOTS, DIR_RESULTS
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -19,7 +19,7 @@ def set_axes(ax, differential=False):
     ax.grid(True)
     
 def read_results(system, electronE, R, modifier='', L=None):
-    file_path = DIR + f"results/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
+    file_path = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
         file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
     else:
@@ -81,7 +81,7 @@ def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None
             width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
-    fname = DIR + f"plots/{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -150,7 +150,7 @@ def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None):
     diss_energy_secax(ax, vD, results_bc)
 
     ax.legend(fontsize='small', loc='upper left')
-    fname = DIR + f"plots/{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
     
@@ -241,7 +241,7 @@ def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=N
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
-    fname = DIR + f'plots/{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from config import DIR
+from config import DIR_PLOTS
 from icec.constants import Units
 
 def generate_polyfit(fname, degree):
@@ -26,7 +26,7 @@ def test_polyfit(polyfit, x, y, degree):
     plt.scatter(x*Units.HARTREE2EV, y*Units.AU2MB, color='red', label='Data points')  # Original data points
     plt.plot(x_fit*Units.HARTREE2EV, y_fit*Units.AU2MB, label=f'Polynomial fit, degree = ' + str(degree))  # Fitted curve
     plt.legend()
-    fname = DIR + 'plots/test_polyfit.pdf'
+    fname = DIR_PLOTS + 'test_polyfit.pdf'
     plt.savefig(fname)
     
 def generate_linfit(fname):
@@ -44,7 +44,7 @@ def test_linfit(interp_func, x, y):
     plt.scatter(x*Units.HARTREE2EV, y*Units.AU2MB, color='red', label='Data points') 
     plt.plot(x_fit*Units.HARTREE2EV, y_fit*Units.AU2MB, label=f'Linear fit')  
     plt.legend()
-    fname = DIR + 'plots/test_linfit.pdf'
+    fname = DIR_PLOTS + 'test_linfit.pdf'
     plt.savefig(fname)
     
 def compare_linfit(interp_func, fname):

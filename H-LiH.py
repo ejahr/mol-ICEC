@@ -1,6 +1,6 @@
-from config import DIR
-from data.H.H import H
-from data.LiH.LiH import LiH, Li, LiHp
+from config import DIR_DATA
+from HLiH.data.H.H import H
+from HLiH.data.LiH.LiH import LiH, Li, LiHp
 
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
@@ -113,16 +113,16 @@ class Hp_LiH():
         return R_min
 
 # ===== Define which parts are active =====
-calc_roots      = 1
-bb              = 0
-bc              = 1
+calc_roots      = 0
+bb              = 1
+bc              = 0
 FC              = 1
-plotting        = 1
+plotting        = 0
 calculate       = 1
 spectra         = 1
 cross_section   = 0
-temp_dependence = 1
-plot_info       = 0
+temp_dependence = 0
+plot_info       = 1
 print_info      = 0
 
 electronE   = 1*Units.EV2HARTREE
@@ -167,7 +167,7 @@ icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
 icec_FC.Morse_Dp.define_box(L)
-fname = DIR + f'data/LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
+fname = DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
 if calc_roots:
     roots, root_estimates = Morse.save_diss_states(fname, max_dissE, num=1000)
     plot.pes.plot_roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
@@ -200,10 +200,10 @@ header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
 if calculate:
     if bb:
         if cross_section:
-            calc.cross_section.xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
+            #calc.cross_section.xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
             calc.cross_section.xs_rydberg_bb(system, header, icec_rydberg, R, n_max, 0, LiHp.v_max)
-            if FC:
-                calc.cross_section.xs_bb(system, header, icec_FC, R, modifier='-FC')
+            #if FC:
+                #calc.cross_section.xs_bb(system, header, icec_FC, R, modifier='-FC')
         if spectra:      
             calc.spectrum.spectrum_bb(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
             if FC:

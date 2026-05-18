@@ -2,10 +2,10 @@ import numpy as np
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-from config import DIR
+from config import DIR_DATA
 from icec.constants import Units, Constants
 from calc.fit import generate_linfit
-from data.H.H import H
+from HLiH.data.H.H import H
 
 class ReadOnly(type):
     def __setattr__(self, name, value):
@@ -63,8 +63,8 @@ class LiH(metaclass=ReadOnly):
     vib_energies = vib_diff_to_v0 + energy_v0
     
     # --- Photoionization cross section ---
-    file_PI_xs_resolved = DIR + 'data/LiH/LiH_vi_vf_'
-    file_PI_xs_unresolved = DIR + 'data/LiH/LiH.txt'
+    file_PI_xs_resolved = DIR_DATA + 'LiH/LiH_vi_vf_'
+    file_PI_xs_unresolved = DIR_DATA + 'LiH/LiH.txt'
     
     PI_xs = generate_linfit(file_PI_xs_unresolved)
 

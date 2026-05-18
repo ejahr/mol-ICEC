@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
-from config import DIR
+from config import DIR_RESULTS, DIR_PLOTS
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -18,7 +18,7 @@ def set_axes(ax):
 
 def read_results_file(system, R, modifier='', L=None):
     'reads in ICEC results'
-    file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}"
+    file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
         file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
     else:
@@ -85,7 +85,7 @@ def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
-    fname = DIR + f'plots/{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -112,7 +112,7 @@ def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     #plot_xs(ax, system, R, vi, label=r'b-b', color='tab:blue') 
     
     ax.legend(ncols=2)
-    fname = DIR + f'plots/{system}.xs-FC.bc.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.bc.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -133,7 +133,7 @@ def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
-    fname = DIR + f'plots/{system}.xs-FC.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -186,7 +186,7 @@ def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
         #ax.plot(results[:,0], xs, color=blue, ls=':')
     
     ax.legend()
-    fname = DIR + f'plots/{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
 
@@ -209,7 +209,7 @@ def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
     
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
     plt.legend()
-    fname = DIR + f'plots/{system}.R.icec.pdf'
+    fname = DIR_PLOTS + f'{system}.R.icec.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     

@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import plot.config
-from config import DIR
+from config import DIR_DATA, DIR_PLOTS
 from icec.icec import ICEC
 from icec.constants import Units, Constants
 from calc.fit import generate_polyfit
@@ -28,7 +28,7 @@ class H(metaclass=ReadOnly):
     m = 1.00782503223 * Constants.m_p
     
     # Photoionization cross section
-    fname = DIR + 'data/H/H.txt'
+    fname = DIR_DATA + 'H/H.txt'
     PI_xs = generate_polyfit(fname, 15)
 
     def plot_H_PI_PR(icec:ICEC):
@@ -47,5 +47,5 @@ class H(metaclass=ReadOnly):
         ax.plot(energies*Units.HARTREE2EV, PI_xs*Units.AU2MB, label = r'$H\to H^+$')
         icec.plot_PR_xs(ax, label = r'$H^+\to H$')
         ax.legend()
-        fname = DIR + 'plots/H.PI.PR.pdf'
+        fname = DIR_PLOTS + 'H.PI.PR.pdf'
         fig.savefig(fname)

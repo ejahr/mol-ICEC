@@ -1,5 +1,5 @@
 import numpy as np
-from config import DIR
+from config import DIR_RESULTS
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
@@ -35,7 +35,7 @@ def spectrum_bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float,
             spectrum_all_vD = spectrum
         else:
             spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))          
-    fname = DIR + f"results/{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
+    fname = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
 def spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
@@ -47,5 +47,5 @@ def spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, electronE: 
     for vD in range(1, vD_max+1):
         spectrum = icec.spectrum_bc(electronE, R, vD) 
         spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))  
-    fname = DIR + f'results/{system}.spectrum{modifier}.bc.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt'
+    fname = DIR_RESULTS + f'{system}.spectrum{modifier}.bc.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt'
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  

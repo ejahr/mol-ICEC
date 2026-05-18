@@ -1,5 +1,5 @@
 import numpy as np
-from config import DIR
+from config import DIR_RESULTS
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
 
@@ -30,7 +30,7 @@ def xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifie
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + f"results/{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
+    file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_max=None):
@@ -41,7 +41,7 @@ def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_ma
         icec.n = n
         xs = icec.xs_vD(R, vD, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + f"results/{system}.xs-rydberg.R{round(R*Units.BOHR2ANGSTROM)}.txt"
+    file_path = DIR_RESULTS + f"{system}.xs-rydberg.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
@@ -56,7 +56,7 @@ def xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modif
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR + f"results/{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
+    file_path = DIR_RESULTS + f"{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
 def xs_bc_R(system, icec, R, header, vD_max):

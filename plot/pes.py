@@ -9,7 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
-from config import DIR
+from config import DIR_PLOTS
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -119,7 +119,7 @@ def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0
     add_cut_out_lines(ax1, ax2)
     
     fig.text(0, 0.5, r'$E-V^\infty_\mathrm{LiH}$ [eV]', va='center', rotation='vertical')
-    fname = DIR + f"plots/{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
 # ===== HELPER PLOTS =====
@@ -135,7 +135,7 @@ def plot_roots(morse:Morse, roots, root_estimates, max_energy):
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
     plt.tight_layout()
-    fname = DIR + f'plots/LiHp.roots.E{round(max_energy*Units.HARTREE2EV,1)}eV.{round(morse.box_length*Units.BOHR2ANGSTROM)}A.pdf'
+    fname = DIR_PLOTS + f'LiHp.roots.E{round(max_energy*Units.HARTREE2EV,1)}eV.{round(morse.box_length*Units.BOHR2ANGSTROM)}A.pdf'
     fig.savefig(fname)
 
 def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
@@ -151,7 +151,7 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     ax.set_xlabel(r'$E$ [$\mathrm{eV}$]')
     ax.set_ylabel(r'$\psi_E(L)$')
     ax.set_ylim(-1,1)
-    fname = DIR + f"plots/{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight')
     
 # ===== ICEC ENERGY SKETCH =====
@@ -257,7 +257,7 @@ def plot_energy_sketch():
     #ax.set_xlim(-2.5, 2.5)
     #ax.set_ylim(-0.2, 3)
     ax.axis("off")
-    fname = DIR + "/plots/icec_energy_sketch.pdf"
+    fname = DIR_PLOTS + "icec_energy_sketch.pdf"
     fig.savefig(fname, bbox_inches='tight')
   
 if __name__ == "__main__":  
