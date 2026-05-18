@@ -1,7 +1,9 @@
 import numpy as np
 from config import DIR_RESULTS
+from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
+from plot.cross_section import read_results_file
 
 def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, max_dissE=None):
     header += "ICEC cross section\n"
@@ -62,3 +64,22 @@ def xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modif
 def xs_bc_R(system, icec, R, header, vD_max):
     for r in R:
         xs_bc(system, header, icec, r, vD_max)
+            
+# ===== OTHER =====
+    
+def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):
+    results_bb = read_results_file(system, R, modifier)
+    modifier += ".bc"
+    results_bc = read_results_file(system, R, modifier, L)
+    results = results_bb[:, vD+1] + results_bc[:, vD+1]
+    
+    print("\n--- Ratio between total and electronic cross section ---")
+    
+    for i in [0,600,950]:
+        energy = results_bb[i,0]
+        xs_tot = results[i]
+        xs_el = icec_el.xs(energy*Units.EV2HARTREE, R) * Units.AU2MB
+        print(f"electronE    : {round(energy,3)} eV")
+        print(f"xs_tot       : {round(xs_tot,3)} MB")
+        print(f"xs_el        : {round(xs_el,3)} MB")
+        print(f"xs_tot/xs_el : {round(xs_tot/xs_el,5)}")
