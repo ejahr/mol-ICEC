@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 from .constants import Units, Constants
 
 # ==========================================================
@@ -22,17 +21,18 @@ class ICEC:
         thresholdEnergy (float): Minimum kinetic energy of the incoming electron for ICEC to happen
         prefactor (float): collects terms that are neither energy nor R dependent 
         
-    TODO take input in atomic units (IP, PI_xs)
     """  
-    def __init__(self, degeneracyFactor:float, IP_A:float, IP_B:float, PI_xs_A, PI_xs_B) :
+    def __init__(self, degeneracyFactor:float, IP_A:float, IP_D:float, PI_xs_A, PI_xs_D) :
         self.degeneracyFactor = degeneracyFactor
         self.IP_A = IP_A
-        self.IP_B = IP_B
+        self.IP_D = IP_D
         self.PI_xs_A = PI_xs_A
-        self.PI_xs_B = PI_xs_B
+        self.PI_xs_D = PI_xs_D
         
-        self.thresholdEnergy = max(0, self.IP_B - self.IP_A)
-        self.prefactor = (3 * Constants.c**2) / (8 * np.pi)
+        self.thresholdEnergy = max(0, self.IP_D - self.IP_A)
+        self.prefactor = ( 3 * Constants.c**4 ) / ( 4 * np.pi )
+        
+    # ====== GRIDS ======
 
     def make_energy_grid(self, minEnergy=None, maxEnergy=10*Units.EV2HARTREE, num:int=100, geometric=True): 
         """ Generates a suitable grid of incoming electron energies.
@@ -46,23 +46,28 @@ class ICEC:
             self.energyGrid = np.geomspace(minEnergy, maxEnergy, num)
         else:
             self.energyGrid = np.linspace(minEnergy, maxEnergy, num)
-
-    def make_R_grid(self, Rmin=2*Units.ANGSTROM2BOHR, Rmax=10*Units.ANGSTROM2BOHR, num:int=100): 
-        """ Generates a grid of interatomic distances.
-        - R (float): Interatomic distance (Bohr)
-        - num (int): number of grid points
-        """
-        self.rGrid = np.linspace(Rmin, Rmax, num)
+        
+    # ====== ENERGY RELATIONS ======
         
     def omega(self, electronE:float) -> float:
         "omega = electronE + IP_A  [Hartree]"
-        return electronE + self.IP_A 
+        omega = electronE + self.IP_A 
+        if omega == 0:
+            raise ZeroDivisionError('omega must not be zero')
+        return omega
     
     def electronE_f(self, electronE:float) -> float:
-        "electronE_f = omega - IP_B  [Hartree]"
-        return self.omega(electronE) - self.IP_B 
+        "electronE_f = omega - IP_D  [Hartree]"
+        return self.omega(electronE) - self.IP_D 
+    
+    def PR_xs_A(self, electronE):
+        if electronE == 0:
+            raise ZeroDivisionError('electronE must not be zero')
+        omega = self.omega(electronE)
+        PI_xs = self.PI_xs_A(omega)
+        return self.degeneracyFactor * omega**2 / ( 2 * electronE * Constants.c**2 ) * PI_xs
 
-    # ----- CROSS SECTION ----- 
+    # ====== CROSS SECTION ======  
        
     def xs(self, electronE:float, R:float) -> float:
         """ Calculates cross section (a.u.) of ICEC for some kinetic energy and R.
@@ -73,9 +78,9 @@ class ICEC:
             return 0
         else: 
             omega = self.omega(electronE)
-            PI_xs_A = self.PI_xs_A(omega)
-            PI_xs_B = self.PI_xs_B(omega)
-            return self.prefactor * self.degeneracyFactor * PI_xs_A * PI_xs_B / (electronE * omega**2 * R**6)
+            PR_xs_A = self.PR_xs_A(electronE)
+            PI_xs_D = self.PI_xs_D(omega)
+            return self.prefactor * PR_xs_A * PI_xs_D / ( omega**4 * R**6 )
 
     def xs_energy(self, R:float):
         """ Calculates cross section (Mb) of ICEC for given range of kinetic energies.
@@ -88,103 +93,36 @@ class ICEC:
             for energy in self.energyGrid
         ]) 
         return xs
-
-    def xs_R(self, electronE:float):
-        """ Calculates cross section (Mb) of ICEC for given range of interatomic distances R.
-        - electronE (float): energy of incoming electron (Hartree) 
-        """
-        if not hasattr(self, 'rGrid'):
-            self.make_R_grid()
-        xs = np.array([
-            self.xs(electronE, R)
-            for R in self.rGrid
-        ])
-        return xs
     
-    # ----- OTHER -----
+    # ====== PLOTS ======
     
-    def PR_xs_A(self, electronE):
-        omega = self.omega(electronE)
-        PI_xs = self.PI_xs_A(omega)
-        return self.degeneracyFactor * omega**2 / (2*electronE*Constants.c**2) * PI_xs
-
-    def plot_xs(self, ax, xs, label="ICEC", **kwargs):
-        """Plots the Cross section xs [Mb]"""
-        ax.plot(self.energyGrid*Units.HARTREE2EV, xs*Units.AU2MB, label=label, **kwargs)
-        ax.set_xlabel(r'$E_\text{el}$ [eV]')
-        ax.set_ylabel(r'$\sigma$ [Mb]')
+    def set_axes(ax):
+        '''x label : epsilon \n
+        y label : sigma \n
+        enables log axis and grid
+        '''
         ax.set_yscale('log')
-        ax.set_title('ICEC cross section')
-
-    def plot_xs_R(self, ax, xs, **kwargs):
-        """Plots the Cross section xs [Mb]"""
-        ax.plot(self.rGrid, xs*Units.AU2MB, **kwargs)
-        ax.set_xlabel(r'$R$ [a.u.]')
+        ax.set_xlabel(r'$\varepsilon$ [eV]')
         ax.set_ylabel(r'$\sigma$ [Mb]')
-        ax.set_yscale('log')
-        ax.set_title('ICEC cross section')
+        ax.grid(True)
+
+    def plot_xs(self, ax, R=None, xs=None, label=None, **kwargs):
+        """Plots the Cross section xs [Mb] against incoming electron energies [eV]"""
+        if xs is None and R is not None:
+            xs = self.xs_energy(R)
+        xs *= Units.AU2MB
+        energy = self.energyGrid * Units.HARTREE2EV
+        if label is None:
+            label = "icec"
+            self.set_axes(ax)
+        ax.plot(energy, xs, label=label, **kwargs)
 
     def plot_PR_xs(self, ax, **kwargs):
         """Plots the Photorecombination Cross section [Mb]"""
-        PR_xs = np.array(
-            [self.PR_xs_A(electronE) for electronE in self.energyGrid]
-        )
+        PR_xs = np.array([
+            self.PR_xs_A(electronE) for electronE in self.energyGrid
+        ])
         mask = PR_xs>0
-        ax.plot(self.energyGrid[mask]*Units.HARTREE2EV, PR_xs[mask]*Units.AU2MB, **kwargs)
-        
-        
-# ==========================================================
-# ============= Asymptotic ICEC cross section ==============
-# ==== for the Overlap (electron transfer) contribution ====
-# ==========================================================
-class OverlapICEC(ICEC):
-    @classmethod
-    def from_ICEC(cls, InstanceICEC: ICEC):
-        """ Generates an instance of OverlapICEC from an instance of ICEC"""
-        new_inst = copy.deepcopy(InstanceICEC) 
-        new_inst.__class__ = cls
-        return new_inst
-    
-    def define_overlap_parameters(self, a_A:float, a_B:float, C:float, d:float, lmax:int=10, gaussian_type:str='s'):
-        """ Defines the overlap parameters, including fitting parameters
-        - lmax: upper bound for sum over l -> set large enough for convergence
-        """
-        self.a_A = a_A
-        self.a_B = a_B
-        self.C = C
-        self.d = d
-        self.lmax = lmax
-        self.gaussian_type = gaussian_type
-
-    def Sab(self, R:float) -> float:
-        """ Square of the overlap integral of two Gaussians
-        """
-        a_AB = self.a_A**2 + self.a_B**2
-        if self.gaussian_type == 'pz':
-            factor = 16 * self.a_A**3 * (self.a_B / a_AB)**5 * R**2
-        elif self.gaussian_type == 's':
-            factor = (2 * self.a_A * self.a_B / a_AB)**3
-        else:
-            print('Invalid gaussian type')
-            return 0
-        return factor* np.exp(-R**2/a_AB)
-
-    def xs(self, electronE:float, R:float) -> float:
-        """ Calculates cross section (a.u.) of the overlap contribution.
-        - electronE (float): kinetic energy of incoming electron (Hartree)
-        - R (float): internuclear distance (Bohr)
-        """ 
-        electronE_f = electronE + self.IP_A - self.IP_B
-        if electronE_f <= 0 :
-            return 0
-        else: 
-            # overlap of the continuum electrons
-            C = self.C * np.exp(-abs(self.IP_A-self.IP_B)/self.d)
-            sum_l = 0
-            for l in range(0,self.lmax+1):  # noqa: E741
-                K_av = electronE*(self.a_A+R)**2 + electronE_f*(self.a_B+R)**2
-                J_l = np.exp(-l*(l+1)/K_av)
-                sum_l += (2*l+1) * J_l
-            sum_l *= C
-            # cross section
-            return 4*np.pi / electronE**(3/2) / np.sqrt(electronE_f) / R**2 * self.Sab(R) * sum_l
+        energy = self.energyGrid[mask]*Units.HARTREE2EV
+        xs = PR_xs[mask]*Units.AU2MB
+        ax.plot(energy, xs, **kwargs)

@@ -8,8 +8,9 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Callable
 from .constants import Constants, Units
 from .morse import Morse
+from .icec import ICEC
 
-class IntraICEC:
+class IntraICEC(ICEC):
     '''ICEC cross section with diatomic molecules.
 
     Uses atomic units (hbar=1, me=1, hartree energy=1).
@@ -62,20 +63,6 @@ class IntraICEC:
             self.energyGrid = np.geomspace(minEnergy, maxEnergy, num)
         else:
             self.energyGrid = np.linspace(minEnergy, maxEnergy, num)
-
-    def make_R_grid(self, Rmin=2*Units.ANGSTROM2BOHR, Rmax=10*Units.ANGSTROM2BOHR, num=100): 
-        ''' Make a suitable grid of interatomic distances.
-        - R (Bohr, a.u.)
-        - num : number of grid points
-        '''
-        self.rGrid = np.linspace(Rmin, Rmax, num)
-        
-    # ====== PHOTORECOMBINATON ======
-    
-    def PR_xs_A(self, electronE):
-        omega = self.omega(electronE)
-        PI_xs = self.PI_xs_A(omega)
-        return self.degeneracyFactor * omega**2 / ( 2 * electronE * Constants.c**2 ) * PI_xs
         
     # ====== PHOTOIONIZATION CROSS SECTION ======
         
@@ -152,9 +139,6 @@ class IntraICEC:
     def input_vib_spacing_D(self, vib_spacing_D, vib_spacing_Dp):
         self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
-    
-    def omega(self, electronE:float) -> float:
-        return electronE + self.IP_A 
     
     def electronE_f(self, electronE:float, vD:int, vDp:int) -> float:
         if vDp is None:
@@ -240,20 +224,8 @@ class IntraICEC:
         t1 = time.perf_counter()
         print(f'b-b spectrum vD={vD} : {round(t1-t0,2)} s')
         return np.array(spectrum)
-
-    def xs_R(self, electronE:float, vD:int=0, vDp:int=None):
-        ''' Calculates ICEC cross section (Mb) for given range of interatomic distances.
-        - electronE : energy of incoming electron (Hartree, a.u.) 
-        '''
-        if not hasattr(self, 'rGrid'):
-            self.make_R_grid()
-        xs = np.array([
-            self.xs(electronE, r, vD, vDp)
-            for r in self.rGrid
-        ])
-        return xs
     
-    # ====== DISSOCIATION OF D ======
+    # ====== DISSOCIATION OF D only FC model ======
     
     def integrate_r(self, integrand, E):
         '''Integration over r
@@ -262,12 +234,9 @@ class IntraICEC:
         - vi: initial vibrational quantum number
         - E : energy of the dissociative Morse state [Hartree]
         '''
-        #t0 = time.perf_counter()
         lower_bound = self.Morse_Dp.get_lower_bound(E)
         upper_bound = self.Morse_Dp.box_length
         result = mpmath.quadsubdiv(integrand, [lower_bound, upper_bound], maxdegree=30)
-        #t1 = time.perf_counter()
-        #print(f'integrate_r  E={round(E,4)} : {round(t1-t0,2)} s')
         return result
  
     def FC_bc_D(self, vD:int, E:float, norm:float=None, dps=15):
@@ -297,6 +266,8 @@ class IntraICEC:
         '''
         vib_energy_D = (E - self.Morse_Dp.energy(0)) - (self.Morse_D.energy(vD) - self.Morse_D.energy(0))
         return self.omega(electronE) - (self.IP_D + vib_energy_D)
+    
+    # ====== CROSS SECTION ======
 
     def xs_bc(self, electronE:float, R:float, vD:int, E:float, FC_bc_D:float=None, norm:float=None) -> float:
         '''Cross section [a.u.] for one bound-continuum (bc) vibrational transition vi -> E.
@@ -304,14 +275,10 @@ class IntraICEC:
         - electronE [Hartree] : kinetic energy of the incoming electron
         - FC_bc [a.u.] : |<psi_E|psi_v>|^2
         '''
-        if electronE == 0:
-            raise ZeroDivisionError('electronE must not be zero')
         if self.electronE_f_bc(electronE, vD, E) <= 0:
             return 0
         else:
             omega = self.omega(electronE)
-            if omega == 0:
-                raise ZeroDivisionError('omega must not be zero')
             PR_xs_A = self.PR_xs_A(electronE)
             PI_xs_D = self.PI_xs_D_electronic(omega)
             if np.isnan(PI_xs_D):
@@ -322,17 +289,10 @@ class IntraICEC:
 
     def xs_vD_E(self, R:float, vD:int, E:float):
         '''Cross section for vD -> E over range of electron energies.'''
-        #t0 = time.perf_counter()
-        #if not hasattr(self, "energyGrid"):
-        #    self.make_energy_grid()
-        #if not hasattr(self.Morse_Dp, "box_length"):
-        #    self.Morse_Dp.define_box()
         FC_bc = self.FC_bc_D(vD, E)
         xs_array = np.array(
             [self.xs_bc(electronE, R, vD, E, FC_bc) for electronE in self.energyGrid]
         )
-        #t1 = time.perf_counter()
-        #print(f'xs_vD_E with E={round(E,4)} : {round(t1-t0,2)} s')
         return xs_array
 
     def xs_vD_continuum(self, R:float, vD:int, diss_energies=None, max_dissE=None):
@@ -356,6 +316,8 @@ class IntraICEC:
         t1 = time.perf_counter()
         print(f'xs_vD_continuum : {round(t1-t0,2)} s')
         return sum(list(result))
+    
+    # ====== SPECTRUM ======
     
     def function_for_spectrum(self, electronE, R, vD, E, density_of_states_at_E):
         electronE_f = self.electronE_f_bc(electronE, vD, E)
@@ -390,31 +352,6 @@ class IntraICEC:
         t1 = time.perf_counter()
         print(f'spectrum : {round(t1-t0,2)} s')
         return np.array(result)
-            
-    # ====== OTHER ======
-
-    def plot_xs(self, ax, xs, label="ICEC", title='ICEC Cross section', **kwargs):
-        '''Plots the Cross section xs [Mb]'''
-        ax.plot(self.energyGrid*Units.HARTREE2EV, xs*Units.AU2MB, label=label, **kwargs)
-        ax.set_xlabel(r'$E_\text{el}$ [eV]')
-        ax.set_ylabel(r'$\sigma$ [Mb]')
-        ax.set_yscale('log')
-        ax.set_title(title)
-
-    def plot_xs_R(self, ax, xs, **kwargs):
-        '''Plots the Cross section xs [Mb]'''
-        ax.plot(self.rGrid, xs*Units.AU2MB, **kwargs)
-        ax.set_xlabel(r'$R$ [a.u.]')
-        ax.set_ylabel(r'$\sigma$ [Mb]')
-        ax.set_yscale('log')
-        ax.set_title('ICEC cross section')
-
-    def plot_PR_xs_A(self, ax, **kwargs):
-        '''Plots the Photorecombination Cross section [Mb]'''
-        PR_xs = np.array(
-            [self.PR_xs_A(electronE) for electronE in self.energyGrid]
-        )
-        ax.plot(self.energyGrid*Units.HARTREE2EV, PR_xs*Units.AU2MB, **kwargs)
         
         
 class RydbergIntraICEC(IntraICEC):
