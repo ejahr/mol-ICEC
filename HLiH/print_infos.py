@@ -1,7 +1,15 @@
+''' 
+Prints information to console and generates helper plots.
+- FC factors and v-ratios
+- ionization energies
+- Boltzmann occupation numbers
+- ratio between summed and electronic ICEC cross section 
+'''
+
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from config import DIR_DATA
+import config
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
@@ -10,7 +18,15 @@ from HLiH.data.LiH.LiH import LiH, Li, LiHp
 import calc.cross_section
 import plot
 
-# ============= Information ===============
+# ============= Functions for Information ===============
+
+def print_ionization_energies(IP_vertical, IP_adiabatic):
+    print('\n--- Ionization energies ---')
+    print(f"vertical                {round(IP_vertical*Units.HARTREE2EV,3)} eV")
+    print(f"vertical approximation  {round(LiH.IP_vert_approx*Units.HARTREE2EV,3)} eV")
+    print(f"adiabatic               {round(IP_adiabatic*Units.HARTREE2EV,3)} eV")
+    print(f"min to min              {round(LiH.IP_min_approx*Units.HARTREE2EV,3)} eV")
+    print(f"energy diff at R=inf    {round(LiH.energy_diff_at_inf*Units.HARTREE2EV,3)} eV")
 
 def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     electronE = 4*Units.EV2HARTREE
@@ -27,7 +43,7 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     
     for vf in range(5):
         print(f'{vi}->{vf}')
-        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_B(omega))
+        print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_D(omega))
         print(' FC Morse    ', icec_FC.FC_factor(vi,vf))
         print(' FC ab initio', LiH.FC_abinitio[vi][vf])
         
@@ -94,8 +110,7 @@ def print_R_min():
     R_min_COM = (H.r_vdw + H.r_vdw + (LiH.Req - LiH.r_mu))*Units.BOHR2ANGSTROM 
     print(f"R_COM vdW H-HLi = {round(R_min_COM,5)} A")
     
-    
-# ============== H+ = LiH =============
+# ============== H+ LiH =============
 
 class Hp_LiH():
     R_min_vdw = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
@@ -111,69 +126,57 @@ class Hp_LiH():
         r_COM_LiH = (H.m * r_LiH + 0) / (H.m + Li.m)
         R_min = r_LiH - r_COM_LiH + r_HH
         return R_min
-    
-
-electronE   = 1*Units.EV2HARTREE
+   
 R           = Hp_LiH.R_min() # 6*Units.ANGSTROM2BOHR
-L           = 8*Units.ANGSTROM2BOHR
-T           = [15, 300, 1500] 
+L           = config.L
+T           = config.T
+min_kinE    = config.min_kinE
+max_kinE    = config.max_kinE
+max_dissE   = config.max_dissE
+num_grid    = config.num_grid
+system      = config.system_name
 
-vD_max_bc   = 7
-min_kinE    = 0.01 * Units.EV2HARTREE
-max_kinE    = 9 * Units.EV2HARTREE
-max_dissE   = 2 * Units.EV2HARTREE
-max_dissE_1 = 1 * Units.EV2HARTREE
-num_grid    = 1000
-n_max       = 10     # rydberg states
-
-system = 'Hp-LiH'
-title = r'$\text{H}^+ \text{LiH}$'
-
-system = 'Hp-LiH'
-header = 'e- + H+ + LiH -> H + LiH+ + e-\n'
+# ===== Initialize ICEC classes =====
     
 # --- ICEC with vibrationally resolved photoionization cross section of D ---
 icec = IntraICEC(*Hp_LiH.input_resolved)
 icec.input_vib_spacing_D(LiH.vib_spacing, LiHp.vib_spacing)
-icec.make_energy_grid(min_kinE, max_kinE, num_grid)
 icec.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
+icec.change_minima_to_adiabatic_IP()
+icec.define_PI_xs_D(method="resolved")
 IP_adiabatic = icec.IP_D - (icec.Morse_D.energy(0)+ icec.Morse_D.De) + (icec.Morse_Dp.energy(0)+ icec.Morse_Dp.De)
 icec.IP_D = IP_adiabatic
-icec.define_PI_xs_D(method="resolved")
 
-# --- ICEC within Franck-Condon approximation for photoionization of D ---
+# --- ICEC with Franck-Condon model ---
 icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
-icec_FC.IP_D = IP_adiabatic
 icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
 icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
-icec_FC.make_energy_grid(min_kinE, maxEnergy=4.5*Units.EV2HARTREE, num=num_grid)
 icec_FC.define_PI_xs_D(method="FC")
+icec_FC.IP_D = IP_adiabatic
 
-# --- calculate or load dissociative energies ---
+# --- dissociative energies ---
 icec_FC.Morse_Dp.define_box(L)
-fname = DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'    
+fname = config.DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'    
 icec_FC.Morse_Dp.load_diss_states(fname)
 
 # --- electronic ICEC without any nuclear dynamics ---
 icec_el = ICEC(*Hp_LiH.input_electronic)
-IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
-icec_el.IP_B = IP_vertical
+IP_vertical = icec_el.IP_D + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
+icec_el.IP_D = IP_vertical
 icec_el.make_energy_grid(min_kinE, LiH.max_kinE_unresolved, num_grid)
+
+# ===== CONSOLE ======
     
-print('\n===== Info =====')
-print(f"vertical ionization energy {round(IP_vertical*Units.HARTREE2EV,3)} eV")
-print(f"   approx                  {round(LiH.IP_vert_approx*Units.HARTREE2EV,3)} eV")
-print(f"adiabatic ionizaton energy {round(IP_adiabatic*Units.HARTREE2EV,3)} eV")
-print(f"   approx min to min       {round(LiH.IP_min_approx*Units.HARTREE2EV,3)} eV")
-print(f"energy diff at R=inf       {round(LiH.energy_diff_at_inf*Units.HARTREE2EV,3)} eV")
+print_R_min()
+print_ionization_energies(IP_vertical, IP_adiabatic)
 #print_FC_factor(icec_FC, 0, 1.3*Units.EV2HARTREE)
 test_FC_factors(icec_el, icec, icec_FC, R)
 print_boltzmann_probabilities(icec_FC, T)
 print_PI_crosssection(icec_FC)
 
-calc.cross_section.calculate_ratio_tot_vs_electronic(system, icec_el, R) 
+# ===== PLOTS =====
 
-plot.pes.plot_diss_at_L(icec_FC.Morse_Dp, "LiH", L)
-plot.pes.plot_PES(icec_FC, 'LiH', L, LiH.energy_diff_at_inf*Units.HARTREE2EV)
+calc.cross_section.calculate_ratio_tot_vs_electronic(system, icec_el, R) 
+plot.pes.diss_at_L(icec_FC.Morse_Dp, "LiH", L)
 H.plot_H_PI_PR(icec_el)
