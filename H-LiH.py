@@ -37,7 +37,7 @@ max_dissE_1 = 1 * Units.EV2HARTREE
 num_grid    = config.num_grid
 n_max       = config.n_max     # rydberg states
 
-system      = config.system
+system      = config.system_name
 header      = config.reaction + '\n'
 title       = config.title
 
