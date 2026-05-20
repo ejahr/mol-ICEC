@@ -61,12 +61,11 @@ icec_rydberg.make_energy_grid(4.35*Units.EV2HARTREE, max_kinE, int(num_grid/2))
 icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
 icec_FC.IP_D = IP_adiabatic
 icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
-icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe)
+icec_FC.define_Morse_Dp(*LiHp.morse_parameters, wexe=LiHp.wexe, box_length=config.L)
 icec_FC.make_energy_grid(min_kinE, maxEnergy=4.5*Units.EV2HARTREE, num=num_grid)
 icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
-icec_FC.Morse_Dp.define_box(config.L)
 fname = config.DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(config.L*Units.BOHR2ANGSTROM)}A.txt'
 if config.calc_roots:
     roots, root_estimates = Morse.save_diss_states(fname, max_dissE, num=1000)
@@ -76,10 +75,9 @@ icec_FC.Morse_Dp.load_diss_states(fname)
 
 # --- electronic ICEC without any nuclear dynamics ---
 icec_el = ICEC(*Hp_LiH.input_electronic)
-IP_vertical = icec_el.IP_B + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
-icec_el.IP_B = IP_vertical
+IP_vertical = icec_el.IP_D + (icec.Morse_Dp.V(icec.Morse_D.re) + icec.Morse_Dp.De)
+icec_el.IP_D = IP_vertical
 icec_el.make_energy_grid(min_kinE, LiH.max_kinE_unresolved, num_grid)
-
 
 if config.calculate:
     if config.bb:

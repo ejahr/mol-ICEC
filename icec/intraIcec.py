@@ -35,6 +35,7 @@ class IntraICEC(ICEC):
         self.PI_xs_A = PI_xs_A
         self.file_PI_xs_D = file_PI_xs_D
         self.prefactor = 3 * Constants.c**4 / ( 4 * np.pi )
+        self.make_energy_grid()
        
     def define_Morse_D(self, mu:float, we:float, re:float, De:float, wexe:float=0):
         '''Morse potential for the PES of D.
@@ -45,7 +46,7 @@ class IntraICEC(ICEC):
         '''
         self.Morse_D:Morse = Morse(mu, we, re, De, wexe)
 
-    def define_Morse_Dp(self, mu:float, we:float, re:float, De:float, wexe:float=0):
+    def define_Morse_Dp(self, mu:float, we:float, re:float, De:float, wexe:float=0, box_length:float=10*Units.ANGSTROM2BOHR):
         '''Morse potential for the PES of D+.
         - mu: reduced mass (proton mass)
         - we: Morse parameter (a.u.)
@@ -53,6 +54,9 @@ class IntraICEC(ICEC):
         - De: Dissociation energy (a.u.)
         '''
         self.Morse_Dp:Morse = Morse(mu, we, re, De, wexe)
+        self.Morse_Dp.define_box(box_length)
+        
+    # ====== GRIDS ======
 
     def make_energy_grid(self, minEnergy=0.01*Units.EV2HARTREE, maxEnergy=10*Units.EV2HARTREE, num=100, geometric=True): 
         ''' Make a suitable grid of incoming electron energies.
@@ -220,7 +224,9 @@ class IntraICEC(ICEC):
             electronE_f = self.electronE_f(electronE, vD, vDp)
             if electronE_f >= 0:
                 xs = self.xs(electronE, R, vD, vDp)
-                spectrum.append([vD, vDp, electronE_f * Units.HARTREE2EV, xs * Units.AU2MB])
+                spectrum.append(
+                    [vD, vDp, electronE_f * Units.HARTREE2EV, xs * Units.AU2MB]
+                )
         t1 = time.perf_counter()
         print(f'b-b spectrum vD={vD} : {round(t1-t0,2)} s')
         return np.array(spectrum)
@@ -304,7 +310,8 @@ class IntraICEC(ICEC):
         #        self.Morse_Dp.find_solutions_in_box()
         #    diss_energies = self.Morse_Dp.diss_energies
         if max_dissE is not None:
-            diss_energies = self.Morse_Dp.diss_energies[self.Morse_Dp.diss_energies <= max_dissE]
+            mask = self.Morse_Dp.diss_energies <= max_dissE
+            diss_energies = self.Morse_Dp.diss_energies[mask]
         t0 = time.perf_counter()
         with ProcessPoolExecutor() as executor:
             result = list(
