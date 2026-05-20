@@ -394,16 +394,16 @@ class RydbergIntraICEC(IntraICEC):
         self.prefactor = 3 * Constants.c**4 / ( 4 * np.pi )
     
     def omega(self, electronE:float):
-        return electronE + self.IP_n()
+        return electronE + self.IP_A_n()
     
-    def IP_n(self):
+    def IP_A_n(self):
         ''' Rydberg formula E_n = E_1 / n^2'''
         return self.IP_A / self.n**2
     
     def PR_xs_A(self, electronE):
         ''' Quasiclassical photorecombination cross section for proton-like ions (Gokhberg 2010) '''
         xs = 1.96 * np.pi**2 / Constants.c**3 \
-            * self.IP_A**2 / ( electronE * ( electronE + self.IP_n() ) ) \
+            * self.IP_A**2 / ( electronE * ( electronE + self.IP_A_n() ) ) \
             * 1 / self.n**3
         return xs
     
