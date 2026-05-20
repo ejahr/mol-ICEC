@@ -17,7 +17,7 @@ title       = r'$\text{H}^+ \text{LiH}$'                # plot title
 reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'          # used in the header of result files
 
 # === Parameters for the calculations ===
-R           = 3.95  * Units.ANGSTROM2BOHR   # distance between center of masses of A and D
+R           = 3.9522557993362915 * Units.ANGSTROM2BOHR   # distance between center of masses of A and D
 L           = 8     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
 
 vD_max_bc   = 7                             # maximum initial vibrational state considered for bound-continuum transitions
@@ -38,8 +38,8 @@ bb              = 1         # ICEC for bound-bound transitions of D, starts calc
 bc              = 0         # ICEC including dissociation of D+, only starts calculation with FC
 rydberg         = 0         # Rydberg ICEC, only starts calculation with resolved
 calculate       = 1         # activates calculation of ICEC cross sections
-plotting        = 0         # generates plots of results from calculation
-spectra         = 1         # activates the ICEC electron spectrum
+plotting        = 0         # generates plots of results from calculation, needs FC calculation
+spectra         = 0         # activates the ICEC electron spectrum
 cross_section   = 0         # activates total ICEC cross sections
 temp_dependence = 0         # activates temperature dependent plots
 
