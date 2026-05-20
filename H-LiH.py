@@ -3,7 +3,6 @@ from HLiH.data.LiH.LiH import LiH, Li, LiHp
 
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
-from icec.morse import Morse
 from icec.constants import Units
 
 import calc
@@ -68,7 +67,7 @@ icec_FC.define_PI_xs_D(method="FC")
 # --- calculate or load dissociative energies ---
 fname = config.DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(config.L*Units.BOHR2ANGSTROM)}A.txt'
 if config.calc_roots:
-    roots, root_estimates = Morse.save_diss_states(fname, max_dissE, num=1000)
+    roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
     plot.pes.plot_roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
     
 icec_FC.Morse_Dp.load_diss_states(fname)
