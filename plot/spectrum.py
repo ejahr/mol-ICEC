@@ -9,6 +9,8 @@ from plot.config import set_rcParams
 
 set_rcParams()
 
+# ===== HELPER FUNCTIONS =====
+
 def set_axes(ax, differential=False):
     ax.set_yscale('log')
     ax.set_xlabel(r"$\epsilon\prime$ [eV]")
@@ -21,18 +23,10 @@ def set_axes(ax, differential=False):
 def read_results(system, electronE, R, modifier='', L=None):
     file_path = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
-        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
-    else:
-        file_path += '.txt'
+        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}'
+    file_path += '.txt'
     results = np.loadtxt(file_path, comments='#')
-    return results   
-
-def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False):
-    energy_out = icec_el.electronE_f(electronE) * Units.HARTREE2EV
-    xs = icec_el.xs(electronE, R) * Units.AU2MB
-    if return_bar:
-        return ax.bar(energy_out, xs, width=width, color='black', label='elec.')
-    ax.bar(energy_out, xs, width=width, color='black', label='elec.') 
+    return results  
 
 def spectrum_idx(vD, key):
     ''' key: 'v_Dp', 'diss_energy', 'E_out', or 'xs'
@@ -48,9 +42,57 @@ def spectrum_idx(vD, key):
     else:
         raise ValueError(
             "key not recognized, must be 'v_Dp', 'diss_energy', 'E_out', or 'xs'"
-        )   
+        )    
+        
+def interpolate(x0, x, y):
+    interpolate_y = sp.interpolate.interp1d(
+        x, y, kind="linear", bounds_error=False, fill_value=0
+    )
+    return interpolate_y(x0)
+
+def diss_energy_secax(ax, vD, results_bc, label=r"$E_+$ [eV]"):
+    electronEf = results_bc[:, spectrum_idx(vD, 'E_out')]
+    diss_energy = results_bc[:, spectrum_idx(vD, 'diss_energy')]
+    E_max = electronEf[0] + diss_energy[0]
+    
+    def electron_to_vib(electronEf):
+        return E_max - electronEf
+    
+    def vib_to_electron(diss_energy):
+        return E_max - diss_energy
+    
+    secax = ax.secondary_xaxis(
+        'top',
+        functions=(electron_to_vib, vib_to_electron)
+    )
+    secax.set_xlabel(label, labelpad = 8)
+    secax.tick_params(axis='both', which='major', labelsize=14)
+    
+def lorentzian(x, x0, gamma):
+    '''Cauchy, Lorentz, Breit-Wigner distribution
+    x0 : position of the peak
+    gamma : HWHM, FWHM = 2 * gamma, has units of x 
+    '''
+    return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
+    #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
+
+# ===== SPECTRUM PLOTS =====
+
+def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False):
+    energy_out = icec_el.electronE_f(electronE) * Units.HARTREE2EV
+    xs = icec_el.xs(electronE, R) * Units.AU2MB
+    if return_bar:
+        return ax.bar(energy_out, xs, width=width, color='black', label='elec.')
+    ax.bar(energy_out, xs, width=width, color='black', label='elec.') 
     
 def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
+    ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy for different initial vibrational states.
+    
+    Legend
+        Lighter shades (wider lines) include vibrationally resolved photoionization cross sections.
+        Darker shades use the Franck-Condon model.
+        Electronic case (black) corresponds to the vertical ionization of D.
+    '''
     results_FC = read_results(system, electronE, R, modifier='-FC')
     results_resolved = read_results(system, electronE, R)
     
@@ -85,29 +127,14 @@ def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-    
-def diss_energy_secax(ax, vD, results_bc, label=r"$E$ [eV]"):
-    electronEf = results_bc[:, spectrum_idx(vD, 'E_out')]
-    diss_energy = results_bc[:, spectrum_idx(vD, 'diss_energy')]
-    
-    E_max = electronEf[0] + diss_energy[0]
-    
-    def electron_to_vib(electronEf):
-        return E_max - electronEf
-    
-    def vib_to_electron(diss_energy):
-        return E_max - diss_energy
-    
-    secax = ax.secondary_xaxis(
-        'top',
-        functions=(electron_to_vib, vib_to_electron)
-    )
-    
-    secax.set_xlabel(label, labelpad = 8)
-    secax.tick_params(axis='both', which='major', labelsize=14)
-    
-    
 def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, secax_label=r'$E$ [eV]'):
+    ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy.
+    
+    Legend
+        Blue peaks (b-b): bound-bound transitions during ionization of D.
+        Blue dashed line (b-d): differential dsigma/dE for bound-dissociative transitions.
+        Black peak: electronic case (vertical ionization of D).
+    '''
     L=icec.Morse_Dp.box_length
     results_bb = read_results(system, electronE, R, modifier='-FC')
     results_bc = read_results(system, electronE, R, modifier='-FC.bc', L=L)
@@ -154,12 +181,7 @@ def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, s
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
     
-def lorentzian(x, x0, gamma):
-    # Cauchy, Lorentz, Breit-Wigner distribution
-    # x0 : position of the peak
-    # gamma : HWHM, FWHM = 2 * gamma, has units of x
-    return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
-    #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
+# ===== TEMPERATURE DEPENDENT SPECTRUM PLOTS ======
     
 def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=1*Units.EV2HARTREE, fold_lorentz=False, **kwargs):
     norm = icec.Morse_D.boltzmann_norm(t)
@@ -186,12 +208,6 @@ def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=
     if fold_lorentz:
         lorentzian_spectrum[lorentzian_spectrum<1e-5] = np.nan
         ax.plot(lorentzian_energies, lorentzian_spectrum, color=color, label = r'$T=$'+str(t)+r'$\,\mathrm{K}$', **kwargs)   
-    
-def interpolate(x0, x, y):
-    interpolate_y = sp.interpolate.interp1d(
-        x, y, kind="linear", bounds_error=False, fill_value=0
-    )
-    return interpolate_y(x0)
       
 def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
     norm = icec.Morse_D.boltzmann_norm(t)
@@ -218,6 +234,13 @@ def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
     ax.plot(energy, avg, color=color, ls="--", **kwargs)
     
 def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
+    ''' Generates spectrum plot: ICEC cross section against outgoing electron energy for different temperatures.
+    
+    Legend
+        Lighter shades indicate higher temperatures. 
+        solid:  bound-bound transitions of LiH, folded with a Lorentz distribution
+        dashed: bound-dissociative transitions
+    '''
     fig = plt.figure(figsize=(6, 4))
     ax = plt.gca() 
     set_axes(ax, differential=True)
@@ -244,5 +267,3 @@ def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=N
     fname = DIR_PLOTS + f'{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
-
-

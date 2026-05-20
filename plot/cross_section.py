@@ -9,6 +9,8 @@ from plot.config import set_rcParams
 set_rcParams()
 width, height = 6, 4
 
+# ===== HELPER FUNCTIONS =====
+
 def set_axes(ax):
     "log yscale, labels: epsilon, sigma"
     ax.set_yscale('log')
@@ -16,22 +18,24 @@ def set_axes(ax):
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
 
-def read_results_file(system, R, modifier='', L=None):
+def read_results(system, R, modifier='', L=None):
     'reads in ICEC results'
     file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
-        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}.txt'
-    else:
-        file_path += '.txt'
+        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}'
+    file_path += '.txt'
     results = np.loadtxt(file_path, comments='#')
     return results
     # TODO
     # energies = results[:,0]
     # xs = results[:,1:]
     # return energies, xs
+    
+# ===== HELPER PLOT FUNCTIONS =====
             
 def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
     'plots electronic ICEC cross section against incoming electron energies'
+    # TODO calculate xs and save in file
     energy = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
     ax.plot(energy, xs, color=color, label=label, **kwargs)
@@ -40,15 +44,14 @@ def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> bound states'
     if modifier == '':
       ax.set_xlim(-0.2, 8.6)  
-    # ax.plot(icec.energyGrid * Units.HARTREE2EV,  icec.PI_xs_B(v_B, 0, icec.energyGrid + icec.IP_A)*Units.AU2MB, label=r'$\sigma_\text{PI}$')
-    results = read_results_file(system, R, modifier)
+    results = read_results(system, R, modifier)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
-def plot_xs_rydberg(ax, system, R, **kwargs):
-    results = read_results_file(system, R, modifier='-rydberg')
+def plot_xs_rydberg(ax, system, R, n=2, **kwargs):
+    results = read_results(system, R, modifier='-rydberg')
     energies = results[:,0]
     #n_max = len(results[0,:]) - 1
-    tot_results = results[:,1]
+    tot_results = results[:,n-1]
     #for n in range(2, n_max+1):
     #    tot_results += results[:,n]
     ax.plot(energies, tot_results, label=r"b-b Ryd", **kwargs)
@@ -56,41 +59,65 @@ def plot_xs_rydberg(ax, system, R, **kwargs):
 def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> dissociative states'
     modifier += ".bc"
-    results = read_results_file(system, R, modifier, L)
+    results = read_results(system, R, modifier, L)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for all transitions from vD'
-    results_bb = read_results_file(system, R, modifier)
+    results_bb = read_results(system, R, modifier)
     modifier += ".bc"
-    results_bc = read_results_file(system, R, modifier, L)
+    results_bc = read_results(system, R, modifier, L)
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
-def xs_FC_bb(system, icec: IntraICEC, R, icec_el:ICEC=None):
-    'generates plot of ICEC cross section for transitions of D from vD = 0 to bound states D+'
+# ===== CROSS SECTION PLOTS ======
+    
+def xs_FC_bb(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+    ''' 
+    Generates plot: 
+        ICEC cross section vs. incoming electron energy.
+        Only bound-bound transitions of D from vi=0 are considered. 
+        Results from Rydberg, vibrationally resolved, and Franck-Condon model. Optional electronic results.
+    
+    Legend
+        Black: electronic results with vertical ionization of D
+        red (b-b): with vibrationally resolved cross sections of D
+        blue (b-b FC): based on Franck-Condon model
+        purple (b-b Ryd): A captures into the n=2 Rydberg state.
+        dotted grey (PR): photorecombination cross section of A
+    '''
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
     if R < 5*Units.ANGSTROM2BOHR:
         ax.set_ylim(1e-4,1e3)
         
-    vi = 0
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue', zorder=1)
-    plot_xs_rydberg(ax, system, R, color = 'tab:purple')
+    plot_xs_rydberg(ax, system, R, n=2, color='tab:purple')
     
     if icec_el is not None:
         plot_xs_el(ax, icec_el, R)
     icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
-    fname = DIR_PLOTS + f'{system}.xs-FC.v0.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
-    'generates plot of ICEC cross section for transitions of D from vD = 0 to bound and dissociative states D+'
+def xs_FC(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+    ''' 
+    Generates plot: 
+        ICEC cross section vs. incoming electron energy.
+        Bound-bound and bound-dissociative transitions of D from vi=0 are considered. 
+        Results from Franck-Condon model. Optional electronic results.
+    
+    Legend
+        black (elec.): electronic results 
+        solid blue (b-b): includes bound-bound transitions of D 
+        dashed blue (b-d): includes bound-dissociative transitions of D
+        dotted blue (tot): all transitions, coincides with electronic case.
+    '''
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -103,8 +130,7 @@ def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     if icec_el is not None:
         plot_xs_el(ax, icec_el, R, label="elec.", zorder=1)
     #icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':')      
-        
-    vi = 0
+
     L = icec.Morse_Dp.box_length
     plot_xs_tot(ax, system, R, vi, L, label=r'tot', modifier='-FC', color='tab:blue', ls=':')
     plot_xs_bc(ax, system, R, vi, L, label=r'b-d', modifier='-FC', color='tab:blue', ls='--')
@@ -112,12 +138,22 @@ def xs_FC(system, icec: IntraICEC, R, icec_el:ICEC=None):
     #plot_xs(ax, system, R, vi, label=r'b-b', color='tab:blue') 
     
     ax.legend(ncols=2)
-    fname = DIR_PLOTS + f'{system}.xs-FC.bc.v0.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.bc.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
 def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
-    'generates plot of ICEC cross section for bound-bound transitions of D'
+    ''' 
+    Generates plot: 
+        ICEC cross section vs. incoming electron energy for different initial vibrational states of D.
+        Only bound-bound transitions of D are considered. 
+        Results from vibrationally resolved PI cross sections and Franck-Condon model.
+    
+    Legend
+        red: vi = 0
+        purple: vi = 1
+        blue: vi = 2
+    '''
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
@@ -153,16 +189,24 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
     return avg/norm
     
 def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
-    'generates plot of temperature dependent ICEC cross sections against incoming electron energies'
+    ''' 
+    Generates plot: 
+        ICEC cross section against incoming electron energy for different temperatures.
+    
+    Legend
+        Lighter shades indicate higher temperatures. 
+        solid:  bound-bound transitions of LiH        
+        dashed: bound-dissociative transitions
+    '''
     fig = plt.figure(figsize=(width, height))
     ax = plt.gca() 
     set_axes(ax)
     ax.set_xlim(-0.1, 4.2)
     
     modifier = "-FC"
-    results_bb = read_results_file(system, R, modifier)
+    results_bb = read_results(system, R, modifier)
     L = icec.Morse_Dp.box_length
-    results_bc = read_results_file(system, R, modifier+'.bc', L)
+    results_bc = read_results(system, R, modifier+'.bc', L)
 
     results = results_bc
     for col in range(1,results.shape[1]):
@@ -187,28 +231,5 @@ def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
     
     ax.legend()
     fname = DIR_PLOTS + f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
-
-def xs_R(system, icec: IntraICEC, R, icec_el:ICEC=None):
-    'generates plot of ICEC cross section for bound-bound transitions of D for different distances between A and D'
-    fig = plt.figure(figsize=(width, height))
-    ax = plt.gca() 
-    set_axes(ax)
-
-    blues = plt.get_cmap("Blues_r")
-    for r in R:
-        index = np.where(R==r)[0][0]
-        blue = blues(index / (len(R) + 1 / len(R)))
-        label = r'$R=$' + str(round(r*Units.BOHR2ANGSTROM)) + r'$\,\mathrm{\AA}$'
-        
-        if icec_el is not None:
-            plot_xs_el(ax, icec_el, r, color=blue, ls='--')
-                
-        plot_xs(ax, system, r, 0, label, color=blue)
-    
-    icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)
-    plt.legend()
-    fname = DIR_PLOTS + f'{system}.R.icec.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)

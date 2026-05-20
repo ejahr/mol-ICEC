@@ -3,7 +3,7 @@ from config import DIR_RESULTS
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
-from plot.cross_section import read_results_file
+from plot.cross_section import read_results
 
 def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, max_dissE=None):
     header += "ICEC cross section\n"
@@ -68,9 +68,9 @@ def xs_bc_R(system, icec, R, header, vD_max):
 # ===== OTHER =====
     
 def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):
-    results_bb = read_results_file(system, R, modifier)
+    results_bb = read_results(system, R, modifier)
     modifier += ".bc"
-    results_bc = read_results_file(system, R, modifier, L)
+    results_bc = read_results(system, R, modifier, L)
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     
     print("\n--- Ratio between total and electronic cross section ---")
