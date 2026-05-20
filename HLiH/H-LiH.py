@@ -1,6 +1,7 @@
 '''
-Old file which is only for H+ LiH
-Similar to run_system.py
+Old file, similar to run_system.py, but only for H+ LiH
+Initiates the calculation of ICEC cross sections and spectra.
+Parameters are defined in config.py, H.py and LiH.py
 '''
 
 import sys
@@ -20,8 +21,6 @@ import config
 
 # ============== H+ = LiH =============
 class Hp_LiH():
-    R_min_vdw = (Li.r_vdw + H.r_vdw + LiH.Req)/2 + H.r_vdw
-
     input_electronic = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.PI_xs]
     input_resolved   = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_resolved]
     input_unresolved = [H.deg_factor, H.IP, LiH.IP, H.PI_xs, LiH.file_PI_xs_unresolved]
@@ -49,7 +48,7 @@ system      = config.system_name
 header      = config.reaction + '\n'
 title       = config.title
 
-# ===== Define ICEC classes for calculating ICEC cross sections =====
+# ===== Initialize ICEC classes =====
 
 # --- ICEC with vibrationally resolved photoionization cross section of D ---
 icec = IntraICEC(*Hp_LiH.input_resolved)
@@ -65,7 +64,7 @@ icec.define_PI_xs_D(method="resolved")
 icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec, n=2)
 icec_rydberg.make_energy_grid(4.35*Units.EV2HARTREE, max_kinE, int(num_grid/2))
 
-# --- ICEC within Franck-Condon approximation for photoionization of D ---
+# --- ICEC with Franck-Condon model ---
 icec_FC = IntraICEC(*Hp_LiH.input_unresolved)
 icec_FC.IP_D = IP_adiabatic
 icec_FC.define_Morse_D(*LiH.morse_parameters, wexe=LiH.wexe)
@@ -77,7 +76,7 @@ icec_FC.define_PI_xs_D(method="FC")
 fname = config.DIR_DATA + f'LiH/LiHp.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(config.L*Units.BOHR2ANGSTROM)}A.txt'
 if config.calc_roots:
     roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
-    plot.pes.plot_roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
+    plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
     
 icec_FC.Morse_Dp.load_diss_states(fname)
 
@@ -90,34 +89,37 @@ icec_el.make_energy_grid(min_kinE, LiH.max_kinE_unresolved, num_grid)
 if config.calculate:
     if config.bb:
         if config.cross_section:
-            calc.cross_section.xs_bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
-            calc.cross_section.xs_rydberg_bb(system, header, icec_rydberg, R, n_max, 0, LiHp.v_max)
+            calc.cross_section.bb(system, header, icec, R, LiH.v_max, LiHp.v_max)
+            calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max, 0, LiHp.v_max)
             if config.FC:
-                calc.cross_section.xs_bb(system, header, icec_FC, R, modifier='-FC')
+                calc.cross_section.bb(system, header, icec_FC, R, modifier='-FC')
         if config.spectra:      
-            calc.spectrum.spectrum_bb(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
+            calc.spectrum.bb(system, header, icec_el, icec, R, electronE, LiH.v_max, LiHp.v_max)
             if config.FC:
-                calc.spectrum.spectrum_bb(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
+                calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
 
     if config.bc:
         if config.cross_section:
-            calc.cross_section.xs_bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE_1, modifier='-FC')
+            calc.cross_section.bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE_1, modifier='-FC')
         if config.spectra:
-            calc.spectrum.spectrum_bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
+            calc.spectrum.bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
 
 if config.plotting:
     if config.bb:
         if config.cross_section and config.FC:
-            plot.cross_section.xs_FC_bb(system, icec, R, icec_el)
+            plot.cross_section.bb_resolved_FC_rydberg(system, icec, R, icec_el)
         if config.spectra and config.FC:
-            plot.spectrum.spectrum_FC_bb(system, R, electronE, LiH.v_max, icec_el=icec_el)
+            plot.spectrum.bb_resolved_and_FC(system, R, electronE, LiH.v_max, icec_el=icec_el)
     
     if config.bc:
         if config.cross_section:
-            plot.cross_section.xs_FC(system, icec_FC, R, icec_el)
+            plot.cross_section.bb_and_bc(system, icec_FC, R, icec_el)
         if config.spectra:   
-            plot.spectrum.spectrum_FC(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_{\mathrm{LiH}^+}$ [eV]")
+            plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_{\mathrm{LiH}^+}$ [eV]")
     #if config.cross_section and config.temp_dependence:
     #    config.cross_sections.plot_xs_boltzmann_FC(system, icec_FC, R, config.T, vD_max_bc, icec_el=icec_el)
     if config.spectra and config.temp_dependence:
-        plot.spectrum.boltzmann_FC(system, icec_FC, R, electronE, config.T, vD_max_bc)
+        plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_bc)
+
+
+plot.pes.pes(icec_FC, 'LiH', config.L, LiH.energy_diff_at_inf*Units.HARTREE2EV)

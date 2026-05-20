@@ -1,10 +1,12 @@
+''' 
+Defines the parameters needed for the calculation of ICEC cross sections and spectra.
+run_system.py starts the calculations and plots.
+All parameters should be given (or converted to) atomic units.
+'''
+
 import os
 import numpy as np
 from icec.constants import Units, Constants
-
-'''
-All parameters should be given (or converted to) atomic units.
-'''
 
 DIR = os.path.dirname(os.path.realpath(__file__)) + '/' # DIR where this config.py file is located
 DIR_DATA = DIR + 'HLiH/data/'                           # dir name where PI XS data is located

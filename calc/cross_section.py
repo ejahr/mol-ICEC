@@ -1,3 +1,12 @@
+''' 
+Defines functions for calculating ICEC cross sections:
+- bb: ICEC cross section vs. incoming electron energy for bound-bound transitions of D.
+- rydberg_bb: ICEC cross section vs. incoming electron energy for capturing into Rydberg states of a proton-like atom.
+- bc: ICEC cross section vs. incoming electron energy. Includes dissociative states of D+.
+
+Also defines the function calculate_ratio_tot_vs_electronic
+'''
+
 import numpy as np
 from config import DIR_RESULTS
 from icec.icec import ICEC
@@ -22,7 +31,7 @@ def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp
 
 # ========= Running calculations and saving results ============
 
-def xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifier=''):
+def bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
@@ -35,7 +44,7 @@ def xs_bb(system, header, icec: IntraICEC, R, vD_max=None, vDp_max=None, modifie
     file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
     
-def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_max=None):
+def rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_max=None):
     header += f"Rydberg states up to n={n_max} "
     header = extend_header(header, icec, R, vD_max=0, vDp_max=vDp_max)
     xs_array = icec.energyGrid * Units.HARTREE2EV
@@ -45,12 +54,8 @@ def xs_rydberg_bb(system, header, icec: RydbergIntraICEC, R, n_max, vD=0, vDp_ma
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     file_path = DIR_RESULTS + f"{system}.xs-rydberg.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
-    
-def xs_R(system, header, icec, R, vD_max=None, vDp_max=None):
-    for r in R:
-        xs_bb(system, header, icec, r, vD_max, vDp_max)
-    
-def xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modifier=''):
+        
+def bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modifier=''):
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     header = extend_header(header, icec, R, vD_max, max_dissE=max_dissE)
@@ -61,10 +66,6 @@ def xs_bc(system, header, icec: IntraICEC, R, vD_max=None, max_dissE=None, modif
     file_path = DIR_RESULTS + f"{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
-def xs_bc_R(system, icec, R, header, vD_max):
-    for r in R:
-        xs_bc(system, header, icec, r, vD_max)
-            
 # ===== OTHER =====
     
 def calculate_ratio_tot_vs_electronic(system, icec_el:ICEC, R, vD=0, L=8*Units.ANGSTROM2BOHR, modifier='-FC'):

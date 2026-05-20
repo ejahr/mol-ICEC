@@ -1,3 +1,11 @@
+'''
+Collects (additional) data for Hydrogen
+- Ionization potentials
+- mass
+- plot of photoionization and photorecombination cross section
+Not needed for the calculation of ICEC. All necessary parameters are defined in config.py
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import plot.config

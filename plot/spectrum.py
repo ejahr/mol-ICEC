@@ -1,3 +1,10 @@
+''' 
+Defines functions for generating spectrum plots:
+- bb_resolved_and_FC: ICEC cross section vs. outgoing electron energy for different initial vibrational states
+- bb_and_bc: ICEC cross section vs. outgoing electron energy, includes bound-dissociative transitions of D
+- boltzmann_bb_and_bc: ICEC cross section vs. outgoing electron energy for different temperatures.
+'''
+
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
@@ -85,7 +92,7 @@ def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False)
         return ax.bar(energy_out, xs, width=width, color='black', label='elec.')
     ax.bar(energy_out, xs, width=width, color='black', label='elec.') 
     
-def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
+def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
     ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy for different initial vibrational states.
     
     Legend
@@ -127,7 +134,7 @@ def spectrum_FC_bb(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def spectrum_FC(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, secax_label=r'$E$ [eV]'):
+def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, secax_label=r'$E$ [eV]'):
     ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy.
     
     Legend
@@ -233,7 +240,7 @@ def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
     #avg[avg<1e-30]=np.nan
     ax.plot(energy, avg, color=color, ls="--", **kwargs)
     
-def boltzmann_FC(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
+def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
     ''' Generates spectrum plot: ICEC cross section against outgoing electron energy for different temperatures.
     
     Legend

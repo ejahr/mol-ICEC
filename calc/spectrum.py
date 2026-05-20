@@ -1,3 +1,9 @@
+''' 
+Defines functions for calculating ICEC electron spectra:
+- bb: ICEC cross section vs. outgoing electron energy for bound-bound transitions of D.
+- bc: ICEC cross section vs. outgoing electron energy for bound-dissociative transitions of D
+'''
+
 import numpy as np
 from config import DIR_RESULTS
 from icec.icec import ICEC
@@ -20,7 +26,7 @@ def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp
 
 # ========= Running calculations and saving results ============
 
-def spectrum_bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electronE:float, vD_max:int=None, vDp_max:int=None, modifier:str=''): 
+def bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electronE:float, vD_max:int=None, vDp_max:int=None, modifier:str=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     if vDp_max is None:
@@ -38,7 +44,7 @@ def spectrum_bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float,
     fname = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
-def spectrum_bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
+def bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
     if vD_max is None:
         vD_max = icec.Morse_D.vmax
     header = extend_header(header, icec, R, vD_max, electronE=electronE)

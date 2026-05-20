@@ -1,3 +1,12 @@
+'''
+Collects (additional) data for LiH and LiH+
+- Ionization potentials
+- spectroscopic constants
+- energy spacings between vibrational states
+- Franck-Condon factors
+Not needed for the calculation of ICEC. All necessary parameters are defined in config.py
+'''
+
 import numpy as np
 import sys
 import os
@@ -48,9 +57,6 @@ class LiH(metaclass=ReadOnly):
     morse_parameters = (mu, we, Req, De)
 
     r_mu    = (H.m*Req + Li.m*0) / (H.m + Li.m)
-
-    #print('alpha =', alpha)
-    #print('we * sqrt(mu/2/De) =', we * np.sqrt(mu/2/De))
 
     # Table III
     energy_v0 = 697.72 * Units.WAVENUMBER2HARTREE
@@ -106,12 +112,10 @@ class LiHp(metaclass=ReadOnly):
 # ====================== TEST ==========================
 
 if __name__ == "__main__":
-    #print('Vertical Ionization potential:', LiH.IP_vert)
     print(f'E_p(Re)  -E(Re) = {LiH.IP_vert_approx*Units.HARTREE2EV} eV')
     print(f'E_p(Re_p)-E(Re) = {LiH.IP_min_approx*Units.HARTREE2EV} eV')
     print(f'LiH.IP          = {LiH.IP*Units.HARTREE2EV} eV\n')
 
-    # Huber p. 382
     print("De Lundsgaard", LiH.De*Units.HARTREE2EV, "eV")
     print("m  calculated", H.m * Li.m / (H.m + Li.m))
     print("m  Huber     ", LiH.mu)

@@ -1,3 +1,11 @@
+''' 
+Defines functions for generating cross section plots:
+- bb_resolved_FC_rydberg: ICEC cross section vs. incoming electron energy. Only bound-bound transitions of D from vi=0. 
+- bb_and_bc: ICEC cross section vs. incoming electron energy. Includes dissociative states of D+.
+- bb_vD: ICEC cross section vs. incoming electron energy for different initial vibrational states of D.
+- boltzmann_bb_and_bc: ICEC cross section vs. incoming electron energy for different temperatures.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from icec.icec import ICEC
@@ -72,7 +80,7 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     
 # ===== CROSS SECTION PLOTS ======
     
-def xs_FC_bb(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy.
@@ -98,14 +106,14 @@ def xs_FC_bb(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     
     if icec_el is not None:
         plot_xs_el(ax, icec_el, R)
-    icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
     fname = DIR_PLOTS + f'{system}.xs-FC.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def xs_FC(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+def bb_and_bc(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy.
@@ -142,7 +150,7 @@ def xs_FC(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
+def bb_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy for different initial vibrational states of D.
@@ -167,7 +175,7 @@ def xs_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
         plot_xs(ax, system, R, vi, label, color=color[vi])
         plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
-    icec.plot_PR_xs_A(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
+    icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
     fname = DIR_PLOTS + f'{system}.xs-FC.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
     plt.tight_layout(pad=0.5)
@@ -188,10 +196,11 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
         )
     return avg/norm
     
-def xs_boltzmann_FC(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
+def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
     ''' 
     Generates plot: 
         ICEC cross section against incoming electron energy for different temperatures.
+        Franck-Condon model
     
     Legend
         Lighter shades indicate higher temperatures. 

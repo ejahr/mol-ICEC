@@ -1,7 +1,15 @@
+''' 
+Defines functions for fitting function to datasets:
+- generate_polyfit: polynomial fit
+- generate_linfit: linear fit
+'''
+
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 from icec.constants import Units
+
+# --- Polynomial fit ---
 
 def generate_polyfit(fname, degree):
     """ Generates polynomial fit of given degree
@@ -23,6 +31,8 @@ def test_polyfit(polyfit, x, y, degree, fname):
     plt.plot(x_fit*Units.HARTREE2EV, y_fit*Units.AU2MB, label=f'Polynomial fit, degree = ' + str(degree))  # Fitted curve
     plt.legend()
     plt.savefig(fname)
+    
+# --- linear fit ---
     
 def generate_linfit(fname):
     xs_data = np.loadtxt(fname, comments='#')
@@ -46,6 +56,8 @@ def compare_linfit(interp_func, fname):
     energies = xs_data[:,0] * Units.EV2HARTREE
     xs = xs_data[:,1] * Units.MB2AU
     test_linfit(interp_func, energies, xs)
+
+# --- chebyshev fit ---
     
 def generate_chebyshev(fname, degree=10):
     xs_data = np.loadtxt(fname, comments='#')

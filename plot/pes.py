@@ -1,3 +1,11 @@
+''' 
+Defines functions for generating plots:
+- pes: potential energy surfaces of D and D+ (currently tailored to LiH -> LiH+) 
+- roots: for checking if all discretized solutions for dissociative states are found
+- energy_sketch: schematics for ICEC
+TODO give parameters in a config file?
+'''
+
 import mpmath
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,6 +21,8 @@ from config import DIR_PLOTS
 from plot.config import set_rcParams
 
 set_rcParams()
+
+# ===== HELPER FUNCTIONS =====
 
 def plot_vib_state(ax, morse:Morse, vi, scale=1./15, yshift=0):
     psi = [morse.psi(vi,r_i) * scale
@@ -54,12 +64,19 @@ def add_cut_out_lines(ax1, ax2):
     ax1.plot([0, 1], [0, 0], transform=ax1.transAxes, **kwargs)
     ax2.plot([0, 1], [1, 1], transform=ax2.transAxes, **kwargs)
     
-def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
-    """ Plots the PES of the ground electronic states of D and D+
-    - icec: class instance of IntraICEC, defines and calculates all necessary quantities
-    - system: str defining the system 
-    - L: maximum distance, length of the box
-    - yshif: difference between the two PES at R -> infty
+# ===== PES =====
+    
+def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
+    """ 
+    Generates plot:
+        PES of the ground electronic states of D and D+
+        currently adapted to LiH
+            
+    Args:
+        icec: class instance of IntraICEC, defines and calculates all necessary quantities
+        system: name of the system 
+        L: maximum distance, length of the box
+        yshif: difference between the two PES at R -> infty
     """   
     print("num of vib states for D :", icec.Morse_D.vmax + 1)
     print("num of vib states for D+:", icec.Morse_Dp.vmax + 1)
@@ -122,9 +139,9 @@ def plot_PES(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0
     fname = DIR_PLOTS + f"{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
-# ===== HELPER PLOTS =====
+# ===== INFORMATION PLOTS =====
 
-def plot_roots(morse:Morse, roots, root_estimates, max_energy):
+def roots(morse:Morse, roots, root_estimates, max_energy):
     fig = plt.figure()
     ax = plt.gca() 
     ax.set_title('Dissociative states')
@@ -138,7 +155,7 @@ def plot_roots(morse:Morse, roots, root_estimates, max_energy):
     fname = DIR_PLOTS + f'LiHp.roots.E{round(max_energy*Units.HARTREE2EV,1)}eV.{round(morse.box_length*Units.BOHR2ANGSTROM)}A.pdf'
     fig.savefig(fname)
 
-def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
+def diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
     def psi_at_L(E):
@@ -156,7 +173,7 @@ def plot_diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     
 # ===== ICEC ENERGY SKETCH =====
     
-def plot_energy_sketch():
+def energy_sketch():
     x_D = 1
     y_D = 0.3
     shift_D = 2
@@ -261,4 +278,4 @@ def plot_energy_sketch():
     fig.savefig(fname, bbox_inches='tight')
   
 if __name__ == "__main__":  
-    plot_energy_sketch()
+    energy_sketch()

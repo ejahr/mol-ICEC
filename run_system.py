@@ -1,8 +1,12 @@
+''' 
+Initiates the calculation of ICEC cross sections and spectra.
+Parameters are defined in config.py
+'''
+
 import numpy as np
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
-
 import calc
 import plot
 import config
@@ -75,7 +79,7 @@ if config.FC and config.bc:
     fname = config.DIR_DATA + f'{unitD.name}p.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
     if config.calc_roots:
         roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
-        plot.pes.plot_roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
+        plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
     icec_FC.Morse_Dp.load_diss_states(fname)
 
 # --- Rydberg ICEC ---
@@ -98,38 +102,38 @@ if config.calculate:
     if config.bb: 
         if config.cross_section:
             if config.resolved:
-                calc.cross_section.xs_bb(system, header, icec, R, unitD.v_max, unitDp.v_max)
+                calc.cross_section.bb(system, header, icec, R, unitD.v_max, unitDp.v_max)
             if config.FC:
-                calc.cross_section.xs_bb(system, header, icec_FC, R, modifier='-FC')
+                calc.cross_section.bb(system, header, icec_FC, R, modifier='-FC')
             if config.rydberg:
-                calc.cross_section.xs_rydberg_bb(system, header, icec_rydberg, R, n_max, 0, unitDp.v_max)
+                calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max, 0, unitDp.v_max)
                 
         if config.spectra: 
             if config.resolved:     
-                calc.spectrum.spectrum_bb(system, header, icec_el, icec, R, electronE, unitD.v_max, unitDp.v_max)
+                calc.spectrum.bb(system, header, icec_el, icec, R, electronE, unitD.v_max, unitDp.v_max)
             if config.FC:
-                calc.spectrum.spectrum_bb(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
+                calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
 
     if config.bc and config.FC:
         if config.cross_section:
-            calc.cross_section.xs_bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE, modifier='-FC')
+            calc.cross_section.bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE, modifier='-FC')
         if config.spectra:
-            calc.spectrum.spectrum_bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
+            calc.spectrum.bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
 
 # ===== PLOTS =====
 
 if config.plotting:
     if config.bb:
         if config.cross_section and config.FC:
-            plot.cross_section.xs_FC_bb(system, icec, R, icec_el)
+            plot.cross_section.bb_resolved_FC_rydberg(system, icec, R, icec_el)
         if config.spectra and config.FC:
-            plot.spectrum.spectrum_FC_bb(system, R, electronE, unitD.v_max, icec_el=icec_el)
+            plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
     
     if config.bc and config.FC:
         if config.cross_section:
-            plot.cross_section.xs_FC(system, icec_FC, R, icec_el)
+            plot.cross_section.bb_and_bc(system, icec_FC, R, icec_el)
         if config.spectra:   
-            plot.spectrum.spectrum_FC(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_+$ [eV]")
+            plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_+$ [eV]")
             
     if config.spectra and config.temp_dependence:
-        plot.spectrum.boltzmann_FC(system, icec_FC, R, electronE, config.T, vD_max_bc)
+        plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_bc)
