@@ -144,6 +144,14 @@ class IntraICEC(ICEC):
         self.vib_diff_to_v0_D = np.cumsum(vib_spacing_D)
         self.vib_diff_to_v0_Dp = np.cumsum(vib_spacing_Dp)
     
+    def convert_minima_to_vertical_IP(self, IP_minima):
+        IP_vertical = IP_minima + (self.Morse_Dp.V(self.Morse_D.re) + self.Morse_Dp.De)
+        return IP_vertical
+    
+    def change_minima_to_adiabatic_IP(self):
+        IP_adiabatic = self.IP_D - (self.Morse_D.energy(0) + self.Morse_D.De) + (self.Morse_Dp.energy(0) + self.Morse_Dp.De)
+        self.IP_D = IP_adiabatic
+    
     def electronE_f(self, electronE:float, vD:int, vDp:int) -> float:
         if vDp is None:
             vib_energy_D = 0
