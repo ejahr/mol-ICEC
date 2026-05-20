@@ -1,3 +1,12 @@
+'''
+Old file which is only for H+ LiH
+Similar to run_system.py
+'''
+
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from HLiH.data.H.H import H
 from HLiH.data.LiH.LiH import LiH, Li, LiHp
 
