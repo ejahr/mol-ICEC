@@ -1,8 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import plot.config
 from config import DIR_DATA, DIR_PLOTS
 from icec.icec import ICEC

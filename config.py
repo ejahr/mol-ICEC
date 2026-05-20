@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from icec.constants import Units, Constants
-import calc.fit
 
 '''
 All parameters should be given (or converted to) atomic units.
@@ -50,9 +49,7 @@ class unitA():  # A
     deg_factor  = 2 / 1                                 # degeneracy factor g_A/g_A- for detailed balance equation
     IP          = 13.598434599702 * Units.EV2HARTREE    # Ionization potential of A- = electron affinity of A
     file_PI_xs  = DIR_DATA + f'{name}/{name}.txt'       # file name of the PI XS of A-
-    degree      = 15
-    
-    PI_xs       = calc.fit.generate_polyfit(file_PI_xs, degree)
+    degree      = 15                                    # degree for polynomial fit, optional
     
 class unitD():  # D
     name        = 'LiH'                                 # name of unit D
@@ -72,8 +69,6 @@ class unitD():  # D
     
     file_PI_xs_resolved = DIR_DATA + f'{name}/{name}_vi_vf_'    # file name structure of the resolved PI XS of D, in code: + '_0_0.txt'
     file_PI_xs_unresolved = DIR_DATA + f'{name}/{name}.txt'     # file name of the unresolved/electronic PI XS of D
-    
-    PI_xs_el = calc.fit.generate_linfit(file_PI_xs_unresolved)
 
 class unitDp(): # D+
     mu          = unitD.mu
