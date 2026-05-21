@@ -17,7 +17,7 @@ electronE   = config.electronE
 R           = config.R
 L           = config.L
 
-vD_max_bc   = config.vD_max_bc
+vD_max_FC   = config.vD_max_FC
 min_kinE    = config.min_kinE
 max_kinE    = config.max_kinE
 max_dissE   = config.max_dissE
@@ -29,7 +29,6 @@ unitDp      = config.unitDp
 
 system      = config.system_name
 header      = config.reaction + '\n'
-title       = config.title
 
 if hasattr(unitA, 'degree'):
     PI_xs_A = calc.fit.generate_polyfit(unitA.file_PI_xs, unitA.degree)
@@ -104,7 +103,7 @@ if config.calculate:
             if config.resolved:
                 calc.cross_section.bb(system, header, icec, R, unitD.v_max, unitDp.v_max)
             if config.FC:
-                calc.cross_section.bb(system, header, icec_FC, R, modifier='-FC')
+                calc.cross_section.bb(system, header, icec_FC, R, vD_max_FC, modifier='-FC')
             if config.rydberg:
                 calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max, 0, unitDp.v_max)
                 
@@ -112,13 +111,13 @@ if config.calculate:
             if config.resolved:     
                 calc.spectrum.bb(system, header, icec_el, icec, R, electronE, unitD.v_max, unitDp.v_max)
             if config.FC:
-                calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, modifier='-FC')
+                calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, vD_max_FC, modifier='-FC')
 
     if config.bc and config.FC:
         if config.cross_section:
-            calc.cross_section.bc(system, header, icec_FC, R, vD_max=0, max_dissE=max_dissE, modifier='-FC')
+            calc.cross_section.bc(system, header, icec_FC, R, vD_max_FC, max_dissE, modifier='-FC')
         if config.spectra:
-            calc.spectrum.bc(system, header, icec_FC, R, electronE, vD_max_bc, modifier='-FC')
+            calc.spectrum.bc(system, header, icec_FC, R, electronE, vD_max_FC, modifier='-FC')
 
 # ===== PLOTS =====
 
@@ -136,4 +135,4 @@ if config.plotting:
             plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_+$ [eV]")
             
     if config.spectra and config.temp_dependence:
-        plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_bc)
+        plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_FC)

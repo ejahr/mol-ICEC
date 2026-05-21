@@ -22,7 +22,7 @@ reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'          # used in the header of 
 R           = 3.9522557993362915 * Units.ANGSTROM2BOHR   # distance between center of masses of A and D
 L           = 8     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
 
-vD_max_bc   = 7                             # maximum initial vibrational state considered for bound-continuum transitions
+vD_max_FC   = 7                             # maximum initial vibrational state considered for bound-continuum transitions
 min_kinE    = 0.01  * Units.EV2HARTREE      # minimum incoming electron energy
 max_kinE    = 9     * Units.EV2HARTREE      # maximum incoming electron energy
 max_dissE   = 2     * Units.EV2HARTREE      # maximum energy up to which the dissociative states are calculated
