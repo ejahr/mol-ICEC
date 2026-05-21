@@ -52,20 +52,20 @@ max_kinE_unresolved = min(max_kinE, max_kinE_data)
 
 # --- ICEC with vibrationally resolved photoionization cross section of D ---
 if config.resolved:
-    icec        = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_resolved)
-    icec.define_Morse_D(*morse_parameters_initial)
-    icec.define_Morse_Dp(*morse_parameters_final)
-    icec.define_PI_xs_D(method="resolved")
-    icec.make_energy_grid(min_kinE, max_kinE, num_grid)
-    icec.change_minima_to_adiabatic_IP()
-    IP_vertical = icec.convert_minima_to_vertical_IP(unitD.IP)
+    icec_bb = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_resolved)
+    icec_bb.define_Morse_D(*morse_parameters_initial)
+    icec_bb.define_Morse_Dp(*morse_parameters_final)
+    icec_bb.define_PI_xs_D(method="resolved")
+    icec_bb.make_energy_grid(min_kinE, max_kinE, num_grid)
+    icec_bb.change_minima_to_adiabatic_IP()
+    IP_vertical = icec_bb.convert_minima_to_vertical_IP(unitD.IP)
 
     if hasattr(unitD, 'vib_spacing') and hasattr(unitDp, 'vib_spacing'):
-        icec.input_vib_spacing_D(unitD.vib_spacing, unitDp.vib_spacing)
+        icec_bb.input_vib_spacing_D(unitD.vib_spacing, unitDp.vib_spacing)
     
 # --- ICEC within Franck-Condon approximation for photoionization of D ---
 if config.FC:
-    icec_FC     = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_unresolved)
+    icec_FC = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_unresolved)
     icec_FC.define_Morse_D(*morse_parameters_initial)
     icec_FC.define_Morse_Dp(*morse_parameters_final, box_length=L)
     icec_FC.define_PI_xs_D(method="FC")
@@ -84,7 +84,7 @@ if config.FC and config.bc:
 # --- Rydberg ICEC ---
 if config.rydberg:
     if config.resolved:
-        icec_rydberg = RydbergIntraICEC.from_IntraICEC(icec, n=2)
+        icec_rydberg = RydbergIntraICEC.from_IntraICEC(icec_bb, n=2)
     elif config.FC:
         icec_rydberg = RydbergIntraICEC.from_IntraICEC(icec_FC, n=2)
     icec_rydberg.make_energy_grid(Units.EV2HARTREE, max_kinE, num_grid)
@@ -102,22 +102,29 @@ if config.calculate:
     if config.bb: 
         if config.cross_section:
             if config.resolved:
-                calc.cross_section.bb(system, header, icec, R, unitD.v_max, unitDp.v_max)
+                print('--- b-b xs resolved ---')
+                calc.cross_section.bb(system, header, icec_bb, R, unitD.v_max, unitDp.v_max)
             if config.FC:
+                print('--- b-b xs FC ---')
                 calc.cross_section.bb(system, header, icec_FC, R, vD_max_FC, modifier='-FC')
             if config.rydberg:
+                print('--- b-b xs rydberg ---')
                 calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max, 0, unitDp.v_max)
                 
         if config.spectra: 
             if config.resolved:     
-                calc.spectrum.bb(system, header, icec_el, icec, R, electronE, unitD.v_max, unitDp.v_max)
+                print('--- b-b spectrum resolved ---') 
+                calc.spectrum.bb(system, header, icec_el, icec_bb, R, electronE, unitD.v_max, unitDp.v_max)
             if config.FC:
+                print('--- b-b spectrum FC ---')  
                 calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, vD_max_FC, modifier='-FC')
 
     if config.bc and config.FC:
         if config.cross_section:
+            print('--- b-c xs FC ---')
             calc.cross_section.bc(system, header, icec_FC, R, vD_max_FC, max_dissE, modifier='-FC')
         if config.spectra:
+            print('--- b-c spectrum FC ---')
             calc.spectrum.bc(system, header, icec_FC, R, electronE, vD_max_FC, modifier='-FC')
 
 # ===== PLOTS =====

@@ -48,16 +48,16 @@ max_kinE_unresolved = energies[-1]*Units.EV2HARTREE - unitA.IP
 # ===== Initialize ICEC classes =====
 
 # --- ICEC with vibrationally resolved photoionization cross section of D ---
-icec = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_resolved)
-icec.input_vib_spacing_D(unitD.vib_spacing, unitDp.vib_spacing)
-icec.define_Morse_D(*morse_parameters_initial)
-icec.define_Morse_Dp(*morse_parameters_final)
-icec.change_minima_to_adiabatic_IP()
-icec.make_energy_grid(min_kinE, max_kinE, num_grid)
-icec.define_PI_xs_D(method="resolved")
+icec_bb = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_resolved)
+icec_bb.input_vib_spacing_D(unitD.vib_spacing, unitDp.vib_spacing)
+icec_bb.define_Morse_D(*morse_parameters_initial)
+icec_bb.define_Morse_Dp(*morse_parameters_final)
+icec_bb.change_minima_to_adiabatic_IP()
+icec_bb.make_energy_grid(min_kinE, max_kinE, num_grid)
+icec_bb.define_PI_xs_D(method="resolved")
 
 # --- Rydberg ---
-icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec, n=2)
+icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec_bb, n=2)
 icec_rydberg.make_energy_grid(min_kinE_rydberg, max_kinE, int(num_grid/2))
 
 # --- ICEC with Franck-Condon model ---
@@ -69,17 +69,16 @@ icec_FC.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
 icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
-if config.FC and config.bc:
-    fname = config.DIR_DATA + f'{unitD.name}/{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(config.L*Units.BOHR2ANGSTROM)}A.txt'
-    if config.calc_roots:
-        roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
-        plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
-    icec_FC.Morse_Dp.load_diss_states(fname)
+fname = config.DIR_DATA + f'{unitD.name}/{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(config.L*Units.BOHR2ANGSTROM)}A.txt'
+if config.calc_roots:
+    roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
+    plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
+icec_FC.Morse_Dp.load_diss_states(fname)
 
 # --- electronic ICEC without any nuclear dynamics ---
 PI_xs_D_el      = calc.fit.generate_linfit(unitD.file_PI_xs_unresolved)
 icec_el         = ICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, PI_xs_D_el)
-icec_el.IP_D    = icec.convert_minima_to_vertical_IP(unitD.IP)
+icec_el.IP_D    = icec_bb.convert_minima_to_vertical_IP(unitD.IP)
 icec_el.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
 
 # ===== CALCULATION =====
@@ -91,7 +90,7 @@ if config.calculate:
         if config.cross_section:
             if config.resolved:
                 print('--- b-b xs resolved ---')
-                calc.cross_section.bb(system, header, icec, R, unitD.v_max, unitDp.v_max)
+                calc.cross_section.bb(system, header, icec_bb, R, unitD.v_max, unitDp.v_max)
             if config.FC:
                 print('--- b-b xs FC ---')
                 calc.cross_section.bb(system, header, icec_FC, R, vD_max_FC, modifier='-FC')
@@ -102,7 +101,7 @@ if config.calculate:
         if config.spectra: 
             if config.resolved:   
                 print('--- b-b spectrum resolved ---')  
-                calc.spectrum.bb(system, header, icec_el, icec, R, electronE, unitD.v_max, unitDp.v_max)
+                calc.spectrum.bb(system, header, icec_el, icec_bb, R, electronE, unitD.v_max, unitDp.v_max)
             if config.FC:
                 print('--- b-b spectrum FC ---')  
                 calc.spectrum.bb(system, header, icec_el, icec_FC, R, electronE, vD_max_FC, modifier='-FC')
@@ -128,10 +127,10 @@ if config.plotting:
         if config.cross_section:
             plot.cross_section.bb_and_bc(system, icec_FC, R)
         if config.spectra:   
-            plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_+$ [eV]")
+            plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_{\mathrm{LiH}^+}$ [eV]")
             
     if config.spectra and config.temp_dependence:
         plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_FC)
 
-
-plot.pes.pes(icec_FC, 'LiH', config.L, LiH.energy_diff_at_inf*Units.HARTREE2EV)
+    plot.pes.pes(icec_FC, 'LiH', config.L, LiH.energy_diff_at_inf*Units.HARTREE2EV)
+    plot.pes.energy_sketch()
