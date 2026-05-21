@@ -107,7 +107,6 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
     ax = plt.gca() 
     ax.set_title(title)
     set_axes(ax)
-    #ax.set_ylim(1e-5, 3)
     ax.set_ylim(1e-3, 50)
     ax.set_xlim(6.545, 7.265)
     
@@ -149,7 +148,6 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     fig = plt.figure(figsize=(6,4.1))
     ax = plt.gca() 
     set_axes(ax)
-    #ax.set_ylim(5*1e-4, 1)
     ax.set_ylim(1e-3, 10)
     ax2 = ax.twinx()
     ax2.set_ylabel(r"$\mathrm{d}\sigma/\mathrm{d}E$ [Mb/eV]", rotation=-90)
@@ -168,8 +166,6 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     if icec_el is not None:
         plot_icec_el(ax, icec_el, electronE, R, width=0.005)
     
-    #x_min = min(results_bc[:,spectrum_idx(vD, 'E_out')]) + 0.17
-    #x_min = 5.69
     x_min = 5.5
     x_max = max(results_bb[:,spectrum_idx(vD, 'E_out')]) + 0.04
     ax.set_xlim(x_min, x_max)
@@ -179,7 +175,7 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
                 xytext=(-26,-1),
                 textcoords='offset points', color='dimgray') 
     
-    print('PR xs =', icec.PR_xs_A(electronE)*Units.AU2MB, 'eV')
+    #print('PR xs =', icec.PR_xs_A(electronE)*Units.AU2MB, 'eV')
     
     diss_energy_secax(ax, vD, results_bc, label=secax_label)
 
@@ -208,7 +204,6 @@ def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=
                 broadened_peak = xs * occupation * lorentzian(lorentzian_energies, energy, gamma)
                 broadened_peak[lorentzian_energies < min_energy] = 0
                 lorentzian_spectrum += broadened_peak 
-                #ax.plot(lorentzian_energies, lorentzian_spectrum)
         else:
             ax.bar(energies, spectrum*occupation, width=0.005, color=color, **kwargs)
      
@@ -237,7 +232,6 @@ def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
         xs_interpolated = interpolate(energy, energy_vD, xs_vD)
         avg += xs_interpolated * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
     
-    #avg[avg<1e-30]=np.nan
     ax.plot(energy, avg, color=color, ls="--", **kwargs)
     
 def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el:ICEC=None):
@@ -251,7 +245,7 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
     fig = plt.figure(figsize=(6, 4))
     ax = plt.gca() 
     set_axes(ax, differential=True)
-    #ax.set_ylim(5*1e-4, 1)
+
     ax.set_ylim(1e-3, 10)
     ax.set_xlim(5.5, 8)
     
@@ -266,7 +260,6 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
         blues = [blues(idx / (len(T) + 2 / len(T))) for idx in range(len(T))]
     zorders = [len(T)-i for i in range(len(T))]
     for t, zorder, blue in zip(T, zorders, blues):
-        #blue = blues(T.index(t) / (len(T) + 2 / len(T)))
         plot_boltzmann_bc(ax, icec, results_bc_FC, vD_max, t, blue, zorder=zorder)
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         

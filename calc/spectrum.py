@@ -40,7 +40,8 @@ def bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electron
         if spectrum_all_vD.size == 0:
             spectrum_all_vD = spectrum
         else:
-            spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))          
+            spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))
+    # TODO rename to spectrum.bb.          
     fname = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     

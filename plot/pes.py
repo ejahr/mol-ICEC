@@ -78,9 +78,6 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
         L: maximum distance, length of the box
         yshif: difference between the two PES at R -> infty
     """   
-    print("num of vib states for D :", icec.Morse_D.vmax + 1)
-    print("num of vib states for D+:", icec.Morse_Dp.vmax + 1)
-    
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
     ax1.spines.bottom.set_visible(False)

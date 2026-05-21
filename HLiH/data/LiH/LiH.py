@@ -4,6 +4,7 @@ Collects (additional) data for LiH and LiH+
 - spectroscopic constants
 - energy spacings between vibrational states
 - Franck-Condon factors
+- R_min for H+ LiH
 Not needed for the calculation of ICEC. All necessary parameters are defined in config.py
 '''
 
@@ -19,6 +20,7 @@ class ReadOnly(type):
         raise AttributeError("Constants are read-only")
     
 # =================== Li ==========================
+
 class Li(metaclass=ReadOnly):
     m = 7*Constants.m_p + 3
     # NIST
@@ -96,7 +98,6 @@ class LiHp(metaclass=ReadOnly):
     vib_spacing = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) 
     vib_spacing *= Units.WAVENUMBER2HARTREE
     vib_diff_to_v0 = np.cumsum(vib_spacing)
-    
     
 # ================== R min for H+ LiH ===================
 
