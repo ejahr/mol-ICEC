@@ -36,7 +36,7 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     print('\n--- FC factor ---')
     print('tot b-b from 0')
     FC_abinitio_sum = sum(LiH.FC_abinitio[vi][vf] for vf in range(7))
-    FC_Morse_sum = sum(icec_FC.FC_factor(vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1))
+    FC_Morse_sum = sum(icec_FC.FC_bb_D(vi,vf) for vf in range(icec_FC.Morse_Dp.vmax+1))
     print(' FC ab initio', FC_abinitio_sum)
     print(' FC Morse    ', FC_Morse_sum)
     print(' ratio       ', FC_Morse_sum/FC_abinitio_sum)
@@ -44,7 +44,7 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
     for vf in range(5):
         print(f'{vi}->{vf}')
         print(' PI / PI elec', icec.PI_xs_D(vi,vf,omega)/icec_el.PI_xs_D(omega))
-        print(' FC Morse    ', icec_FC.FC_factor(vi,vf))
+        print(' FC Morse    ', icec_FC.FC_bb_D(vi,vf))
         print(' FC ab initio', LiH.FC_abinitio[vi][vf])
         
     print(f'\n--- ICEC Cross section [Mb] at {round(electronE*Units.HARTREE2EV,1)} eV---')
@@ -77,10 +77,10 @@ def test_FC_factors(icec_el: ICEC, icec:IntraICEC, icec_FC:IntraICEC, R:float):
         print(f'{vi}->{vf}/{vi}->{vf-1}')
         print(' PI          ', icec.PI_xs_D(0,vf,omega)/icec.PI_xs_D(0,vf-1,omega))
         print(' FC ab initio', LiH.FC_abinitio[vi][vf]/LiH.FC_abinitio[vi][vf-1])
-        print(' FC Morse    ', icec_FC.FC_factor(0,vf)/icec_FC.FC_factor(0,vf-1))
+        print(' FC Morse    ', icec_FC.FC_bb_D(0,vf)/icec_FC.FC_bb_D(0,vf-1))
         
 def print_FC_factor(icec:IntraICEC, vD, E):
-    fc_factor = icec.FC_factor(0, 0)
+    fc_factor = icec.FC_bb_D(0, 0)
     print(f"FC factor 0 -> 0 : {fc_factor}")
     fc_factor = icec.FC_bc_D(vD, E, dps=50)
     print(f"FC factor {vD} -> {round(E*Units.HARTREE2EV,1)} eV : {fc_factor}")

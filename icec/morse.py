@@ -6,18 +6,10 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from .constants import Units, Constants
 
 class Morse:
-    """Morse potential model for diatomic molecules.
+    '''Morse potential model for diatomic molecules.
 
     Uses atomic units (hbar=1, me=1, hartree energy=1).
     Adapted from https://scipython.com/blog/the-morse-oscillator and https://liu-group.github.io/Morse-potential
-
-    Args:
-        mu (float): Reduced mass (electron mass).
-        we (float): Vibrational constant (Hartree).
-        re (float): Equilibrium bond distance (Bohr).
-        De (float): Dissociation energy (Hartree).
-        wexe (float, optional): Defaults to 0.
-        E0 (float, optional): Reference energy offset (Hartree). Defaults to 0.
 
     Attributes:
         mu (float): Reduced mass (electron mass).
@@ -30,11 +22,19 @@ class Morse:
         vmax (int): Maximum bound vibrational quantum number.
         rmin (float): Suggested lower radial bound (Bohr).
         rmax (float): Suggested upper radial bound (Bohr).
-        
-    TODO put Morse class in separate file
-    """
+    '''
 
     def __init__(self, mu:float, we:float, re:float, De:float, wexe:float=0, E0:float=0):
+        ''''
+        Args:
+            mu (float): Reduced mass (electron mass).
+            we (float): Vibrational constant (Hartree).
+            re (float): Equilibrium bond distance (Bohr).
+            De (float): Dissociation energy (Hartree).
+            wexe (float, optional): Defaults to 0.
+            E0 (float, optional): Reference energy offset (Hartree). Defaults to 0.
+        '''
+        
         self.mu = mu
         self.we = we
         self.re = re 
@@ -57,18 +57,18 @@ class Morse:
         self.rmax = self.re - np.log(1 - f) / self.alpha
 
     def V(self, r:float) -> float:
-        """Morse potential V(r), with V(inf) = 0.
+        '''Morse potential V(r), with V(inf) = 0.
         
         Args:
             r (float): Interatomic distance (Bohr).
 
         Returns:
             float: Potential energy (Hartree).
-        """
+        '''
         return self.De * (1 - np.exp(-self.alpha * (r - self.re))) ** 2 - self.De
 
     def psi(self, v:int, r:float):
-        """Return the v-th bound-state eigenfunction at distance r.
+        '''Return the v-th bound-state eigenfunction at distance r.
 
         Args:
             v (int): Vibrational quantum number (0 <= v <= vmax).
@@ -76,7 +76,7 @@ class Morse:
 
         Returns:
             mpmath.mpf or complex: Wavefunction value at r.
-        """
+        '''
         z = self.z0 * mpmath.exp(-self.alpha * r)
         N = mpmath.sqrt(
             (2 * self.lam - 2 * v - 1)
@@ -92,14 +92,14 @@ class Morse:
         )
 
     def energy(self, v:int) -> float:
-        """Return the energy of the v-th bound state.
+        '''Return the energy of the v-th bound state.
 
         Args:
             v (int): Vibrational quantum number (0 <= v <= vmax).
 
         Returns:
             float: Energy of the v-th bound state, E < 0 (Hartree).
-        """
+        '''
         if self.wexe > 0:
             return self.we * (v + 0.5) - self.wexe * (v + 0.5) ** 2 - self.De
         return self.we * (v + 0.5) - (self.we * (v + 0.5)) ** 2 / (4 * self.De) - self.De
@@ -158,7 +158,7 @@ class Morse:
         n = self.box_length * np.sqrt(2 * self.mu * E) / np.pi
         return round(n / d)
 
-    def get_norm_diss(self, E:float, dps=15):
+    def get_norm_diss(self, E:float, dps:int=15):
         '''Box normalization of the dissociative Morse states.
         - E : energy (Hartree, a.u.)
         - lower_bound : lower bound for the integration
@@ -181,10 +181,11 @@ class Morse:
 
     def psi_diss(self, E:float, r:float):
         '''Dissociative (continuum) states of the Morse potential
-        source: https://doi.org/10.1088/0953-4075/21/16/011
-        mpmath.hyp1f1: https://mpmath.org/doc/current/functions/hypergeometric.html#hyp1f1
-        - E : energy above dissociation limit (Hartree)
-        - r : interatomic distance (Bohr)
+        - source: https://doi.org/10.1088/0953-4075/21/16/011
+        - mpmath.hyp1f1: https://mpmath.org/doc/current/functions/hypergeometric.html#hyp1f1
+        
+        - E: energy above dissociation limit (Hartree)
+        - r: interatomic distance (Bohr)
         '''
         if mpmath.fabs(E) < 0:
             raise ValueError(f'E should be > 0. But E = {E}')
@@ -205,7 +206,7 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def solve_root(self, max_energy, root_estimate, scale=1, dps=15):
+    def solve_root(self, max_energy:float, root_estimate, scale=1, dps:int=15):
         def psi_diss_L(E:float):
             if hasattr(E, "__len__"):
                 E = E[0]
@@ -223,8 +224,8 @@ class Morse:
         return mpmath.re(root)
     
     def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500):
-        """Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
-        """
+        '''Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
+        '''
         first_root = self.solve_root(max_energy, root_estimate=1e-10, scale=1e-3, dps=50)
         print("first root", first_root, mpmath.fabs(self.psi_diss(first_root, self.box_length)))
         root_estimates = np.geomspace(float(first_root), max_energy, num)
@@ -248,7 +249,7 @@ class Morse:
         self.diss_energies = roots
         return roots, root_estimates
     
-    def DoS_box(self, energy):
+    def DoS_box(self, energy:float):
         return np.sqrt(2*self.mu/energy) * self.box_length / (2*np.pi)
     
     def get_DoS(self, energies=None):
@@ -266,7 +267,7 @@ class Morse:
         return DoS
     
     def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE, num:int=500):
-        header = "Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = " + str(round(self.box_length*Units.BOHR2ANGSTROM)) + " Angstrom\n"
+        header = f"Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = {round(self.box_length*Units.BOHR2ANGSTROM)} Angstrom\n"
         header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.] | DoS in 1D box [a.u.]"
         roots, root_estimates = self.find_solutions_in_box(max_energy, num)   
         
@@ -291,7 +292,7 @@ class Morse:
         self.diss_norms = data[:,2]
         self.DoS = data[:,3]
          
-    def boltzmann_norm(self, t):
+    def boltzmann_norm(self, t:float):
         norm = sum(
             # add De to energy(vi) to get positive values which increases numerical stability
             np.exp(- (self.energy(v) + self.De) / Constants.KB / t) 
@@ -299,15 +300,15 @@ class Morse:
         )
         return norm
     
-    def boltzmann_occupation(self, t, v, norm=None):
+    def boltzmann_occupation(self, t:float, v:int, norm=None):
         if norm is None:
             norm = self.boltzmann_norm(t)
         return np.exp( -(self.energy(v) + self.De) / Constants.KB / t ) / norm
 
     def make_rgrid(self, num:int=1000, rmin:float=None, rmax:float=None):
-        """Generates a grid of interatomic distances r (Bohr, a.u.)
+        '''Generates a grid of interatomic distances r (Bohr, a.u.)
         - resolution : number of grid points
-        """
+        '''
         if rmin is None:
             rmin = self.rmin
         if rmax is None:
@@ -316,7 +317,7 @@ class Morse:
         return self.r
 
     def plot_V(self, ax, **kwargs):
-        """ Plots the potential energy surface V(r)"""
+        ''' Plots the potential energy surface V(r)'''
         if not hasattr(self, "r"):
             self.make_rgrid()
         V = self.V(self.r)
@@ -331,8 +332,8 @@ def equal_mpf(a, b, rtol=1e-5, atol=0.0):
     return False
         
 def unique_mpf(arr, rtol=1e-5, atol=0.0):
-    """ Returns sorted array of unique floats     
-    """
+    ''' Returns sorted array of unique floats     
+    '''
     arr = np.asarray(arr, dtype=float)
     if arr.size == 0:
         return arr
