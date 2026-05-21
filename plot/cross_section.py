@@ -41,11 +41,11 @@ def read_results(system, R, modifier='', L=None):
     
 # ===== HELPER PLOT FUNCTIONS =====
             
-def plot_xs_el(ax, icec:ICEC, R, label='electronic', color='black', **kwargs):
+def plot_xs_el(ax, system, R, label='electronic', color='black', **kwargs):
     'plots electronic ICEC cross section against incoming electron energies'
-    # TODO calculate xs and save in file
-    energy = icec.energyGrid * Units.HARTREE2EV
-    xs = icec.xs_energy(R) * Units.AU2MB
+    results = read_results(system, R, modifier='-electronic')
+    energy = results[:,0]
+    xs = results[:,1]
     ax.plot(energy, xs, color=color, label=label, **kwargs)
 
 def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
@@ -101,7 +101,7 @@ def PI_PR_A(icec:ICEC):
     fname = DIR_PLOTS + f'{unitA.name}.PI.PR.pdf'
     fig.savefig(fname)
     
-def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, vi:int = 0):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy.
@@ -124,9 +124,7 @@ def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:in
     plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
     plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue', zorder=1)
     plot_xs_rydberg(ax, system, R, n=2, color='tab:purple')
-    
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R)
+    plot_xs_el(ax, system, R)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
@@ -134,7 +132,7 @@ def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:in
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def bb_and_bc(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
+def bb_and_bc(system, icec:IntraICEC, R, vi:int = 0):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy.
@@ -156,22 +154,18 @@ def bb_and_bc(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     else:
         ax.set_ylim(3*1e-4,60)
         
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R, label="elec.", zorder=1)
-    #icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':')      
-
+    plot_xs_el(ax, system, R, label="elec.", zorder=1)   
     L = icec.Morse_Dp.box_length
     plot_xs_tot(ax, system, R, vi, L, label=r'tot', modifier='-FC', color='tab:blue', ls=':')
     plot_xs_bc(ax, system, R, vi, L, label=r'b-d', modifier='-FC', color='tab:blue', ls='--')
     plot_xs(ax, system, R, vi, label=r'b-b', modifier='-FC', color='tab:blue')
-    #plot_xs(ax, system, R, vi, label=r'b-b', color='tab:blue') 
     
     ax.legend(ncols=2)
     fname = DIR_PLOTS + f'{system}.xs-FC.bc.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
-def bb_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
+def bb_vD(system, icec: IntraICEC, R, vD_max):
     ''' 
     Generates plot: 
         ICEC cross section vs. incoming electron energy for different initial vibrational states of D.
@@ -187,8 +181,7 @@ def bb_vD(system, icec: IntraICEC, R, vD_max, icec_el:ICEC=None):
     ax = plt.gca() 
     set_axes(ax)
     
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R)
+    plot_xs_el(ax, system, R)
         
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
@@ -217,7 +210,7 @@ def boltzmann(icec: IntraICEC, results, vD_max, t):
         )
     return avg/norm
     
-def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None):
+def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max):
     ''' 
     Generates plot: 
         ICEC cross section against incoming electron energy for different temperatures.
@@ -242,8 +235,7 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None
     for col in range(1,results.shape[1]):
         results[:, col] += results_bb[:, col]
         
-    if icec_el is not None:
-        plot_xs_el(ax, icec_el, R)
+    plot_xs_el(ax, system, R)
             
     blues = plt.get_cmap("Blues_r")    
     for t in T:
@@ -256,9 +248,6 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max, icec_el:ICEC=None
         xs = boltzmann(icec, results_bc, vD_max, t)
         ax.plot(results_bc[:,0], xs, color=blue, ls='--')
         
-        #xs = boltzmann(icec, results, vD_max, t)
-        #ax.plot(results[:,0], xs, color=blue, ls=':')
-    
     ax.legend()
     fname = DIR_PLOTS + f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)

@@ -96,6 +96,7 @@ icec_el.IP_D        = IP_vertical
 icec_el.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
 
 # ===== CALCULATION =====
+calc.cross_section.electronic(system, header, icec_el, R)
 
 if config.calculate:
     if config.bb: 
@@ -124,13 +125,13 @@ if config.calculate:
 if config.plotting:
     if config.bb:
         if config.cross_section and config.FC:
-            plot.cross_section.bb_resolved_FC_rydberg(system, icec, R, icec_el)
+            plot.cross_section.bb_resolved_FC_rydberg(system, icec_bb, R)
         if config.spectra and config.FC:
             plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
     
     if config.bc and config.FC:
         if config.cross_section:
-            plot.cross_section.bb_and_bc(system, icec_FC, R, icec_el)
+            plot.cross_section.bb_and_bc(system, icec_FC, R)
         if config.spectra:   
             plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_+$ [eV]")
             

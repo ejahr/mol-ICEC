@@ -46,7 +46,6 @@ def extend_header_bc(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, 
 # ========= Running calculations and saving results ============
 
 def electronic(system:str, header:str, icec:ICEC, R:float):
-    # TODO
     header = extend_header(header, R, electronic=True)
     xs_array = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
