@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
-from config import DIR_RESULTS, DIR_PLOTS
+from config import DIR_RESULTS, DIR_PLOTS, unitA
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -79,6 +79,27 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
 # ===== CROSS SECTION PLOTS ======
+
+def PI_PR_A(icec:ICEC):
+    ''' 
+    Generates plot: 
+        photoionization and photorecombination cross section of unit A
+    '''
+    fig = plt.figure()
+    ax = plt.gca() 
+    ax.set_yscale('log')
+    ax.set_xlabel(r'$\varepsilon$ [eV]')
+    ax.set_ylabel(r'$\sigma$ [Mb]')
+    
+    energies = icec.energyGrid
+    omegas = np.array([icec.omega(electronE) for electronE in energies])
+    PI_xs = np.array([icec.PI_xs_A(omega) for omega in omegas])
+
+    ax.plot(energies*Units.HARTREE2EV, PI_xs*Units.AU2MB, label = 'PI')
+    icec.plot_PR_xs(ax, label = 'PR')
+    ax.legend()
+    fname = DIR_PLOTS + f'{unitA.name}.PI.PR.pdf'
+    fig.savefig(fname)
     
 def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, icec_el:ICEC = None, vi:int = 0):
     ''' 

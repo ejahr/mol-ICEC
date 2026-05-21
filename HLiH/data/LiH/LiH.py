@@ -11,9 +11,7 @@ import numpy as np
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-from config import DIR_DATA
 from icec.constants import Units, Constants
-from calc.fit import generate_linfit
 from HLiH.data.H.H import H
 
 class ReadOnly(type):
@@ -68,16 +66,6 @@ class LiH(metaclass=ReadOnly):
     vib_diff_to_v0 = np.cumsum(vib_spacing)
     vib_energies = vib_diff_to_v0 + energy_v0
     
-    # --- Photoionization cross section ---
-    file_PI_xs_resolved = DIR_DATA + 'LiH/LiH_vi_vf_'
-    file_PI_xs_unresolved = DIR_DATA + 'LiH/LiH.txt'
-    
-    PI_xs = generate_linfit(file_PI_xs_unresolved)
-
-    xs_data = np.loadtxt(file_PI_xs_unresolved, comments='#')
-    energies = xs_data[:,0]
-    max_kinE_unresolved = energies[-1]*Units.EV2HARTREE - H.IP
-    
     # --- FC Factors for LiH -> LiH+ ---
     # https://doi.org/10.1063/1.479970
     FC_abinitio = [[0.0153, 0.0292, 0.0305, 0.0214, 0.0103, 0.0031, 0.0004],
@@ -108,6 +96,17 @@ class LiHp(metaclass=ReadOnly):
     vib_spacing = np.array([0, 351.6, 257.2, 163.5, 84.1, 31.8, 7.3]) 
     vib_spacing *= Units.WAVENUMBER2HARTREE
     vib_diff_to_v0 = np.cumsum(vib_spacing)
+    
+    
+# ================== R min for H+ LiH ===================
+
+def R_min():
+    # https://doi.org/10.1039/D3CP02959J Tab.3
+    r_LiH = 1.646 * Units.ANGSTROM2BOHR
+    r_HH = 2.513 * Units.ANGSTROM2BOHR
+    r_COM_LiH = (H.m * r_LiH + 0) / (H.m + Li.m)
+    R_min = r_LiH - r_COM_LiH + r_HH
+    return R_min
     
 # ====================== TEST ==========================
 
