@@ -13,7 +13,7 @@ from matplotlib import rcParams
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
-from config import DIR_PLOTS
+from config import DIR_PLOTS, unitDp
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -145,7 +145,7 @@ def roots(morse:Morse, roots, root_estimates, max_energy):
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
     plt.tight_layout()
-    fname = DIR_PLOTS + f'LiHp.roots.E{round(max_energy*Units.HARTREE2EV,1)}eV.{round(morse.box_length*Units.BOHR2ANGSTROM)}A.pdf'
+    fname = DIR_PLOTS + f'{unitDp.name}.roots.E{round(max_energy*Units.HARTREE2EV)}.L{round(morse.box_length*Units.BOHR2ANGSTROM)}.pdf'
     fig.savefig(fname)
 
 def diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
@@ -264,8 +264,6 @@ def energy_sketch():
     ax.plot([x_A+0.005, x_D-0.005], [E_A+shift_A/2, E_D+shift_D/2], lw=1.5, color='tab:red')
     set_rcParams()
 
-    #ax.set_xlim(-2.5, 2.5)
-    #ax.set_ylim(-0.2, 3)
     ax.axis("off")
     fname = DIR_PLOTS + "icec_energy_sketch.pdf"
     fig.savefig(fname, bbox_inches='tight')
