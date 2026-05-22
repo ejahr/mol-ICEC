@@ -26,7 +26,7 @@ def get_fpath_spectrum(system:str, electronE:float, R:float, modifier:str='', L:
     return  DIR_RESULTS + fname + '.txt'
 
 def read_spectrum(system:str, electronE:float, R:float, modifier:str='', L:float=None):
-    fpath = get_fpath_xs(system, electronE, R, modifier, L)
+    fpath = get_fpath_spectrum(system, electronE, R, modifier, L)
     results = np.loadtxt(fpath, comments='#')
     return results  
 

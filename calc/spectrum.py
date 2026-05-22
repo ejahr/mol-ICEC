@@ -5,10 +5,10 @@ Defines functions for calculating ICEC electron spectra:
 '''
 
 import numpy as np
-from config import DIR_RESULTS
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
+import calc.file_io as file_io
 
 def extend_header(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, vDp_max:int=None, electronE:float=None, max_dissE=None):
     header += f"ICEC electron spectrum at E_in = {round(electronE*Units.HARTREE2EV)} eV\n"
@@ -41,8 +41,7 @@ def bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electron
             spectrum_all_vD = spectrum
         else:
             spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))
-    # TODO rename to spectrum.bb.          
-    fname = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
+    fname = file_io.get_fpath_spectrum(system, electronE, R, modifier + '.bb')      
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
     
 def bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
@@ -53,6 +52,6 @@ def bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD
     spectrum_all_vD = icec.spectrum_bc(electronE, R, vD=0)  
     for vD in range(1, vD_max+1):
         spectrum = icec.spectrum_bc(electronE, R, vD) 
-        spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))  
-    fname = DIR_RESULTS + f'{system}.spectrum{modifier}.bc.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt'
+        spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum)) 
+    fname = file_io.get_fpath_spectrum(system, electronE, R, modifier + '.bc', icec.Morse_Dp.box_length)  
     np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  

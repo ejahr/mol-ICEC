@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
-from config import DIR_PLOTS, DIR_RESULTS
+from config import DIR_PLOTS
 from plot.config import set_rcParams
+import calc.file_io as file_io
 
 set_rcParams()
 
@@ -26,30 +27,6 @@ def set_axes(ax, differential=False):
     else:
         ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
-    
-def read_results(system, electronE, R, modifier='', L=None):
-    file_path = DIR_RESULTS + f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
-    if L is not None:
-        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}'
-    file_path += '.txt'
-    results = np.loadtxt(file_path, comments='#')
-    return results  
-
-def spectrum_idx(vD, key):
-    ''' key: 'v_Dp', 'diss_energy', 'E_out', or 'xs'
-    '''
-    if key == 'v_Dp':           # final vibrational state, for bound-bound spectra
-        return 4*vD+1
-    elif key == 'diss_energy':  # final vibrational energy, for bound-dissociative spectra
-        return 4*vD+1
-    elif key == 'E_out':        # outgoing electron energy, corresponds to electronEf
-        return 4*vD+2
-    elif key == 'xs':           # icec cross section
-        return 4*vD+3
-    else:
-        raise ValueError(
-            "key not recognized, must be 'v_Dp', 'diss_energy', 'E_out', or 'xs'"
-        )    
         
 def interpolate(x0, x, y):
     interpolate_y = sp.interpolate.interp1d(
@@ -58,8 +35,8 @@ def interpolate(x0, x, y):
     return interpolate_y(x0)
 
 def diss_energy_secax(ax, vD, results_bc, label=r"$E_+$ [eV]"):
-    electronEf = results_bc[:, spectrum_idx(vD, 'E_out')]
-    diss_energy = results_bc[:, spectrum_idx(vD, 'diss_energy')]
+    electronEf = results_bc[:, file_io.spectrum_idx(vD, 'E_out')]
+    diss_energy = results_bc[:, file_io.spectrum_idx(vD, 'diss_energy')]
     E_max = electronEf[0] + diss_energy[0]
     
     def electron_to_vib(electronEf):
@@ -100,8 +77,8 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
         Darker shades use the Franck-Condon model.
         Electronic case (black) corresponds to the vertical ionization of D.
     '''
-    results_FC = read_results(system, electronE, R, modifier='-FC')
-    results_resolved = read_results(system, electronE, R)
+    results_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC')
+    results_resolved = file_io.read_spectrum(system, electronE, R)
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -120,16 +97,16 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
     for vD in range(vD_max+1):
         label = str(vD) #r'$v_i=$' + 
         ax.bar(
-            results_resolved[:,spectrum_idx(vD, 'E_out')], 
-            results_resolved[:,spectrum_idx(vD, 'xs')], 
+            results_resolved[:,file_io.spectrum_idx(vD, 'E_out')], 
+            results_resolved[:,file_io.spectrum_idx(vD, 'xs')], 
             width=0.006, color=color_resolved[vD], label=label)
         ax.bar(
-            results_FC[:,spectrum_idx(vD, 'E_out')], 
-            results_FC[:,spectrum_idx(vD, 'xs')], 
+            results_FC[:,file_io.spectrum_idx(vD, 'E_out')], 
+            results_FC[:,file_io.spectrum_idx(vD, 'xs')], 
             width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
-    fname = DIR_PLOTS + f"{system}.spectrum-FC.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.spectrum.bb.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -142,8 +119,8 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
         Black peak: electronic case (vertical ionization of D).
     '''
     L=icec.Morse_Dp.box_length
-    results_bb = read_results(system, electronE, R, modifier='-FC')
-    results_bc = read_results(system, electronE, R, modifier='-FC.bc', L=L)
+    results_bb = file_io.read_spectrum(system, electronE, R, modifier='-FC')
+    results_bc = file_io.read_spectrum(system, electronE, R, modifier='-FC.bc', L=L)
     
     fig = plt.figure(figsize=(6,4.1))
     ax = plt.gca() 
@@ -155,19 +132,19 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     ax2.yaxis.set_label_coords(1.06, 0.5)
 
     ax.plot(
-        results_bc[:,spectrum_idx(vD, 'E_out')], 
-        results_bc[:,spectrum_idx(vD, 'xs')], 
+        results_bc[:,file_io.spectrum_idx(vD, 'E_out')], 
+        results_bc[:,file_io.spectrum_idx(vD, 'xs')], 
         color='tab:blue', ls='--', label='b-d')
     ax.bar(
-        results_bb[:,spectrum_idx(vD, 'E_out')], 
-        results_bb[:,spectrum_idx(vD, 'xs')], 
+        results_bb[:,file_io.spectrum_idx(vD, 'E_out')], 
+        results_bb[:,file_io.spectrum_idx(vD, 'xs')], 
         width=0.005, color='tab:blue', label='b-b')
     
     if icec_el is not None:
         plot_icec_el(ax, icec_el, electronE, R, width=0.005)
     
     x_min = 5.5
-    x_max = max(results_bb[:,spectrum_idx(vD, 'E_out')]) + 0.04
+    x_max = max(results_bb[:,file_io.spectrum_idx(vD, 'E_out')]) + 0.04
     ax.set_xlim(x_min, x_max)
     ax.hlines(icec.PR_xs_A(electronE)*Units.AU2MB, 0, 10, color='dimgray', ls=':', zorder=1)  
     ax.annotate(r'$\sigma_\text{PR}$', 
@@ -180,7 +157,7 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     diss_energy_secax(ax, vD, results_bc, label=secax_label)
 
     ax.legend(fontsize='small', loc='upper left')
-    fname = DIR_PLOTS + f"{system}.spectrum-FC.bc.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = DIR_PLOTS + f"{system}.spectrum-FC.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
     
@@ -190,14 +167,14 @@ def plot_boltzmann_bb(ax, icec: IntraICEC, results, vD_max, t, color, electronE=
     norm = icec.Morse_D.boltzmann_norm(t)
     
     if fold_lorentz:
-        lorentzian_energies = np.linspace(results[-1,spectrum_idx(0, 'E_out')]-1.5, results[0,spectrum_idx(vD_max,'E_out')]+1, 10000)
+        lorentzian_energies = np.linspace(results[-1,file_io.spectrum_idx(0, 'E_out')]-1.5, results[0,file_io.spectrum_idx(vD_max,'E_out')]+1, 10000)
         lorentzian_spectrum = np.zeros_like(lorentzian_energies)
     
     for vD in range(vD_max+1):
         min_energy = icec.electronE_f_bc(electronE, vD, 0)*Units.HARTREE2EV
         occupation = icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
-        energies = results[:,spectrum_idx(vD, 'E_out')]
-        spectrum = results[:,spectrum_idx(vD, 'xs')]
+        energies = results[:,file_io.spectrum_idx(vD, 'E_out')]
+        spectrum = results[:,file_io.spectrum_idx(vD, 'xs')]
         if fold_lorentz:
             gamma = 0.08 #eV
             for energy, xs in zip(energies, spectrum):
@@ -216,19 +193,19 @@ def plot_boltzmann_bc(ax, icec: IntraICEC, results, vD_max, t, color, **kwargs):
     
     energy = np.sort(
         np.concatenate(
-            ([results[:,spectrum_idx(vD, 'E_out')] for vD in range(vD_max+1)]), 
+            ([results[:,file_io.spectrum_idx(vD, 'E_out')] for vD in range(vD_max+1)]), 
             axis=None
         )
     )
     
-    energy_v0 = results[:,spectrum_idx(0, 'E_out')]
-    xs_v0 = results[:,spectrum_idx(0, 'xs')]
+    energy_v0 = results[:,file_io.spectrum_idx(0, 'E_out')]
+    xs_v0 = results[:,file_io.spectrum_idx(0, 'xs')]
     xs_interpolated = interpolate(energy, energy_v0, xs_v0)
     avg = xs_interpolated * icec.Morse_D.boltzmann_occupation(t, 0, norm=norm)
         
     for vD in range(1, vD_max+1):
-        energy_vD = results[:,spectrum_idx(vD, 'E_out')]
-        xs_vD = results[:,spectrum_idx(vD, 'xs')]
+        energy_vD = results[:,file_io.spectrum_idx(vD, 'E_out')]
+        xs_vD = results[:,file_io.spectrum_idx(vD, 'xs')]
         xs_interpolated = interpolate(energy, energy_vD, xs_vD)
         avg += xs_interpolated * icec.Morse_D.boltzmann_occupation(t, vD, norm=norm)
     
@@ -250,8 +227,8 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
     ax.set_xlim(5.5, 8)
     
     L=icec.Morse_Dp.box_length
-    results_bb_FC = read_results(system, electronE, R, modifier='-FC')
-    results_bc_FC = read_results(system, electronE, R, modifier='-FC.bc', L=L)
+    results_bb_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC')
+    results_bc_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC.bc', L=L)
 
     blues = plt.get_cmap("Blues_r")  
     if len(T) == 3:
@@ -264,6 +241,6 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
-    fname = DIR_PLOTS + f'{system}.boltzmann-FC.spectrum.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.spectrum-boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
