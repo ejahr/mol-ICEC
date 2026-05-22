@@ -3,7 +3,6 @@ Defines functions for generating plots:
 - pes: potential energy surfaces of D and D+ (currently tailored to LiH -> LiH+) 
 - roots: for checking if all discretized solutions for dissociative states are found
 - energy_sketch: schematics for ICEC
-TODO give parameters in a config file?
 '''
 
 import mpmath
@@ -11,9 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import rcParams
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
@@ -273,6 +269,3 @@ def energy_sketch():
     ax.axis("off")
     fname = DIR_PLOTS + "icec_energy_sketch.pdf"
     fig.savefig(fname, bbox_inches='tight')
-  
-if __name__ == "__main__":  
-    energy_sketch()

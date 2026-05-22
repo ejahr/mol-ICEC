@@ -15,11 +15,11 @@ DIR_RESULTS = DIR + 'results/'                          # dir name where results
 DIR_PLOTS = DIR + 'plots/'                              # dir name where plots should be saved 
 
 # === System ===
-system_name = 'Hp-LiH'                                  # used in the header of result files
+system_name = 'Hp-LiH'                                  # used for file names
 reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'          # used in the header of result files
 
 # === Parameters for the calculations ===
-R           = R_min()   # distance between center of masses of A and D
+R           = R_min()                       # distance between center of masses of A and D
 L           = 8     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
 
 vD_max_FC   = 7                             # maximum initial vibrational state considered for FC model
@@ -37,13 +37,13 @@ calc_roots      = 0         # activates calculation of the dissociative states o
 resolved        = 1         # ICEC with vibrationally resolved PI cross sections of D
 FC              = 1         # Franck-Condon model to ICEC
 bb              = 1         # ICEC for bound-bound transitions of D, starts calculation with resolved or FC
-bc              = 1         # ICEC including dissociation of D+, only starts calculation with FC
-rydberg         = 1         # Rydberg ICEC for proton-like A, only starts calculation with resolved
-calculate       = 1         # activates calculation of ICEC cross sections
+bc              = 0         # ICEC including dissociation of D+, only starts calculation with FC
+rydberg         = 0         # Rydberg ICEC for proton-like A, only starts calculation with resolved
+calculate       = 0         # activates calculation of ICEC cross sections
 plotting        = 1         # generates plots of results from calculation, needs FC calculation
 spectra         = 1         # activates the ICEC electron spectrum
-cross_section   = 1         # activates total ICEC cross sections
-temp_dependence = 1         # activates temperature dependent plots
+cross_section   = 0         # activates total ICEC cross sections
+temp_dependence = 0         # activates temperature dependent plots
 
 # === Parameters for electron acceptor (A) and electron donor (D) ===
 class unitA():  # A
@@ -69,7 +69,7 @@ class unitD():  # D
                              806.39, 758.32, 706.47, 649.46, 585.50, 512.30, 427.12, 
                              326.95, 209.30, 76.29]) * Units.WAVENUMBER2HARTREE
     
-    file_PI_xs_resolved = DIR_DATA + f'{name}/{name}_vi_vf_'    # file name structure of the resolved PI XS of D, in code: + '_0_0.txt'
+    file_PI_xs_resolved = DIR_DATA + f'{name}/{name}_vi_vf_'    # file name structure of the resolved PI XS of D, + '_0_0.txt'
     file_PI_xs_unresolved = DIR_DATA + f'{name}/{name}.txt'     # file name of the unresolved/electronic PI XS of D
 
 class unitDp(): # D+

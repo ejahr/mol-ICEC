@@ -227,7 +227,7 @@ class Morse:
         '''Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         '''
         first_root = self.solve_root(max_energy, root_estimate=1e-10, scale=1e-3, dps=50)
-        print("first root", first_root, mpmath.fabs(self.psi_diss(first_root, self.box_length)))
+        print(f'first root at {mpmath.nstr(first_root,2)} with value {mpmath.nstr(mpmath.fabs(self.psi_diss(first_root, self.box_length)),2)}')
         root_estimates = np.geomspace(float(first_root), max_energy, num)
             
         t0 = time.perf_counter()
@@ -241,7 +241,7 @@ class Morse:
                     if str(e):
                         print("root solve failed", e)
         t1 = time.perf_counter()
-        print("time for root finding:", t1 - t0)
+        print(f'time for roots: {round(t1 - t0, 1)} s')
         roots = unique_mpf(np.array(roots), rtol=1e-8) # also sorts the array
         roots = np.array([
             E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8')
@@ -275,7 +275,7 @@ class Morse:
         with ProcessPoolExecutor() as executor:
             norms = list(executor.map(self.get_norm_diss, roots)) 
         t1 = time.perf_counter()
-        print("time for norm calculation:", t1 - t0)
+        print(f'time for norms: {round(t1 - t0, 1)} s')
         
         self.diss_norms = norms
         DoS = self.get_DoS(roots) 
