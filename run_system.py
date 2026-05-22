@@ -75,7 +75,7 @@ if config.FC:
 
 # --- calculate or load dissociative energies ---
 if config.FC and config.bc:
-    fname = config.DIR_DATA + f'{unitD.name}p.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
+    fname = config.DIR_RESULTS + f'{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV,1)}eV.L{round(L*Units.BOHR2ANGSTROM)}A.txt'
     if config.calc_roots:
         roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
         plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)
