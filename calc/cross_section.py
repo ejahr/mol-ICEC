@@ -8,11 +8,10 @@ Also defines the function calculate_ratio_tot_vs_electronic
 '''
 
 import numpy as np
-from config import DIR_RESULTS
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
-from plot.cross_section import read_results
+import calc.file_io as file_io
 
 def extend_header(header:str, R:float=None, electronic=False):
     header += "ICEC cross section\n"
@@ -50,8 +49,8 @@ def electronic(system:str, header:str, icec:ICEC, R:float):
     xs_array = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
     xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR_RESULTS + f"{system}.xs-electronic.R{round(R*Units.BOHR2ANGSTROM)}.txt"
-    np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
+    fpath = file_io.get_fpath_xs(system, R, '-electronic')
+    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
 
 def bb(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, vDp_max:int=None, modifier:str=''):
     if vD_max is None:
@@ -64,8 +63,8 @@ def bb(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, vDp_max
         xs = icec.xs_vD(R, v, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
     # TODO rename to xs.bb.  
-    file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}.txt"
-    np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
+    fpath = file_io.get_fpath_xs(system, R, modifier + '.bb')
+    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
     
 def rydberg_bb(system:str, header:str, icec:RydbergIntraICEC, R:float, n_max:int, vD:int=0, vDp_max:int=None):
     header += f"Rydberg states up to n={n_max} "
@@ -75,8 +74,8 @@ def rydberg_bb(system:str, header:str, icec:RydbergIntraICEC, R:float, n_max:int
         icec.n = n
         xs = icec.xs_vD(R, vD, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR_RESULTS + f"{system}.xs-rydberg.R{round(R*Units.BOHR2ANGSTROM)}.txt"
-    np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)
+    fpath = file_io.get_fpath_xs(system, R, '-rydberg.bb')
+    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
         
 def bc(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, max_dissE:float=None, modifier:str=''):
     if vD_max is None:
@@ -86,15 +85,14 @@ def bc(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, max_dis
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    file_path = DIR_RESULTS + f"{system}.xs{modifier}.bc.R{round(R*Units.BOHR2ANGSTROM)}.L{round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)}.txt"
-    np.savetxt(file_path, np.transpose(xs_array), fmt='%1.3e', header=header)    
+    fpath = file_io.get_fpath_xs(system, R, modifier + '.bc', icec.Morse_Dp.box_length)
+    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)    
         
 # ===== OTHER =====
     
 def calculate_ratio_tot_vs_electronic(system:str, icec_el:ICEC, R:float, vD:int=0, L:float=8*Units.ANGSTROM2BOHR, modifier:str='-FC'):
-    results_bb = read_results(system, R, modifier)
-    modifier += ".bc"
-    results_bc = read_results(system, R, modifier, L)
+    results_bb = file_io.read_xs(system, R, modifier + '.bb')
+    results_bc = file_io.read_xs(system, R, modifier + '.bc', L)
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     
     print("\n--- Ratio between total and electronic cross section ---")

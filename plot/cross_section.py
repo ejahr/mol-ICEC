@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
-from config import DIR_RESULTS, DIR_PLOTS, unitA
+import calc.file_io as file_io
+from config import DIR_PLOTS, unitA
 from plot.config import set_rcParams
 
 set_rcParams()
@@ -25,38 +26,25 @@ def set_axes(ax):
     ax.set_xlabel(r'$\varepsilon$ [eV]')
     ax.set_ylabel(r'$\sigma$ [Mb]')
     ax.grid(True)
-
-def read_results(system, R, modifier='', L=None):
-    'reads in ICEC results'
-    file_path = DIR_RESULTS + f"{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}"
-    if L is not None:
-        file_path += f'.L{round(L*Units.BOHR2ANGSTROM)}'
-    file_path += '.txt'
-    results = np.loadtxt(file_path, comments='#')
-    return results
-    # TODO
-    # energies = results[:,0]
-    # xs = results[:,1:]
-    # return energies, xs
     
 # ===== HELPER PLOT FUNCTIONS =====
             
 def plot_xs_el(ax, system, R, label='electronic', color='black', **kwargs):
     'plots electronic ICEC cross section against incoming electron energies'
-    results = read_results(system, R, modifier='-electronic')
+    results = file_io.read_xs(system, R, modifier='-electronic')
     energy = results[:,0]
     xs = results[:,1]
     ax.plot(energy, xs, color=color, label=label, **kwargs)
 
-def plot_xs(ax, system, R, vD, label='icec', modifier='', **kwargs):
+def plot_xs_bb(ax, system, R, vD, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> bound states'
     if modifier == '':
       ax.set_xlim(-0.2, 8.6)  
-    results = read_results(system, R, modifier)
+    results = file_io.read_xs(system, R, modifier + '.bb')
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_rydberg(ax, system, R, n=2, **kwargs):
-    results = read_results(system, R, modifier='-rydberg')
+    results = file_io.read_xs(system, R, '-rydberg.bb')
     energies = results[:,0]
     #n_max = len(results[0,:]) - 1
     tot_results = results[:,n-1]
@@ -66,15 +54,13 @@ def plot_xs_rydberg(ax, system, R, n=2, **kwargs):
     
 def plot_xs_bc(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for vD -> dissociative states'
-    modifier += ".bc"
-    results = read_results(system, R, modifier, L)
+    results = file_io.read_xs(system, R, modifier + '.bc', L)
     ax.plot(results[:,0], results[:, vD+1], label=label, **kwargs)
     
 def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     'plots ICEC cross section against incoming electron energies for all transitions from vD'
-    results_bb = read_results(system, R, modifier)
-    modifier += ".bc"
-    results_bc = read_results(system, R, modifier, L)
+    results_bb = file_io.read_xs(system, R, modifier + '.bb')
+    results_bc = file_io.read_xs(system, R, modifier + '.bc', L)
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
@@ -121,14 +107,14 @@ def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, vi:int = 0):
     if R < 5*Units.ANGSTROM2BOHR:
         ax.set_ylim(1e-4,1e3)
         
-    plot_xs(ax, system, R, vi, label=r'b-b', color='tab:red')
-    plot_xs(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue', zorder=1)
+    plot_xs_bb(ax, system, R, vi, label=r'b-b', color='tab:red')
+    plot_xs_bb(ax, system, R, vi, label=r'b-b FC', modifier='-FC', color='tab:blue', zorder=1)
     plot_xs_rydberg(ax, system, R, n=2, color='tab:purple')
     plot_xs_el(ax, system, R)
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
-    fname = DIR_PLOTS + f'{system}.xs-FC.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs.bb.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -158,10 +144,10 @@ def bb_and_bc(system, icec:IntraICEC, R, vi:int = 0):
     L = icec.Morse_Dp.box_length
     plot_xs_tot(ax, system, R, vi, L, label=r'tot', modifier='-FC', color='tab:blue', ls=':')
     plot_xs_bc(ax, system, R, vi, L, label=r'b-d', modifier='-FC', color='tab:blue', ls='--')
-    plot_xs(ax, system, R, vi, label=r'b-b', modifier='-FC', color='tab:blue')
+    plot_xs_bb(ax, system, R, vi, label=r'b-b', modifier='-FC', color='tab:blue')
     
     ax.legend(ncols=2)
-    fname = DIR_PLOTS + f'{system}.xs-FC.bc.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -186,12 +172,12 @@ def bb_vD(system, icec: IntraICEC, R, vD_max):
     color = ['tab:red', 'tab:purple', 'tab:blue']
     for vi in range(0, vD_max+1):
         label = r'$v_i=$' + str(vi)
-        plot_xs(ax, system, R, vi, label, color=color[vi])
-        plot_xs(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
+        plot_xs_bb(ax, system, R, vi, label, color=color[vi])
+        plot_xs_bb(ax, system, R, vi, label+' FC', modifier='-FC', linestyle='--', color=color[vi])
     
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
-    fname = DIR_PLOTS + f'{system}.xs-FC.vB.R{round(R*Units.BOHR2ANGSTROM)}.icec.pdf'
+    fname = DIR_PLOTS + f'{system}.xs-FC.bb.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -227,9 +213,9 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max):
     ax.set_xlim(-0.1, 4.2)
     
     modifier = "-FC"
-    results_bb = read_results(system, R, modifier)
+    results_bb = file_io.read_xs(system, R, modifier)
     L = icec.Morse_Dp.box_length
-    results_bc = read_results(system, R, modifier+'.bc', L)
+    results_bc = file_io.read_xs(system, R, modifier+'.bc', L)
 
     results = results_bc
     for col in range(1,results.shape[1]):
