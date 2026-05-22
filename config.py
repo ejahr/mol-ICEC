@@ -27,7 +27,7 @@ min_kinE    = 0.01  * Units.EV2HARTREE      # minimum incoming electron energy
 max_kinE    = 9     * Units.EV2HARTREE      # maximum incoming electron energy
 max_dissE   = 2     * Units.EV2HARTREE      # maximum energy up to which the dissociative states are calculated
 num_grid    = 1000                          # number of grid points between min and max electron energies
-n_max       = 10                            # number of rydberg states
+n_max_ryd   = 10                            # number of rydberg states
 
 electronE   = 1     * Units.EV2HARTREE      # incoming electron energy for ICEC electron spectra
 T           = [15, 300, 1500]   # Kelvin    # temperatures for temperature dependent spectra

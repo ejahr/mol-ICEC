@@ -22,7 +22,7 @@ min_kinE    = config.min_kinE
 max_kinE    = config.max_kinE
 max_dissE   = config.max_dissE
 num_grid    = config.num_grid
-n_max       = config.n_max  
+n_max_ryd   = config.n_max_ryd  
 unitA       = config.unitA
 unitD       = config.unitD
 unitDp      = config.unitDp
@@ -109,7 +109,7 @@ if config.calculate:
                 calc.cross_section.bb(system, header, icec_FC, R, vD_max_FC, modifier='-FC')
             if config.rydberg:
                 print('--- b-b xs rydberg ---')
-                calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max, 0, unitDp.v_max)
+                calc.cross_section.rydberg_bb(system, header, icec_rydberg, R, n_max_ryd, 0, unitDp.v_max)
                 
         if config.spectra: 
             if config.resolved:     
