@@ -72,7 +72,7 @@ $$V(R) = D_e \left( 1 - e^{\alpha (R-R_\text{eq})}\right)^2 - D_e$$
 - `HLiH/print_info.py`: prints additional information for H+ LiH to the console.
 - `HLiH/data/` : photoionization cross sections of H and LiH. 
 - `HLiH/results/`: results of the calculations from `H-LiH.py`. Includes `LiHp.diss_energies.E2.0eV.L8A.txt`.
-- `HLiH/plots/`: generated plots which show the calculated ICEC results.
+- `HLiH/plots/`: generated plots which show the calculated ICEC results. Also includes PES of LiH, an energy sketch and a visualization of the dissociative states of LiH+.
 
 ## Requirements
 - Can be run on Linux or WSL. Not tried on native Windows or iOS.
