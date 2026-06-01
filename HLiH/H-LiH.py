@@ -121,20 +121,27 @@ if config.calculate:
 # ===== PLOTS =====
 
 if config.plotting:
+    print('--- Generates Plots ---')
     if config.bb:
         if config.cross_section and config.FC:
+            print('bb xs : resolved, FC, and Rydberg results')
             plot.cross_section.bb_resolved_FC_rydberg(system, icec_bb, R)
         if config.spectra and config.FC:
+            print('bb spectrum : resolved and FC results')
             plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
     
     if config.bc and config.FC:
         if config.cross_section:
+            print('bb and bc xs : FC results')
             plot.cross_section.bb_and_bc(system, icec_FC, R)
         if config.spectra:   
+            print('bb and bc spectrum : FC results')
             plot.spectrum.bb_and_bc(system, icec_FC, R, electronE, vD=0, icec_el=icec_el, secax_label=r"$E_{\mathrm{LiH}^+}$ [eV]")
             
     if config.spectra and config.temp_dependence:
+        print('bb and bc spectrum : FC results with temperature')
         plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_FC)
 
+    print('pes and energy_sketch')
     plot.pes.pes(icec_FC, 'LiH', config.L, LiH.energy_diff_at_inf*Units.HARTREE2EV)
     plot.pes.energy_sketch()
