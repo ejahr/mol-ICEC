@@ -415,6 +415,23 @@ class RydbergIntraICEC(IntraICEC):
         new_inst.n = n
         return new_inst
     
+    def min_energy(self, vDmax=0):
+        min_IP_D = self.IP_D - (self.Morse_D.energy(vDmax) - self.Morse_D.energy(0))
+        IP_A_2 = self.IP_A / (2*2)
+        electronE = min_IP_D - IP_A_2
+        electronE = round(electronE * Units.HARTREE2EV,2)
+        electronE = electronE * Units.EV2HARTREE
+        return electronE
+        
+    def make_energy_grid(self, minEnergy=0.01*Units.EV2HARTREE, maxEnergy=10*Units.EV2HARTREE, num=100, geometric=True): 
+        if self.min_energy() > minEnergy and self.min_energy() < maxEnergy:
+            num = int(num*(maxEnergy-self.min_energy())/(maxEnergy-minEnergy))
+            minEnergy = max(self.min_energy(), minEnergy)
+        if geometric:
+            self.energyGrid = np.geomspace(minEnergy, maxEnergy, num)
+        else:
+            self.energyGrid = np.linspace(minEnergy, maxEnergy, num)
+            
     def __init__(self, IP_A: float, IP_D: float, n:int, file_PI_xs_D: str) :
         self.IP_A = IP_A # assumption: IP_A = R_A Rydberg constant
         self.IP_D = IP_D # assumption: adiabatic ionization energy

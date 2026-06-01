@@ -26,7 +26,6 @@ R                   = config.R
 
 vD_max_FC           = config.vD_max_FC
 min_kinE            = config.min_kinE
-min_kinE_rydberg    = 4.35*Units.EV2HARTREE
 max_kinE            = config.max_kinE
 max_dissE           = config.max_dissE
 num_grid            = config.num_grid
@@ -60,7 +59,7 @@ icec_bb.define_PI_xs_D(method="resolved")
 
 # --- Rydberg ---
 icec_rydberg : RydbergIntraICEC = RydbergIntraICEC.from_IntraICEC(icec_bb, n=2)
-icec_rydberg.make_energy_grid(min_kinE_rydberg, max_kinE, int(num_grid/2))
+icec_rydberg.make_energy_grid(min_kinE, max_kinE, int(num_grid/2))
 
 # --- ICEC with Franck-Condon model ---
 icec_FC = IntraICEC(unitA.deg_factor, unitA.IP, unitD.IP, PI_xs_A, unitD.file_PI_xs_unresolved)
