@@ -224,8 +224,8 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max):
     plot_xs_el(ax, system, R)
             
     blues = plt.get_cmap("Blues_r")    
-    for t in T:
-        blue = blues(T.index(t) / (len(T) + 1 / len(T)))
+    for idx, t in enumerate(T):
+        blue = blues(idx / (len(T) + 1 / len(T)))
         label = r'$T=$' + str(t) + r'$\,$K'
         
         xs = boltzmann(icec, results_bb, vD_max, t)
