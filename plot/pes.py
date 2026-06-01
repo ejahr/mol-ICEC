@@ -5,6 +5,7 @@ Defines functions for generating plots:
 - energy_sketch: schematics for ICEC
 '''
 
+import os
 import mpmath
 import numpy as np
 import matplotlib.pyplot as plt
@@ -129,7 +130,10 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     add_cut_out_lines(ax1, ax2)
     
     fig.text(0, 0.5, r'$E-V^\infty_\mathrm{LiH}$ [eV]', va='center', rotation='vertical')
-    fname = DIR_PLOTS + f"{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = os.path.join(
+        DIR_PLOTS,
+        f"{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    )
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
 # ===== INFORMATION PLOTS =====
@@ -145,7 +149,10 @@ def roots(morse:Morse, roots, root_estimates, max_energy):
     ax.bar(roots*Units.HARTREE2EV, roots, width=0.005, color='tab:red', label='roots')
     ax.legend()
     plt.tight_layout()
-    fname = DIR_PLOTS + f'{unitDp.name}.roots.E{round(max_energy*Units.HARTREE2EV)}.L{round(morse.box_length*Units.BOHR2ANGSTROM)}.pdf'
+    fname = os.path.join(
+        DIR_PLOTS,
+        f'{unitDp.name}.roots.E{round(max_energy*Units.HARTREE2EV)}.L{round(morse.box_length*Units.BOHR2ANGSTROM)}.pdf'
+    )
     fig.savefig(fname)
 
 def diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
@@ -161,7 +168,10 @@ def diss_at_L(morse:Morse, system, L=8*Units.ANGSTROM2BOHR):
     ax.set_xlabel(r'$E$ [$\mathrm{eV}$]')
     ax.set_ylabel(r'$\psi_E(L)$')
     ax.set_ylim(-1,1)
-    fname = DIR_PLOTS + f"{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = os.path.join(
+        DIR_PLOTS,
+        f"{system}.psi_at_L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    )
     fig.savefig(fname, bbox_inches='tight')
     
 # ===== ICEC ENERGY SKETCH =====
@@ -265,5 +275,5 @@ def energy_sketch():
     set_rcParams()
 
     ax.axis("off")
-    fname = DIR_PLOTS + "icec_energy_sketch.pdf"
+    fname = os.path.join(DIR_PLOTS, "icec_energy_sketch.pdf")
     fig.savefig(fname, bbox_inches='tight')

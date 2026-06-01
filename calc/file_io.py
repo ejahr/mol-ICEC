@@ -1,13 +1,14 @@
 
+import os
 import numpy as np
-from config import DIR_RESULTS
+from config import DIR_RESULTS, DIR
 from icec.constants import Units
 
 def get_fpath_xs(system:str, R:float, modifier:str='', L:float=None):
     fname = f'{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}'
     if L is not None:
         fname += f'.L{round(L*Units.BOHR2ANGSTROM)}'
-    return DIR_RESULTS + fname + '.txt'
+    return os.path.join(DIR_RESULTS, fname + '.txt')
 
 def read_xs(system:str, R:float, modifier:str='', L:float=None):
     'reads in ICEC results'
@@ -23,7 +24,7 @@ def get_fpath_spectrum(system:str, electronE:float, R:float, modifier:str='', L:
     fname =f"{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}"
     if L is not None:
         fname += f'.L{round(L*Units.BOHR2ANGSTROM)}'
-    return  DIR_RESULTS + fname + '.txt'
+    return os.path.join(DIR_RESULTS, fname + '.txt')
 
 def read_spectrum(system:str, electronE:float, R:float, modifier:str='', L:float=None):
     fpath = get_fpath_spectrum(system, electronE, R, modifier, L)
@@ -45,3 +46,15 @@ def spectrum_idx(vD:int, key:str):
         raise ValueError(
             "key not recognized, must be 'v_Dp', 'diss_energy', 'E_out', or 'xs'"
         )    
+        
+def mkdir(dir_name):
+    dir_path = os.path.join(DIR, dir_name)
+    try:
+        os.mkdir(dir_path)
+        print(f"Directory '{dir_path}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{dir_path}' already exists.")
+    except PermissionError:
+        print(f"Permission denied: Unable to create '{dir_path}'.")
+    except Exception as e:
+        print(f"An error occurred: {e}")

@@ -9,14 +9,14 @@ import numpy as np
 from icec.constants import Units, Constants
 from HLiH.data.LiH.LiH import R_min
 
-DIR = os.path.dirname(os.path.realpath(__file__)) + '/' # DIR where this config.py file is located
-DIR_DATA = DIR + 'data/'                                # dir name where PI XS data is located
-DIR_RESULTS = DIR + 'results/'                          # dir name where results should be saved
-DIR_PLOTS = DIR + 'plots/'                              # dir name where plots should be saved 
+DIR = os.path.dirname(os.path.realpath(__file__))   # DIR where this config.py file is located
+DIR_DATA = os.path.join(DIR, 'data')                # dir name where PI XS data is located
+DIR_RESULTS = os.path.join(DIR, 'results')          # dir name where results should be saved
+DIR_PLOTS = os.path.join(DIR, 'plots')              # dir name where plots should be saved 
 
 # === System ===
-system_name = 'Hp-LiH'                                  # used for file names
-reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'          # used in the header of result files
+system_name = 'Hp-LiH'                              # used for file names
+reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'      # used in the header of result files
 
 # === Parameters for the calculations ===
 R           = R_min()                       # distance between center of masses of A and D

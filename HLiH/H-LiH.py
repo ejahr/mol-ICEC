@@ -16,6 +16,9 @@ from icec.constants import Units
 import calc
 import plot
 
+calc.file_io.mkdir(config.DIR_RESULTS)
+calc.file_io.mkdir(config.DIR_PLOTS)
+
 # ============== H+ = LiH =============
 
 electronE           = config.electronE
@@ -68,7 +71,10 @@ icec_FC.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
 icec_FC.define_PI_xs_D(method="FC")
 
 # --- calculate or load dissociative energies ---
-fname = config.DIR_RESULTS + f'{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV)}.L{round(config.L*Units.BOHR2ANGSTROM)}.txt'
+fname = os.path.join(
+    config.DIR_RESULTS, 
+    f'{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV)}.L{round(config.L*Units.BOHR2ANGSTROM)}.txt'
+)
 if config.calc_roots:
     roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
     plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)

@@ -3,6 +3,7 @@ Initiates the calculation of ICEC cross sections and spectra.
 Parameters are defined in config.py
 '''
 
+import os
 import numpy as np
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
@@ -10,6 +11,9 @@ from icec.constants import Units
 import calc
 import plot
 import config
+
+calc.file_io.mkdir(config.DIR_RESULTS)
+calc.file_io.mkdir(config.DIR_PLOTS)
 
 # ===== PARAMETERS FROM CONFIG =====
 
@@ -75,7 +79,10 @@ if config.FC:
 
 # --- calculate or load dissociative energies ---
 if config.FC and config.bc:
-    fname = config.DIR_RESULTS + f'{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV)}.L{round(L*Units.BOHR2ANGSTROM)}.txt'
+    fname = os.path.join(
+        config.DIR_RESULTS, 
+        f'{unitDp.name}.diss_energies.E{round(max_dissE*Units.HARTREE2EV)}.L{round(config.L*Units.BOHR2ANGSTROM)}.txt'
+    )
     if config.calc_roots:
         roots, root_estimates = icec_FC.Morse_Dp.save_diss_states(fname, max_dissE, num=1000)
         plot.pes.roots(icec_FC.Morse_Dp, roots, root_estimates, max_dissE)

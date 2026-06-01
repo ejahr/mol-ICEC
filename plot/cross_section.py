@@ -6,6 +6,7 @@ Defines functions for generating cross section plots:
 - boltzmann_bb_and_bc: ICEC cross section vs. incoming electron energy for different temperatures.
 '''
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from icec.icec import ICEC
@@ -84,7 +85,7 @@ def PI_PR_A(icec:ICEC):
     ax.plot(energies*Units.HARTREE2EV, PI_xs*Units.AU2MB, label = 'PI')
     icec.plot_PR_xs(ax, label = 'PR')
     ax.legend()
-    fname = DIR_PLOTS + f'{unitA.name}.PI.PR.pdf'
+    fname = os.path.join(DIR_PLOTS, f'{unitA.name}.PI.PR.pdf')
     fig.savefig(fname)
     
 def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, vi:int = 0):
@@ -114,7 +115,7 @@ def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, vi:int = 0):
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
-    fname = DIR_PLOTS + f'{system}.xs.bb.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    fname = os.path.join(DIR_PLOTS, f'{system}.xs.bb.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf')
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -147,7 +148,10 @@ def bb_and_bc(system, icec:IntraICEC, R, vi:int = 0):
     plot_xs_bb(ax, system, R, vi, label=r'b-b', modifier='-FC', color='tab:blue')
     
     ax.legend(ncols=2)
-    fname = DIR_PLOTS + f'{system}.xs-FC.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    fname = os.path.join(
+        DIR_PLOTS, 
+        f'{system}.xs-FC.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
+    )
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -177,7 +181,10 @@ def bb_vD(system, icec: IntraICEC, R, vD_max):
     
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
-    fname = DIR_PLOTS + f'{system}.xs-FC.bb.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    fname = os.path.join(
+        DIR_PLOTS,
+        f'{system}.xs-FC.bb.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
+    )
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -235,6 +242,9 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max):
         ax.plot(results_bc[:,0], xs, color=blue, ls='--')
         
     ax.legend()
-    fname = DIR_PLOTS + f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    fname = os.path.join(
+        DIR_PLOTS,
+        f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    )
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)

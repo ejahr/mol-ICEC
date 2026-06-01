@@ -5,6 +5,7 @@ Defines functions for generating spectrum plots:
 - boltzmann_bb_and_bc: ICEC cross section vs. outgoing electron energy for different temperatures.
 '''
 
+import os
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
@@ -106,7 +107,10 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
             width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
-    fname = DIR_PLOTS + f"{system}.spectrum.bb.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
+    fname = os.path.join(
+        DIR_PLOTS,
+        f"{system}.spectrum.bb.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
+    )
     plt.tight_layout(pad=0.5)
     fig.savefig(fname)
     
@@ -157,7 +161,10 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     diss_energy_secax(ax, vD, results_bc, label=secax_label)
 
     ax.legend(fontsize='small', loc='upper left')
-    fname = DIR_PLOTS + f"{system}.spectrum-FC.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    fname = os.path.join(
+        DIR_PLOTS,
+        f"{system}.spectrum-FC.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+    )
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
     
@@ -241,6 +248,9 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
-    fname = DIR_PLOTS + f'{system}.spectrum-boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    fname = os.path.join(
+        DIR_PLOTS,
+        f'{system}.spectrum-boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+    )
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
