@@ -77,8 +77,8 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
         Darker shades use the Franck-Condon model.
         Electronic case (black) corresponds to the vertical ionization of D.
     '''
-    results_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC')
-    results_resolved = file_io.read_spectrum(system, electronE, R)
+    results_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC.bb')
+    results_resolved = file_io.read_spectrum(system, electronE, R, modifier='.bb')
     
     fig = plt.figure(figsize=(6,4))
     ax = plt.gca() 
@@ -119,7 +119,7 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
         Black peak: electronic case (vertical ionization of D).
     '''
     L=icec.Morse_Dp.box_length
-    results_bb = file_io.read_spectrum(system, electronE, R, modifier='-FC')
+    results_bb = file_io.read_spectrum(system, electronE, R, modifier='-FC.bb')
     results_bc = file_io.read_spectrum(system, electronE, R, modifier='-FC.bc', L=L)
     
     fig = plt.figure(figsize=(6,4.1))
@@ -227,7 +227,7 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
     ax.set_xlim(5.5, 8)
     
     L=icec.Morse_Dp.box_length
-    results_bb_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC')
+    results_bb_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC.bb')
     results_bc_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC.bc', L=L)
 
     blues = plt.get_cmap("Blues_r")  
