@@ -10,16 +10,16 @@ from icec.constants import Units, Constants
 from HLiH.data.LiH.LiH import R_min
 
 DIR = os.path.dirname(os.path.realpath(__file__))   # DIR where this config.py file is located
-DIR_DATA = os.path.join(DIR, 'data')                # dir name where PI XS data is located
-DIR_RESULTS = os.path.join(DIR, 'results')          # dir name where results should be saved
-DIR_PLOTS = os.path.join(DIR, 'plots')              # dir name where plots should be saved 
+DIR_DATA = os.path.join(DIR, 'LiH', 'data')                # dir name where PI XS data is located
+DIR_RESULTS = os.path.join(DIR, 'LiH', 'results')          # dir name where results should be saved
+DIR_PLOTS = os.path.join(DIR,'LiH', 'plots')              # dir name where plots should be saved 
 
 # === System ===
 system_name = 'Hp-LiH'                              # used for file names
 reaction    = 'e- + H+ + LiH -> H + LiH+ + e-'      # used in the header of result files
 
 # === Parameters for the calculations ===
-R           = R_min()                       # distance between center of masses of A and D
+R           = R_min()                       # = 3.9522557993362915 distance between center of masses of A and D
 L           = 8     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
 
 vD_max_FC   = 7                             # maximum initial vibrational state considered for FC model
@@ -47,11 +47,11 @@ temp_dependence = 1         # activates temperature dependent plots
 
 # === Parameters for electron acceptor (A) and electron donor (D) ===
 class unitA():  # A
-    name        = 'H'                                   # name of unit A
-    deg_factor  = 2 / 1                                 # degeneracy factor g_A/g_A- for detailed balance equation
-    IP          = 13.598434599702 * Units.EV2HARTREE    # Ionization potential of A- = electron affinity of A
-    file_PI_xs  = DIR_DATA + f'{name}/{name}.txt'       # file name of the PI XS of A-
-    degree      = 15                                    # degree for polynomial fit, optional
+    name        = 'H'                                           # name of unit A
+    deg_factor  = 2 / 1                                         # degeneracy factor g_A/g_A- for detailed balance equation
+    IP          = 13.598434599702 * Units.EV2HARTREE            # Ionization potential of A- = electron affinity of A
+    file_PI_xs  = os.path.join(DIR_DATA, f'{name}/{name}.txt')  # file name of the PI XS of A-
+    degree      = 15                                            # degree for polynomial fit, optional
     
 class unitD():  # D
     name        = 'LiH'                                 # name of unit D
@@ -69,8 +69,8 @@ class unitD():  # D
                              806.39, 758.32, 706.47, 649.46, 585.50, 512.30, 427.12, 
                              326.95, 209.30, 76.29]) * Units.WAVENUMBER2HARTREE
     
-    file_PI_xs_resolved = DIR_DATA + f'{name}/{name}_vi_vf_'    # file name structure of the resolved PI XS of D, + '_0_0.txt'
-    file_PI_xs_unresolved = DIR_DATA + f'{name}/{name}.txt'     # file name of the unresolved/electronic PI XS of D
+    file_PI_xs_resolved = os.path.join(DIR_DATA, f'{name}/{name}_vi_vf_')    # file name structure of the resolved PI XS of D, + '_0_0.txt'
+    file_PI_xs_unresolved = os.path.join(DIR_DATA, f'{name}/{name}.txt')     # file name of the unresolved/electronic PI XS of D
 
 class unitDp(): # D+
     name        = 'LiHp'

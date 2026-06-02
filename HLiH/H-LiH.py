@@ -1,20 +1,21 @@
 '''
 Old file, similar to run_system.py, but only for H+ LiH
 Initiates the calculation of ICEC cross sections and spectra.
-Parameters are defined in .config.py
+Parameters are taken from ../config.py
+For H+ LiH, the local config file must be copied to the parent folder
 '''
 
 import numpy as np
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from HLiH import config
 from HLiH.data.LiH.LiH import LiH
 from icec.icec import ICEC
 from icec.intraIcec import IntraICEC, RydbergIntraICEC
 from icec.constants import Units
 import calc
 import plot
+import config
 
 calc.file_io.mkdir(config.DIR_RESULTS)
 calc.file_io.mkdir(config.DIR_PLOTS)
