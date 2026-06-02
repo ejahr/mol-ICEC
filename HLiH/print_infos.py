@@ -179,4 +179,4 @@ print_PI_crosssection(icec_FC)
 
 calc.cross_section.calculate_ratio_tot_vs_electronic(system, icec_el, R) 
 plot.pes.diss_at_L(icec_FC.Morse_Dp, "LiH", L)
-H.plot_H_PI_PR(icec_el)
+plot.cross_section.PI_PR_A(icec_el)
