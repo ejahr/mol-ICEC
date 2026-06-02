@@ -250,7 +250,7 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
     ax.legend(fontsize='small', loc="upper right")
     fname = os.path.join(
         DIR_PLOTS,
-        f'{system}.spectrum-boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
+        f'{system}.spectrum-FC.boltzmann.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
     )
     plt.tight_layout(pad = 0.5)
     fig.savefig(fname)
