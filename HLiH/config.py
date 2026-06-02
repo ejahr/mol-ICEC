@@ -33,17 +33,17 @@ electronE   = 1     * Units.EV2HARTREE      # incoming electron energy for ICEC 
 T           = [15, 300, 1500]   # Kelvin    # temperatures for temperature dependent spectra
 
 # === Define which calculations are active ===
-calc_roots      = 0         # activates calculation of the dissociative states of D+ within box of L, needs to run at least once
+calc_roots      = 1         # activates calculation of the dissociative states of D+ within box of L, needs to run at least once
 resolved        = 1         # ICEC with vibrationally resolved PI cross sections of D
 FC              = 1         # Franck-Condon model to ICEC
 bb              = 1         # ICEC for bound-bound transitions of D, starts calculation with resolved or FC
-bc              = 0         # ICEC including dissociation of D+, only starts calculation with FC
-rydberg         = 0         # Rydberg ICEC for proton-like A, only starts calculation with resolved
-calculate       = 0         # activates calculation of ICEC cross sections
+bc              = 1         # ICEC including dissociation of D+, only starts calculation with FC
+rydberg         = 1         # Rydberg ICEC for proton-like A, only starts calculation with resolved
+calculate       = 1         # activates calculation of ICEC cross sections
 plotting        = 1         # generates plots of results from calculation, needs FC calculation
 spectra         = 1         # activates the ICEC electron spectrum
-cross_section   = 0         # activates total ICEC cross sections
-temp_dependence = 0         # activates temperature dependent plots
+cross_section   = 1         # activates total ICEC cross sections
+temp_dependence = 1         # activates temperature dependent plots
 
 # === Parameters for electron acceptor (A) and electron donor (D) ===
 class unitA():  # A
