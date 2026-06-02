@@ -41,8 +41,7 @@ def bb(system: str, header:str, icec_el:ICEC, icec: IntraICEC, R:float, electron
             spectrum_all_vD = spectrum
         else:
             spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum))
-    fname = file_io.get_fpath_spectrum(system, electronE, R, modifier + '.bb')      
-    np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
+    file_io.save_spectrum(spectrum_all_vD, header, system, electronE, R, modifier + '.bb')
     
 def bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD_max:int=None, modifier:str=''): 
     if vD_max is None:
@@ -53,5 +52,4 @@ def bc(system: str, header: str, icec: IntraICEC, R: float, electronE: float, vD
     for vD in range(1, vD_max+1):
         spectrum = icec.spectrum_bc(electronE, R, vD) 
         spectrum_all_vD = np.hstack((spectrum_all_vD, spectrum)) 
-    fname = file_io.get_fpath_spectrum(system, electronE, R, modifier + '.bc', icec.Morse_Dp.box_length)  
-    np.savetxt(fname, spectrum_all_vD, fmt='%1.3e', header=header)  
+    file_io.save_spectrum(spectrum_all_vD, header, system, electronE, R, modifier + '.bc', icec.Morse_Dp.box_length)

@@ -65,6 +65,14 @@ def plot_xs_tot(ax, system, R, vD, L, label='icec', modifier='', **kwargs):
     results = results_bb[:, vD+1] + results_bc[:, vD+1]
     ax.plot(results_bb[:,0], results, label=label, **kwargs)
     
+def save_fig(fig, system, R:float, modifier='', L=None):
+    plt.tight_layout(pad=0.5)
+    fname = f'{system}.xs{modifier}.R{round(R*Units.BOHR2ANGSTROM)}'
+    if L is not None:
+        fname += f'.L{round(L*Units.BOHR2ANGSTROM)}'
+    fpath = os.path.join(DIR_PLOTS, fname + '.pdf')
+    fig.savefig(fpath)
+    
 # ===== CROSS SECTION PLOTS ======
 
 def PI_PR_A(icec:ICEC):
@@ -115,9 +123,7 @@ def bb_resolved_FC_rydberg(system, icec:IntraICEC, R, vi:int = 0):
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':') 
     
     ax.legend(ncol=2)
-    fname = os.path.join(DIR_PLOTS, f'{system}.xs.bb.v{vi}.R{round(R*Units.BOHR2ANGSTROM)}.pdf')
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, R, f'.bb.v{vi}')
     
 def bb_and_bc(system, icec:IntraICEC, R, vi:int = 0):
     ''' 
@@ -148,12 +154,7 @@ def bb_and_bc(system, icec:IntraICEC, R, vi:int = 0):
     plot_xs_bb(ax, system, R, vi, label=r'b-b', modifier='-FC', color='tab:blue')
     
     ax.legend(ncols=2)
-    fname = os.path.join(
-        DIR_PLOTS, 
-        f'{system}.xs-FC.v{vi}.R{str(round(R*Units.BOHR2ANGSTROM))}.L{str(round(L*Units.BOHR2ANGSTROM))}.pdf'
-    )
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, R, f'-FC.v{vi}', L)
     
 def bb_vD(system, icec: IntraICEC, R, vD_max):
     ''' 
@@ -181,12 +182,7 @@ def bb_vD(system, icec: IntraICEC, R, vD_max):
     
     icec.plot_PR_xs(ax, label=r'$\sigma_\text{PR}$', color='dimgray', ls=':', zorder=1)    
     
-    fname = os.path.join(
-        DIR_PLOTS,
-        f'{system}.xs-FC.bb.R{round(R*Units.BOHR2ANGSTROM)}.pdf'
-    )
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, R, '-FC.bb')
     
 # ===== BOLTZMANN =====   
     
@@ -242,9 +238,4 @@ def boltzmann_bb_and_bc(system, icec: IntraICEC, R, T, vD_max):
         ax.plot(results_bc[:,0], xs, color=blue, ls='--')
         
     ax.legend()
-    fname = os.path.join(
-        DIR_PLOTS,
-        f'{system}.boltzmann-FC.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
-    )
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, R, '-FC.boltzmann', L)

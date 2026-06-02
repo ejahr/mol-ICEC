@@ -49,8 +49,7 @@ def electronic(system:str, header:str, icec:ICEC, R:float):
     xs_array = icec.energyGrid * Units.HARTREE2EV
     xs = icec.xs_energy(R) * Units.AU2MB
     xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    fpath = file_io.get_fpath_xs(system, R, '-electronic')
-    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
+    file_io.save_xs(xs_array, header, system, R, '-electronic')
 
 def bb(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, vDp_max:int=None, modifier:str=''):
     if vD_max is None:
@@ -62,9 +61,7 @@ def bb(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, vDp_max
     for v in range(vD_max+1):
         xs = icec.xs_vD(R, v, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    # TODO rename to xs.bb.  
-    fpath = file_io.get_fpath_xs(system, R, modifier + '.bb')
-    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
+    file_io.save_xs(xs_array, header, system, R, modifier + '.bb')
     
 def rydberg_bb(system:str, header:str, icec:RydbergIntraICEC, R:float, n_max:int, vD:int=0, vDp_max:int=None):
     header += f"Rydberg states up to n={n_max} "
@@ -75,8 +72,7 @@ def rydberg_bb(system:str, header:str, icec:RydbergIntraICEC, R:float, n_max:int
         icec.n = n
         xs = icec.xs_vD(R, vD, vDp_max) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    fpath = file_io.get_fpath_xs(system, R, '-rydberg.bb')
-    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)
+    file_io.save_xs(xs_array, header, system, R, '-rydberg.bb')
         
 def bc(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, max_dissE:float=None, modifier:str=''):
     if vD_max is None:
@@ -86,8 +82,7 @@ def bc(system:str, header:str, icec:IntraICEC, R:float, vD_max:int=None, max_dis
     for vD in range(vD_max+1):
         xs = icec.xs_vD_continuum(R, vD, max_dissE=max_dissE) * Units.AU2MB
         xs_array = np.vstack((xs_array, xs))  # --- -> ===
-    fpath = file_io.get_fpath_xs(system, R, modifier + '.bc', icec.Morse_Dp.box_length)
-    np.savetxt(fpath, np.transpose(xs_array), fmt='%1.3e', header=header)    
+    file_io.save_xs(xs_array, header, system, R, modifier + '.bc', icec.Morse_Dp.box_length)   
         
 # ===== OTHER =====
     

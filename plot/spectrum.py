@@ -60,6 +60,14 @@ def lorentzian(x, x0, gamma):
     '''
     return (gamma / np.pi) / ((x - x0)**2 + gamma**2)
     #return gamma**2 / ((x - x0)**2 + gamma**2) # peak height stays the same
+    
+def save_fig(fig, system:str, electronE:float, R:float, modifier='', L=None):
+    plt.tight_layout(pad=0.5)
+    fname = f'{system}.spectrum{modifier}.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}'
+    if L is not None:
+        fname += f'.L{round(L*Units.BOHR2ANGSTROM)}'
+    fpath = os.path.join(DIR_PLOTS, fname + '.pdf')
+    fig.savefig(fpath)
 
 # ===== SPECTRUM PLOTS =====
 
@@ -107,12 +115,7 @@ def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=
             width=0.002, color=color_FC[vD], label='FC')
 
     ax.legend(ncols=4, fontsize='small', loc='upper center')
-    fname = os.path.join(
-        DIR_PLOTS,
-        f"{system}.spectrum.bb.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.pdf"
-    )
-    plt.tight_layout(pad=0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, electronE, R, '.bb')
     
 def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, secax_label=r'$E$ [eV]'):
     ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy.
@@ -161,12 +164,7 @@ def bb_and_bc(system, icec:IntraICEC, R, electronE, vD=0, icec_el:ICEC=None, sec
     diss_energy_secax(ax, vD, results_bc, label=secax_label)
 
     ax.legend(fontsize='small', loc='upper left')
-    fname = os.path.join(
-        DIR_PLOTS,
-        f"{system}.spectrum-FC.v0.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
-    )
-    plt.tight_layout(pad = 0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, electronE, R, '-FC.v0', L)
     
 # ===== TEMPERATURE DEPENDENT SPECTRUM PLOTS ======
     
@@ -248,9 +246,4 @@ def boltzmann_bb_and_bc(system, icec:IntraICEC, R, electronE, T, vD_max, icec_el
         plot_boltzmann_bb(ax, icec, results_bb_FC, vD_max, t, blue, electronE, fold_lorentz=True, zorder=zorder+len(T))
         
     ax.legend(fontsize='small', loc="upper right")
-    fname = os.path.join(
-        DIR_PLOTS,
-        f'{system}.spectrum-FC.boltzmann.E{round(electronE*Units.HARTREE2EV)}.R{round(R*Units.BOHR2ANGSTROM)}.L{round(L*Units.BOHR2ANGSTROM)}.pdf'
-    )
-    plt.tight_layout(pad = 0.5)
-    fig.savefig(fname)
+    save_fig(fig, system, electronE, R, '-FC.boltzmann', L)
