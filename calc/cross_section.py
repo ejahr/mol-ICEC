@@ -22,28 +22,24 @@ def extend_header(header:str, R:float=None, electronic=False):
 
 def extend_header_bb(header:str, R:float=None, vD_max:int=None, vDp_max:int=None):
     header = extend_header(header, R)
-    header += f'Number of initial vibrational states: {vD_max+1}\n'
-    header += f'Number of final vibrational states: {vDp_max+1}\n'
-    header += 'E_in [eV] | xs [Mb]'
-    if vD_max is not None:
-        header += ' vD=0'
-    if  vD_max > 0:
-        header += f' | ... | xs vD={vD_max+1}' 
+    header += f'Number of initial vibrational states: {vD_max+1}\n' \
+        + f'Number of final vibrational states: {vDp_max+1}\n'  \
+        + 'E_in [eV] | xs [Mb] vD=0'
+    if vD_max > 0:
+        header += f' | ... | xs vD={vD_max}' 
     return header
     
 def extend_header_bc(header:str, icec:IntraICEC, R:float=None, vD_max:int=None, max_dissE=None):
     header = extend_header(header, R)
-    header += f'Number of initial vibrational states: {vD_max+1}\n'
     if max_dissE is None:
         max_dissE = icec.Morse_Dp.diss_energies[-1]
-    header += "Dissociative states of D+: " + \
-    f"Max energy = {round(max_dissE*Units.HARTREE2EV,1)} eV, " + \
-    f"Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n" 
-    header += 'E_in [eV] | xs vD=0 [Mb]'
-    if vD_max is not None:
-        header += ' vD=0'
-    if  vD_max > 0:
-        header += f' | ... | xs vD={vD_max+1}' 
+    header += f'Number of initial vibrational states: {vD_max+1}\n' \
+        + "Dissociative states of D+: " \
+        + f"Max energy = {round(max_dissE*Units.HARTREE2EV,1)} eV, " \
+        + f"Box length = {round(icec.Morse_Dp.box_length*Units.BOHR2ANGSTROM)} Angstrom\n" \
+        + 'E_in [eV] | xs [Mb] vD=0'
+    if vD_max > 0:
+        header += f' | ... | xs vD={vD_max}' 
     return header
 
 # ========= Running calculations and saving results ============

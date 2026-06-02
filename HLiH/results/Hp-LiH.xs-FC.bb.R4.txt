@@ -3,7 +3,7 @@
 # R = 3.952 Angstrom
 # Number of initial vibrational states: 8
 # Number of final vibrational states: 5
-# E_in [eV] | xs [Mb] vD=0 | ... | xs vD=8
+# E_in [eV] | xs [Mb] vD=0 | ... | xs vD=7
 1.000e-02 5.979e+01 1.414e+02 1.602e+02 1.320e+02 1.224e+02 1.351e+02 1.347e+02 1.179e+02
 1.006e-02 5.943e+01 1.406e+02 1.592e+02 1.312e+02 1.216e+02 1.343e+02 1.339e+02 1.172e+02
 1.012e-02 5.907e+01 1.397e+02 1.582e+02 1.304e+02 1.209e+02 1.335e+02 1.330e+02 1.164e+02

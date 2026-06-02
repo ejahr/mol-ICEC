@@ -3,7 +3,7 @@
 # R = 3.952 Angstrom
 # Number of initial vibrational states: 8
 # Dissociative states of D+: Max energy = 2.0 eV, Box length = 8 Angstrom
-# E_in [eV] | xs vD=0 [Mb] | ... | xs vD=8 [Mb]
+# E_in [eV] | xs [Mb] vD=0 | ... | xs vD=7
 1.000e-02 4.566e+02 3.749e+02 3.562e+02 3.844e+02 3.939e+02 3.808e+02 3.795e+02 3.911e+02
 1.006e-02 4.538e+02 3.726e+02 3.541e+02 3.821e+02 3.916e+02 3.785e+02 3.773e+02 3.887e+02
 1.012e-02 4.511e+02 3.704e+02 3.520e+02 3.798e+02 3.892e+02 3.762e+02 3.750e+02 3.864e+02
