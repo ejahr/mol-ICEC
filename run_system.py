@@ -76,6 +76,8 @@ if config.FC:
     icec_FC.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
     icec_FC.change_minima_to_adiabatic_IP()
     IP_vertical = icec_FC.convert_minima_to_vertical_IP(unitD.IP)
+    
+    plot.pes.diss_at_L(icec_FC.Morse_Dp, config.unitD.name, L)
 
 # --- calculate or load dissociative energies ---
 if config.FC and config.bc:
@@ -139,10 +141,10 @@ if config.calculate:
 if config.plotting:
     print('--- Generates Plots ---')
     if config.bb:
-        if config.cross_section and config.FC:
+        if config.cross_section and config.FC and config.resolved:
             print('bb xs : resolved, FC, and Rydberg results')
             plot.cross_section.bb_resolved_FC_rydberg(system, icec_bb, R)
-        if config.spectra and config.FC:
+        if config.spectra and config.FC and config.resolved:
             print('bb spectrum : resolved and FC results')
             plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
     
@@ -157,3 +159,5 @@ if config.plotting:
     if config.spectra and config.temp_dependence:
         print('bb and bc spectrum : FC results with temperature')
         plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_FC)
+
+

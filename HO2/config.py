@@ -18,16 +18,16 @@ reaction    = 'e- + H+ + O2 -> H + (O2)+ + e-'      # used in the header of resu
 
 # === Parameters for the calculations ===
 R           = 3.9522557993362915 * Units.ANGSTROM2BOHR   # distance between center of masses of A and D
-L           = 5     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
+L           = 8     * Units.ANGSTROM2BOHR   # box length for discretizing the dissociative states of D+
 
-vD_max_FC   = 0                             # maximum initial vibrational state considered for bound-continuum transitions
+vD_max_FC   = 1                             # maximum initial vibrational state considered for bound-continuum transitions
 min_kinE    = 0.01  * Units.EV2HARTREE      # minimum incoming electron energy
 max_kinE    = 9     * Units.EV2HARTREE      # maximum incoming electron energy
-max_dissE   = 0.1   * Units.EV2HARTREE      # maximum energy up to which the dissociative states are calculated
-num_grid    = 1000                          # number of grid points between min and max electron energies
+max_dissE   = 2     * Units.EV2HARTREE      # maximum energy up to which the dissociative states are calculated
+num_grid    = 100                          # number of grid points between min and max electron energies
 n_max_ryd   = 10                            # number of rydberg states
 
-electronE   = 8     * Units.EV2HARTREE      # incoming electron energy for ICEC electron spectra
+electronE   = 1     * Units.EV2HARTREE      # incoming electron energy for ICEC electron spectra
 T           = [15, 300, 1500]   # Kelvin    # temperatures for temperature dependent spectra
 
 # === Define which calculations are active ===
@@ -35,7 +35,7 @@ calc_roots      = 0         # activates calculation of the dissociative states o
 resolved        = 0         # ICEC with vibrationally resolved PI cross sections of D
 FC              = 1         # Franck-Condon model to ICEC
 bb              = 1         # ICEC for bound-bound transitions of D, starts calculation with resolved or FC
-bc              = 1         # ICEC including dissociation of D+, only starts calculation with FC
+bc              = 0         # ICEC including dissociation of D+, only starts calculation with FC
 rydberg         = 0         # Rydberg ICEC for proton-like A, only starts calculation with resolved
 calculate       = 1         # activates calculation of ICEC cross sections
 plotting        = 1         # generates plots of results from calculation, needs FC calculation

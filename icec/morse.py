@@ -4,6 +4,7 @@ import mpmath
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from .constants import Units, Constants
+import config_morse
 
 class Morse:
     '''Morse potential model for diatomic molecules.
@@ -206,34 +207,38 @@ class Morse:
         )
         return mpmath.exp(-z / 2) * (psi_in + psi_out)
     
-    def solve_root(self, max_energy:float, root_estimate, scale=1, dps:int=15):
+    def solve_root(self, max_energy:float, root_estimate):
         def psi_diss_L(E:float):
             if hasattr(E, "__len__"):
                 E = E[0]
-            if mpmath.im(E) > 0 or mpmath.re(E) > max_energy or mpmath.re(E) <= 0: # don't go looking beyond (0,max_energy]
+            E = mpmath.re(E)
+            if E > max_energy or E <= 0: # don't go looking beyond (0,max_energy]
                 return 1e100
             else:
-                return scale*self.psi_diss(E, self.box_length)
+                return config_morse.scale_factor*self.psi_diss(E, self.box_length)
           
         def psi_float(E:float) -> float:
             return float(mpmath.re(psi_diss_L(E)))
     
-        rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-6)[0]
-        with mpmath.workdps(dps):
+        rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-8)[0]
+        with mpmath.workdps(config_morse.dps_for_roots):
             root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
         return mpmath.re(root)
     
-    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+    def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE):
         '''Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         '''
-        first_root = self.solve_root(max_energy, root_estimate=1e-10, scale=1e-3, dps=50)
+        first_root = self.solve_root(max_energy, config_morse.first_root_estimate)
         print(f'first root at {mpmath.nstr(first_root,2)} with value {mpmath.nstr(mpmath.fabs(self.psi_diss(first_root, self.box_length)),2)}')
-        root_estimates = np.geomspace(float(first_root), max_energy, num)
+        root_estimates = np.geomspace(float(first_root), max_energy, config_morse.num_estimates)
             
         t0 = time.perf_counter()
         roots = []
         with ProcessPoolExecutor() as executor:
-            futures = [executor.submit(self.solve_root, max_energy, root) for root in root_estimates]
+            futures = [
+                executor.submit(self.solve_root, max_energy, root_estimate) 
+                for root_estimate in root_estimates
+            ]
             for future in as_completed(futures):
                 try:
                     roots.append(future.result())
@@ -243,9 +248,9 @@ class Morse:
         t1 = time.perf_counter()
         print(f'time for roots: {round(t1 - t0, 1)} s')
         roots = unique_mpf(np.array(roots), rtol=1e-8) # also sorts the array
-        roots = np.array([
-            E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < mpmath.mpf('1e-8')
-        ])
+        #roots = np.array([
+        #    E for E in roots if mpmath.fabs(self.psi_diss(E, self.box_length)) < 1e-5
+        #])
         self.diss_energies = roots
         return roots, root_estimates
     
@@ -266,10 +271,10 @@ class Morse:
         self.DoS = DoS
         return DoS
     
-    def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE, num:int=500):
+    def save_diss_states(self, file_path:str, max_energy:float=1*Units.EV2HARTREE):
         header = f"Energies of the continuum solutions to the Morse potential with psi(L)=0 where L = {round(self.box_length*Units.BOHR2ANGSTROM)} Angstrom\n"
         header += "E [eV] | E [a.u.] | norm [a.u.] | density of states [a.u.] | DoS in 1D box [a.u.]"
-        roots, root_estimates = self.find_solutions_in_box(max_energy, num)   
+        roots, root_estimates = self.find_solutions_in_box(max_energy)   
         
         t0 = time.perf_counter()
         with ProcessPoolExecutor() as executor:
