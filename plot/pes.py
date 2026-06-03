@@ -114,15 +114,14 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     y = [icec.Morse_D.energy(2) * Units.HARTREE2EV - 0.01, 0]
     add_vertical_arrow(ax2, x=L-0.37, y=y, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
     # adiabtic IP
-    print((icec.Morse_Dp.De + icec.Morse_Dp.energy(0)) * Units.HARTREE2EV)
     y = [icec.Morse_D.energy(0) * Units.HARTREE2EV - 0.01, (icec.Morse_Dp.De + icec.Morse_Dp.energy(0))*Units.HARTREE2EV + 0.6]
     add_vertical_arrow(ax2, x=L/2+0.7, y=y, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
     # vertical IP
-    y = [icec.Morse_D.V(icec.Morse_D.re) * Units.HARTREE2EV, (icec.Morse_Dp.De + icec.Morse_Dp.V(icec.Morse_D.re))*Units.HARTREE2EV + yshift + 0.6]
+    y = [icec.Morse_D.V(icec.Morse_D.re) * Units.HARTREE2EV, (icec.Morse_Dp.De + icec.Morse_Dp.V(icec.Morse_D.re))*Units.HARTREE2EV + 0.6]
     add_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y=y, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
     # difference in V(R->oo)
-    y = [0, yshift + icec.Morse_Dp.De * Units.HARTREE2EV + 0.5]
-    add_vertical_arrow(ax2, x=L-0.2, y=y, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
+    y = [0, icec.Morse_Dp.De * Units.HARTREE2EV + 0.5]
+    add_vertical_arrow(ax2, x=L-0.2, y=y, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75*L/8, shift_text_y=-0.035)
 
     # ----- D+ -----
     height = height_ratios[0] / height_ratios[1] * (icec.Morse_D.De*Units.HARTREE2EV + 2*0.1)
@@ -133,17 +132,15 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     if show_continuum_states:
         energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
         plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+        y = [yshift, energy * Units.HARTREE2EV + yshift + 0.02]
+        add_vertical_arrow(ax1, x=7.8, y=y, text=r"$E$", shift_text_x=0.05)
     for vf in range(num_final_bound_states):
         plot_vib_state(ax1, icec.Morse_Dp, vf, scale, yshift)
     
     V = icec.Morse_Dp.V(r)
     ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
     ax1.annotate(system + '+', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
-    
-    # dissociative vibrational energy
-    if show_continuum_states:
-        add_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
-    
+      
     add_cut_out_lines(ax1, ax2)
     
     fig.text(0, 0.5, r'$E-V^\infty$ [eV]', va='center', rotation='vertical')

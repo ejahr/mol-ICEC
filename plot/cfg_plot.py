@@ -13,7 +13,7 @@ num_final_bound_states = 3
 show_continuum_states = False
 scale = 1./15
 yshift = 7 # LiH
-yshift = 0
+yshift = 12 # O2
 
 def set_rcParams():
     plt.rcdefaults()
