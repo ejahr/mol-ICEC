@@ -4,7 +4,7 @@ import mpmath
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from .constants import Units, Constants
-import config_morse
+import icec.cfg as cfg
 
 class Morse:
     '''Morse potential model for diatomic molecules.
@@ -215,22 +215,22 @@ class Morse:
             if E > max_energy or E <= 0: # don't go looking beyond (0,max_energy]
                 return 1e100
             else:
-                return config_morse.scale_factor*self.psi_diss(E, self.box_length)
+                return cfg.scale_factor*self.psi_diss(E, self.box_length)
           
         def psi_float(E:float) -> float:
             return float(mpmath.re(psi_diss_L(E)))
     
         rough_root = sp.optimize.fsolve(psi_float, root_estimate, xtol=1e-8)[0]
-        with mpmath.workdps(config_morse.dps_for_roots):
+        with mpmath.workdps(cfg.dps_for_roots):
             root = mpmath.findroot(psi_diss_L, rough_root, solver='newton', verify=False)
         return mpmath.re(root)
     
     def find_solutions_in_box(self, max_energy:float=1*Units.EV2HARTREE):
         '''Finds allowed dissociative Morse states in a given box of self.box_length by solving psi(E,L) = 0 for E.
         '''
-        first_root = self.solve_root(max_energy, config_morse.first_root_estimate)
+        first_root = self.solve_root(max_energy, cfg.first_root_estimate)
         print(f'first root at {mpmath.nstr(first_root,2)} with value {mpmath.nstr(mpmath.fabs(self.psi_diss(first_root, self.box_length)),2)}')
-        root_estimates = np.geomspace(float(first_root), max_energy, config_morse.num_estimates)
+        root_estimates = np.geomspace(float(first_root), max_energy, cfg.num_estimates)
             
         t0 = time.perf_counter()
         roots = []
