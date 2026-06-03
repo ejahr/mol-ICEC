@@ -15,9 +15,9 @@ from icec.intraIcec import IntraICEC
 from icec.morse import Morse
 from icec.constants import Units
 from config import DIR_PLOTS, unitDp
-from plot.config import set_rcParams
+import plot.cfg_plot as cfg_plot
 
-set_rcParams()
+cfg_plot.set_rcParams()
 
 # ===== HELPER FUNCTIONS =====
 
@@ -35,17 +35,17 @@ def plot_diss_state(ax, morse:Morse, energy, norm=None, scale=1, yshift=0, color
                 for r_i in morse.r]
     ax.plot(morse.r*Units.BOHR2ANGSTROM, psi_diss, color=color, lw=1)
     
-def add_vertical_arrow(ax, x:float, y1:float, y2:float, text:str="", shift_text_x=0.1, y_text=None, shift_text_y=0):
+def add_vertical_arrow(ax, x:float, y:tuple[float], text:str="", shift_text_x=0.1, y_text=None, shift_text_y=0):
     arrowstyle = patches.ArrowStyle("<|-|>", head_width=0.1, head_length=0.3)
     arrowprops = dict(arrowstyle=arrowstyle, lw=1, color='tab:red', capstyle='butt', joinstyle="miter")
     ax.annotate(
         "",
-        xy=(x, y1),        
-        xytext=(x, y2),
+        xy=(x, y[0]),        
+        xytext=(x, y[1]),
         arrowprops=arrowprops
     )
     if y_text is None:
-        y_text = (y1 + y2) / 2 + shift_text_y
+        y_text = (y[0] + y[1]) / 2 + shift_text_y
     ax.text(
         x + shift_text_x,
         y_text,
@@ -75,7 +75,13 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
         L: maximum distance, length of the box
         yshif: difference between the two PES at R -> infty
     """   
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,  height_ratios=[0.3, 0.7], figsize=(5,5))
+    height_ratios           = cfg_plot.height_ratios
+    scale                   = cfg_plot.scale
+    show_continuum_states   = cfg_plot.show_continuum_states
+    num_final_bound_states  = cfg_plot.num_final_bound_states
+    yshift                  = cfg_plot.yshift if yshift == 0 else yshift
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, height_ratios=height_ratios, figsize=(5,5))
     fig.subplots_adjust(hspace=0.05)  # adjust space between Axes
     ax1.spines.bottom.set_visible(False)
     ax2.spines.top.set_visible(False)
@@ -83,18 +89,18 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     
     r = icec.Morse_D.make_rgrid(rmax=L)
     icec.Morse_Dp.r = r
-    scale = 1./15
+    L = L*Units.BOHR2ANGSTROM
     
     # ----- D -----
     ax2.set_xlabel(r'$R$ [$\mathrm{\AA}$]')
-    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV-0.1, 0.1)
+    ax2.set_ylim(-icec.Morse_D.De*Units.HARTREE2EV - 0.1, 0.1)
     
     for vi in range(3):
         plot_vib_state(ax2, icec.Morse_D, vi, scale)
         
     V = icec.Morse_D.V(r)
     ax2.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV, color='black')
-    ax2.annotate(r'$\mathrm{LiH}$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
+    ax2.annotate(system, (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV - 0.25))
     
     # vertical line at minimum of PES
     x = np.array([icec.Morse_D.re, r[-1]-0.25]) * Units.BOHR2ANGSTROM
@@ -102,37 +108,48 @@ def pes(icec:IntraICEC, system:str, L=5*Units.ANGSTROM2BOHR, yshift:float=0):
     ax2.plot(x, y, ls='--', color='grey', lw=1, zorder=0)
     
     # dissociation energy
-    add_vertical_arrow(ax2, x=7.8, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV-0.01, y2=0, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
+    y = [icec.Morse_D.V(icec.Morse_D.re) * Units.HARTREE2EV - 0.01, 0]
+    add_vertical_arrow(ax2, x=L-0.2, y=y, text=r"$D_\mathrm{e}$", shift_text_x=0.06, y_text=-1)
     # bound vibrational energy
-    add_vertical_arrow(ax2, x=7.63, y1=icec.Morse_D.energy(2)*Units.HARTREE2EV-0.01, y2=0, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
+    y = [icec.Morse_D.energy(2) * Units.HARTREE2EV - 0.01, 0]
+    add_vertical_arrow(ax2, x=L-0.37, y=y, text=r"$E_\nu$", shift_text_x=-0.5, y_text=-1)
     # adiabtic IP
-    add_vertical_arrow(ax2, x=4.7, y1=icec.Morse_D.energy(0)*Units.HARTREE2EV-0.01, y2=0.33, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
+    print((icec.Morse_Dp.De + icec.Morse_Dp.energy(0)) * Units.HARTREE2EV)
+    y = [icec.Morse_D.energy(0) * Units.HARTREE2EV - 0.01, (icec.Morse_Dp.De + icec.Morse_Dp.energy(0))*Units.HARTREE2EV + 0.6]
+    add_vertical_arrow(ax2, x=L/2+0.7, y=y, text=r"$\mathrm{IP}^\mathrm{a}$", shift_text_x=0.06, y_text=-1)
     # vertical IP
-    add_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y1=icec.Morse_D.V(icec.Morse_D.re)*Units.HARTREE2EV, y2=0.56, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
+    y = [icec.Morse_D.V(icec.Morse_D.re) * Units.HARTREE2EV, (icec.Morse_Dp.De + icec.Morse_Dp.V(icec.Morse_D.re))*Units.HARTREE2EV + yshift + 0.6]
+    add_vertical_arrow(ax2, x=icec.Morse_D.re*Units.BOHR2ANGSTROM, y=y, text=r"$\mathrm{IP}^\mathrm{v}$", shift_text_x=0.06, y_text=-1)
     # difference in V(R->oo)
-    add_vertical_arrow(ax2, x=7.8, y1=0, y2=0.44, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
+    y = [0, yshift + icec.Morse_Dp.De * Units.HARTREE2EV + 0.5]
+    add_vertical_arrow(ax2, x=L-0.2, y=y, text=r"$V^\infty_+ - V^\infty$", shift_text_x=-1.75, shift_text_y=-0.035)
 
     # ----- D+ -----
-    height = 0.3/0.7*(0.1 - (-icec.Morse_D.De*Units.HARTREE2EV-0.1))
-    ax1.set_ylim(yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1, yshift-icec.Morse_Dp.De*Units.HARTREE2EV-0.1 + height)
+    height = height_ratios[0] / height_ratios[1] * (icec.Morse_D.De*Units.HARTREE2EV + 2*0.1)
+    y_min = yshift - icec.Morse_Dp.De*Units.HARTREE2EV - 0.1
+    ax1.set_ylim(y_min, y_min + height)
     
-    energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
-    plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
-    plot_vib_state(ax1, icec.Morse_Dp, 0, scale, yshift)
+    # states
+    if show_continuum_states:
+        energy, norm = icec.Morse_Dp.diss_energies[30], icec.Morse_Dp.diss_norms[30]
+        plot_diss_state(ax1, icec.Morse_Dp, energy, norm, scale, yshift)
+    for vf in range(num_final_bound_states):
+        plot_vib_state(ax1, icec.Morse_Dp, vf, scale, yshift)
     
     V = icec.Morse_Dp.V(r)
     ax1.plot(r*Units.BOHR2ANGSTROM, V*Units.HARTREE2EV + yshift, color='black')
-    ax1.annotate(r'$\mathrm{LiH}^+$', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
+    ax1.annotate(system + '+', (r[-200]*Units.BOHR2ANGSTROM, V[-100]*Units.HARTREE2EV + yshift + 0.1))
     
     # dissociative vibrational energy
-    add_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
+    if show_continuum_states:
+        add_vertical_arrow(ax1, x=7.8, y1=yshift, y2=energy*Units.HARTREE2EV+yshift+0.02, text=r"$E$", shift_text_x=0.05)
     
     add_cut_out_lines(ax1, ax2)
     
-    fig.text(0, 0.5, r'$E-V^\infty_\mathrm{LiH}$ [eV]', va='center', rotation='vertical')
+    fig.text(0, 0.5, r'$E-V^\infty$ [eV]', va='center', rotation='vertical')
     fname = os.path.join(
         DIR_PLOTS,
-        f"{system}.PES.L{round(L*Units.BOHR2ANGSTROM)}.pdf"
+        f"{system}.PES.L{round(L)}.pdf"
     )
     fig.savefig(fname, bbox_inches='tight', pad_inches=0.2)
 
@@ -272,7 +289,7 @@ def energy_sketch():
     ax.text((x_A+x_D)/2 - 0.075, E_A+shift_A/2 + 0.3, r"$\omega$", color='tab:red')
     rcParams['path.sketch'] = (4, 15, 1)
     ax.plot([x_A+0.005, x_D-0.005], [E_A+shift_A/2, E_D+shift_D/2], lw=1.5, color='tab:red')
-    set_rcParams()
+    cfg_plot.set_rcParams()
 
     ax.axis("off")
     fname = os.path.join(DIR_PLOTS, "icec_energy_sketch.pdf")

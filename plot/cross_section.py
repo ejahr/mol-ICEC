@@ -14,10 +14,10 @@ from icec.intraIcec import IntraICEC
 from icec.constants import Units, Constants
 import calc.file_io as file_io
 from config import DIR_PLOTS, unitA
-from plot.config import set_rcParams
+import plot.cfg_plot as cfg_plot
 
-set_rcParams()
-width, height = 6, 4
+cfg_plot.set_rcParams()
+width, height = cfg_plot.width, cfg_plot.height
 
 # ===== HELPER FUNCTIONS =====
 

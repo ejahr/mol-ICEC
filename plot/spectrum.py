@@ -13,10 +13,10 @@ from icec.icec import ICEC
 from icec.intraIcec import IntraICEC
 from icec.constants import Units
 from config import DIR_PLOTS
-from plot.config import set_rcParams
+import plot.cfg_plot as cfg_plot
 import calc.file_io as file_io
 
-set_rcParams()
+cfg_plot.set_rcParams()
 
 # ===== HELPER FUNCTIONS =====
 
