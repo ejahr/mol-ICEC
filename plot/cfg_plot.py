@@ -4,7 +4,7 @@ width, height = 6, 4
 
 # spectrum
 bar_width = 0.002 # LiH
-bar_width = 0.01 # O2
+bar_width = 0.02 # O2
 
 # PES
 height_ratios = [0.3, 0.7]      # LiH

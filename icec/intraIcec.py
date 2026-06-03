@@ -181,6 +181,11 @@ class IntraICEC(ICEC):
         IP_vertical = IP_minima + (self.Morse_Dp.V(self.Morse_D.re) + self.Morse_Dp.De)
         return IP_vertical
     
+    def convert_adiabatic_to_vertical_IP(self, IP_adiabatic):
+        IP_minimum = IP_adiabatic + (self.Morse_D.De + self.Morse_D.energy(0)) - (self.Morse_Dp.De + self.Morse_Dp.energy(0))
+        IP_vertical = self.convert_minima_to_vertical_IP(IP_minimum)
+        return IP_vertical
+    
     def change_minima_to_adiabatic_IP(self):
         IP_adiabatic = self.IP_D - (self.Morse_D.energy(0) + self.Morse_D.De) + (self.Morse_Dp.energy(0) + self.Morse_Dp.De)
         self.IP_D = IP_adiabatic

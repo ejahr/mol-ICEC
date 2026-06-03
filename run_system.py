@@ -61,8 +61,11 @@ if config.resolved:
     icec_bb.define_Morse_Dp(*morse_parameters_final)
     icec_bb.define_PI_xs_D(method="resolved")
     icec_bb.make_energy_grid(min_kinE, max_kinE, num_grid)
-    icec_bb.change_minima_to_adiabatic_IP()
-    IP_vertical = icec_bb.convert_minima_to_vertical_IP(unitD.IP)
+    if config.unitD.IP_type == "minimum":
+        icec_bb.change_minima_to_adiabatic_IP()
+        IP_vertical = icec_bb.convert_minima_to_vertical_IP(unitD.IP)
+    elif config.unitD.IP_type == "adiabatic":
+        IP_vertical = icec_bb.convert_adiabatic_to_vertical_IP(unitD.IP)
 
     if hasattr(unitD, 'vib_spacing') and hasattr(unitDp, 'vib_spacing'):
         icec_bb.input_vib_spacing_D(unitD.vib_spacing, unitDp.vib_spacing)
@@ -74,8 +77,11 @@ if config.FC:
     icec_FC.define_Morse_Dp(*morse_parameters_final, box_length=L)
     icec_FC.define_PI_xs_D(method="FC")
     icec_FC.make_energy_grid(min_kinE, max_kinE_unresolved, num_grid)
-    icec_FC.change_minima_to_adiabatic_IP()
-    IP_vertical = icec_FC.convert_minima_to_vertical_IP(unitD.IP)
+    if config.unitD.IP_type == "minimum":
+        icec_FC.change_minima_to_adiabatic_IP()
+        IP_vertical = icec_FC.convert_minima_to_vertical_IP(unitD.IP)
+    elif config.unitD.IP_type == "adiabatic":
+        IP_vertical = icec_FC.convert_adiabatic_to_vertical_IP(unitD.IP)
     
     plot.pes.diss_at_L(icec_FC.Morse_Dp, config.unitD.name, L)
 

@@ -53,8 +53,9 @@ class unitA():  # A
     
 class unitD():  # D
     # p.489 in Huber1979
-    name        = 'O2'                                   # name of unit D
-    IP          = 12.071 * Units.EV2HARTREE              # this is the adiabatic IP and not minimum to minimum, but no time to change the code or the value
+    name        = 'O2'                                  # name of unit D
+    IP          = 12.071 * Units.EV2HARTREE             # this is the adiabatic IP and not minimum to minimum, but no time to change the code or the value
+    IP_type     = "adiabatic"                           # "adiabatic", "vertical", "minimum"
     mu          = 7.9974575 * Constants.m_p
     Req         = 1.20752 
     we          = 1580.19 * Units.WAVENUMBER2HARTREE
