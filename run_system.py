@@ -163,4 +163,4 @@ if config.plotting:
         print('bb and bc spectrum : FC results with temperature')
         plot.spectrum.boltzmann_bb_and_bc(system, icec_FC, R, electronE, config.T, vD_max_FC)
 
-
+    plot.pes.pes(icec_FC, unitD.name, L)
