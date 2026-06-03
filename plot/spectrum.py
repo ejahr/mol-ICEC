@@ -78,6 +78,28 @@ def plot_icec_el(ax, icec_el: ICEC, electronE, R, width=0.002, return_bar=False)
         return ax.bar(energy_out, xs, width=width, color='black', label='elec.')
     ax.bar(energy_out, xs, width=width, color='black', label='elec.') 
     
+def bb_FC(system, R, electronE, vD=0, icec_el:ICEC=None,):
+    ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy for different initial vibrational states.
+    '''
+    width = cfg_plot.bar_width
+    
+    results_FC = file_io.read_spectrum(system, electronE, R, modifier='-FC.bb')
+    
+    fig = plt.figure(figsize=(6,4))
+    ax = plt.gca() 
+    set_axes(ax)
+    
+    if icec_el is not None:
+        plot_icec_el(ax, icec_el, electronE, R, width)
+    
+    ax.bar(
+        results_FC[:,file_io.spectrum_idx(vD, 'E_out')], 
+        results_FC[:,file_io.spectrum_idx(vD, 'xs')], 
+        width=width, color='tab:blue', label='b-b')
+
+    ax.legend()
+    save_fig(fig, system, electronE, R, '-FC.bb')
+    
 def bb_resolved_and_FC(system, R, electronE, vD_max=0, title=None, icec_el:ICEC=None,):
     ''' Generates spectrum plot: ICEC cross section vs. outgoing electron energy for different initial vibrational states.
     

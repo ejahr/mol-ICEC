@@ -144,9 +144,12 @@ if config.plotting:
         if config.cross_section and config.FC and config.resolved:
             print('bb xs : resolved, FC, and Rydberg results')
             plot.cross_section.bb_resolved_FC_rydberg(system, icec_bb, R)
-        if config.spectra and config.FC and config.resolved:
-            print('bb spectrum : resolved and FC results')
-            plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
+        if config.spectra:
+            if config.FC:
+                plot.spectrum.bb_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
+            if config.FC and config.resolved:
+                print('bb spectrum : resolved and FC results')
+                plot.spectrum.bb_resolved_and_FC(system, R, electronE, unitD.v_max, icec_el=icec_el)
     
     if config.bc and config.FC:
         if config.cross_section:

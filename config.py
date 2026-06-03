@@ -27,7 +27,7 @@ max_dissE   = 0.1   * Units.EV2HARTREE      # maximum energy up to which the dis
 num_grid    = 1000                          # number of grid points between min and max electron energies
 n_max_ryd   = 10                            # number of rydberg states
 
-electronE   = 8     * Units.EV2HARTREE      # incoming electron energy for ICEC electron spectra
+electronE   = 1     * Units.EV2HARTREE      # incoming electron energy for ICEC electron spectra
 T           = [15, 300, 1500]   # Kelvin    # temperatures for temperature dependent spectra
 
 # === Define which calculations are active ===
@@ -60,6 +60,7 @@ class unitD():  # D
     we          = 1580.19 * Units.WAVENUMBER2HARTREE
     wexe        = 11.98 * Units.WAVENUMBER2HARTREE   
     De          = we**2 / 4 / wexe
+    v_max       = 0
 
     file_PI_xs_unresolved = os.path.join(DIR_DATA, f'{name}.txt')     # file name of the unresolved/electronic PI XS of D
 
