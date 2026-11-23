@@ -78,3 +78,6 @@ $$V(R) = D_e \left( 1 - e^{\alpha (R-R_\text{eq})}\right)^2 - D_e$$
 - Can be run on Linux or WSL. Not tried on native Windows or iOS.
 - Python = 3.12
 - Libraries: `numpy`, `scipy`, [`mpmath`](https://mpmath.org/), `matplotlib`, `concurrent.futures`, `itertools` 
+
+## Citation
+Jahr, E. M. (2026). "mol-lCEC". Zenodo. https://doi.org/10.5281/zenodo.18890590
