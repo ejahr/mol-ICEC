@@ -6,7 +6,7 @@ $$e^-_k + \mathrm{A} + \mathrm{D} \to \mathrm{A}^- + \mathrm{D}^+ + e^-_{k'}$$
 This implentation incorporates the vibrational degrees of freedom of the neighbor into an analytical model of ICEC. 
 The results are cross sections or electron spectra depending on the incoming electron energy.
 
-[![DOI](https://zenodo.org/badge/977628832.svg)](https://doi.org/10.5281/zenodo.18890590)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18890590.svg)](https://doi.org/10.5281/zenodo.18890590)
 
 ## Theory
 E. M. Jahr, E. Fasshauer; Intramolecular nuclear dynamics in intermolecular Coulombic electron capture. _J. Chem. Phys._ 164, 194304 (2026). https://doi.org/10.1063/5.0333097
